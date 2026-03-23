@@ -3,15 +3,9 @@ import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { CNStepOne } from "@/Features/CreateNovelScreen/CNStepOne";
 import { NextButton } from "@/Features/CreateNovelScreen/NextButton";
 import { useState } from "react";
-import {
-  StyleSheet,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  Keyboard,
-  TouchableWithoutFeedback,
-} from "react-native";
+import { View, StyleSheet } from "react-native";
+// Kütüphaneden gerekli bileşeni alıyoruz
+import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 const CreateNovelScreen = () => {
   const [profileImage, setProfileImage] = useState<string | null>(null);
@@ -20,33 +14,25 @@ const CreateNovelScreen = () => {
     <Screen>
       <ProfileSettingsHeader title="Yeni Roman Oluştur" />
 
-      <KeyboardAvoidingView
+      <KeyboardAwareScrollView
+        bottomOffset={24}
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 24}
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-            keyboardShouldPersistTaps="handled"
-          >
-            <View style={styles.container}>
-              <CNStepOne
-                setProfileImage={setProfileImage}
-                profileImage={profileImage}
-              />
+        <View style={styles.container}>
+          <CNStepOne
+            setProfileImage={setProfileImage}
+            profileImage={profileImage}
+          />
 
-              <View style={styles.buttonWrapper}>
-                <NextButton
-                  onPress={() => console.log("Devam Et tıklandı")}
-                  disabled={false}
-                />
-              </View>
-            </View>
-          </ScrollView>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
+          <NextButton
+            onPress={() => console.log("Devam Et tıklandı")}
+            disabled={false}
+          />
+        </View>
+      </KeyboardAwareScrollView>
     </Screen>
   );
 };
@@ -54,20 +40,11 @@ const CreateNovelScreen = () => {
 export default CreateNovelScreen;
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    backgroundColor: "#fff",
-  },
   container: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 40,
+    marginTop: 24,
     alignItems: "center",
-  },
-  buttonWrapper: {
-    marginTop: "auto",
-    width: "100%",
-    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 8,
   },
 });

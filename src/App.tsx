@@ -23,6 +23,7 @@ import { useEffect, useState } from "react";
 import { TokenStorage } from "./utils/tokenStorage";
 import { useAuthStore } from "./store/useAuthStore";
 import { ToastContainer } from "./components/Toasts/ToastContainer";
+import { KeyboardProvider } from "react-native-keyboard-controller";
 
 enableFreeze(false);
 const queryClient = new QueryClient();
@@ -57,17 +58,19 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <QueryClientProvider client={queryClient}>
-        <BottomSheetModalProvider>
-          <SafeAreaProvider>
-            <NavigationContainer ref={navigationRef}>
-              <RootNavigator />
-              <GlobalConfirmModal />
-              <ToastContainer />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </BottomSheetModalProvider>
-      </QueryClientProvider>
+      <KeyboardProvider>
+        <QueryClientProvider client={queryClient}>
+          <BottomSheetModalProvider>
+            <SafeAreaProvider>
+              <NavigationContainer ref={navigationRef}>
+                <RootNavigator />
+                <GlobalConfirmModal />
+                <ToastContainer />
+              </NavigationContainer>
+            </SafeAreaProvider>
+          </BottomSheetModalProvider>
+        </QueryClientProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }
