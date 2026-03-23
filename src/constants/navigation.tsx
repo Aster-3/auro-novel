@@ -2,10 +2,9 @@ import { JSX } from "react";
 import { HomeIcon } from "../components/icons/HomeIcon";
 import { ChatIcon } from "../components/icons/ChatIcon";
 import { ProfileIcon } from "../components/icons/ProfileIcon";
-import { Text, ImageSourcePropType } from "react-native";
+import { Text } from "react-native";
 import { LibraryIcon } from "../components/icons/LibraryIcon";
 import { NotificationIcon } from "../components/icons/NotificationIcon";
-import { Comment } from "@/types/comment";
 
 export type RootStackParamList = {
   Main: undefined;
@@ -26,6 +25,15 @@ export type RootStackParamList = {
     commentId: number;
     novelId: string;
   };
+  PersonalInfo: undefined;
+  PrivacySecurity: undefined;
+  PurchaseHistory: undefined;
+  DownloadedChapters: undefined;
+  AppTheme: undefined;
+  NotificationSettings: undefined;
+  AuthorPanelScreen: undefined;
+  SupportFeedback: undefined;
+  CreateNovel: undefined;
 };
 
 export const TAB_ICONS: Record<

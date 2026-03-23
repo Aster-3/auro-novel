@@ -1,27 +1,18 @@
 import { getChapters } from "@/services/ChapterService";
-import { GetChapters } from "@/types/chapter";
-import { InfiniteData, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 
 export const useInfiniteChapters = (query: { id: string; limit?: number }) => {
-  return useInfiniteQuery<
-    GetChapters,
-    Error,
-    InfiniteData<GetChapters>,
-    [string, string, number | undefined],
-    number
-  >({
+  return useInfiniteQuery({
     queryKey: ["chapters", query.id, query.limit],
-    queryFn: ({ pageParam = 1 }: { pageParam: number }) =>
-      getChapters({ ...query, page: pageParam }),
+    queryFn: ({ pageParam = 1 }) => getChapters({ ...query, page: pageParam }),
+    select: (data) => ({
+      items: data.pages.flatMap((page) => page.items),
+      total: data.pages[0]?.total ?? 0,
+    }),
     initialPageParam: 1,
-    getNextPageParam: (lastPageResponse) => {
-      const { currentPage, lastPage } = lastPageResponse;
-      if (currentPage < lastPage) {
-        return currentPage + 1;
-      }
-      return undefined;
-    },
+    getNextPageParam: (lastPageResponse) =>
+      lastPageResponse.nextPage || undefined,
+    refetchOnWindowFocus: true,
     staleTime: 1000 * 60 * 5,
-    retry: false,
   });
 };

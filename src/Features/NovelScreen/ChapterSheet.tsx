@@ -28,14 +28,14 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
     fetchNextPage,
     hasNextPage,
     isLoading,
-  } = useInfiniteChapters({ id, limit: 10 });
+  } = useInfiniteChapters({ id });
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["50%", "90%"], []);
   const [isShortTypeNew, setIsShortTypeNew] = useState(true);
 
   const chapters = useMemo(() => {
-    const allChapters = data?.pages.flatMap((page) => page.data) || [];
+    const allChapters = data?.items || [];
     return isShortTypeNew ? allChapters : [...allChapters].reverse();
   }, [data, isShortTypeNew]);
 
@@ -63,7 +63,7 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
     >
       <View style={styles.header}>
         <View style={{ width: 24 }} />
-        <Text style={styles.title}>{data?.pages[0]?.count || 0} Bölüm</Text>
+        <Text style={styles.title}>{data?.total || 0} Bölüm</Text>
         <TouchableOpacity
           onPress={() => setIsShortTypeNew(!isShortTypeNew)}
           style={{
@@ -76,7 +76,7 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
 
       <BottomSheetFlatList
         data={chapters}
-        keyExtractor={(item: Chapter) => item.id.toString()}
+        keyExtractor={(item: Chapter) => item.id}
         renderItem={renderItem}
         onEndReached={() => {
           if (hasNextPage && !isFetchingNextPage) {

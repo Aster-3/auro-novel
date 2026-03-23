@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontFamily: "Mont-600",
-    color: "#1C274C",
+    color: "#090e1f",
   },
   iconContainer: {
     justifyContent: "center",

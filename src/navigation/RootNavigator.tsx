@@ -8,6 +8,15 @@ import SettingsScreen from "@/screens/SettingsScreen";
 import RegisterScreen from "@/screens/RegisterScreen";
 import VerifyUserScreen from "@/screens/VerifyUserScreen";
 import ReplyScreen from "@/screens/ReplyScreen";
+import PersonalInfoScreen from "../screens/PersonalInfoScreen";
+import PrivacySecurityScreen from "../screens/PrivacySecurityScreen";
+import PurchaseHistoryScreen from "../screens/PurchaseHistoryScreen";
+import DownloadedChaptersScreen from "../screens/DownloadedChaptersScreen";
+import AppThemeScreen from "../screens/AppThemeScreen";
+import NotificationSettingsScreen from "../screens/NotificationSettingsScreen";
+import SupportFeedbackScreen from "../screens/SupportFeedbackScreen";
+import AuthorPanelScreen from "../screens/AuthorPanelScreen";
+import CreateNovelScreen from "@/screens/CreateNovelScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -42,11 +51,35 @@ export const RootNavigator = () => {
       <Stack.Group screenOptions={{ animation: "slide_from_right" }}>
         <Stack.Screen name="Novel" component={NovelScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
+        <Stack.Screen name="Settings" component={SettingsScreen} />
+        <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
+        <Stack.Screen
+          name="PrivacySecurity"
+          component={PrivacySecurityScreen}
+        />
+        <Stack.Screen
+          name="PurchaseHistory"
+          component={PurchaseHistoryScreen}
+        />
+        <Stack.Screen
+          name="DownloadedChapters"
+          component={DownloadedChaptersScreen}
+        />
+        <Stack.Screen name="AppTheme" component={AppThemeScreen} />
+        <Stack.Screen
+          name="NotificationSettings"
+          component={NotificationSettingsScreen}
+        />
+        <Stack.Screen name="AuthorPanelScreen" component={AuthorPanelScreen} />
+        <Stack.Screen
+          name="SupportFeedback"
+          component={SupportFeedbackScreen}
+        />
+        <Stack.Screen name="CreateNovel" component={CreateNovelScreen} />
       </Stack.Group>
 
       <Stack.Group screenOptions={{ presentation: "modal" }}>
         <Stack.Screen name="Comment" component={CommentScreen} />
-        <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="VerifyUser" component={VerifyUserScreen} />
         <Stack.Screen name="Reply" component={ReplyScreen} />
