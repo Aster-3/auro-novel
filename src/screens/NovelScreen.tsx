@@ -1,5 +1,5 @@
 import React, { useRef, useCallback } from "react";
-import { Text, View, FlatList, StyleSheet } from "react-native";
+import { View, FlatList, StyleSheet } from "react-native";
 import { Image } from "expo-image";
 
 import { RouteProp, useRoute } from "@react-navigation/native";
@@ -17,7 +17,6 @@ import { SimilarNovels } from "@/Features/NovelScreen/SimilarNovels";
 import { NovelNavCard } from "@/Features/NovelScreen/NovelNavCard";
 import { ChapterSheet } from "@/Features/NovelScreen/ChapterSheet";
 
-import { DUMMY_COMMENTS } from "@/constants/seed";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
 import { LinearGradient } from "expo-linear-gradient";
@@ -68,7 +67,7 @@ const NovelScreen = () => {
         <Image
           source={data.coverImage}
           style={StyleSheet.absoluteFillObject}
-          blurRadius={10}
+          blurRadius={11}
           contentFit="cover"
           transition={500}
         />

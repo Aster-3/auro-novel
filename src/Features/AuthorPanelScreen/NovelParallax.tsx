@@ -1,8 +1,15 @@
-import { View, Text, StyleSheet, useWindowDimensions } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  useWindowDimensions,
+  Pressable,
+} from "react-native";
 import { useNovels } from "@/hooks/useNovels";
 import Carousel from "react-native-reanimated-carousel";
 import { Image } from "expo-image";
 import { useEffect, useRef } from "react";
+import { globalNavigate } from "@/navigation/globalNavigate";
 
 export const NovelParallax = ({
   onNovelSelect,
@@ -43,12 +50,15 @@ export const NovelParallax = ({
 
   const renderNovelItem = ({ item }: { item: any }) => {
     return (
-      <View style={[styles.itemContainer, { marginHorizontal: GAP / 2 }]}>
+      <Pressable
+        style={[styles.itemContainer, { marginHorizontal: GAP / 2 }]}
+        onPress={() => globalNavigate("NovelPanel", { id: item.id })}
+      >
         <Image
           source={item.coverImage}
           style={{ width: "100%", height: "100%" }}
         />
-      </View>
+      </Pressable>
     );
   };
   return (

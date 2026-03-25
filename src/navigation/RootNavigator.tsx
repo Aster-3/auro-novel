@@ -17,6 +17,7 @@ import NotificationSettingsScreen from "../screens/NotificationSettingsScreen";
 import SupportFeedbackScreen from "../screens/SupportFeedbackScreen";
 import AuthorPanelScreen from "../screens/AuthorPanelScreen";
 import CreateNovelScreen from "@/screens/CreateNovelScreen";
+import NovelPanelScreen from "@/screens/NovelPanelScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -76,6 +77,7 @@ export const RootNavigator = () => {
           component={SupportFeedbackScreen}
         />
         <Stack.Screen name="CreateNovel" component={CreateNovelScreen} />
+        <Stack.Screen name="NovelPanel" component={NovelPanelScreen} />
       </Stack.Group>
 
       <Stack.Group screenOptions={{ presentation: "modal" }}>

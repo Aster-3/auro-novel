@@ -7,23 +7,32 @@ import {
   Animated,
   Easing,
   Platform,
+  Text,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import * as ImagePicker from "expo-image-picker";
 import { useEffect, useRef } from "react";
 import { Image } from "expo-image";
+import {
+  CreateNovelErrors,
+  CreateNovelScreenProps,
+} from "@/screens/CreateNovelScreen";
+import { slugifyText } from "@/utils/slugify";
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
 export const CNStepOne = ({
-  profileImage,
-  setProfileImage,
+  formData,
+  setFormData,
+  errors,
+  setErrors,
 }: {
-  profileImage: string | null;
-  setProfileImage: (image: string) => void;
+  formData: CreateNovelScreenProps;
+  setFormData: (data: CreateNovelScreenProps) => void;
+  errors: CreateNovelErrors;
+  setErrors: (errors: CreateNovelErrors) => void;
 }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
-
   const pressAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -64,7 +73,18 @@ export const CNStepOne = ({
     });
 
     if (!pickedImage.canceled && pickedImage.assets.length > 0) {
-      setProfileImage(pickedImage.assets[0].uri);
+      setFormData({
+        ...formData,
+        coverImage: {
+          uri: pickedImage.assets[0].uri,
+          name: pickedImage.assets[0].fileName || "upload.jpg",
+          type: pickedImage.assets[0].mimeType || "image/jpeg",
+        },
+      });
+
+      if (errors.coverImage) {
+        setErrors({ ...errors, coverImage: undefined });
+      }
     }
   };
 
@@ -105,13 +125,20 @@ export const CNStepOne = ({
       <Pressable
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
-        style={styles.pressableContainer}
         onPress={handleImageSelect}
       >
-        <Animated.View style={[styles.coverPlaceholder, animatedPressStyle]}>
-          {profileImage ? (
+        <Animated.View
+          style={[
+            styles.coverPlaceholder,
+            animatedPressStyle,
+            errors.coverImage
+              ? { borderWidth: 2, borderColor: "#ef4444" }
+              : null,
+          ]}
+        >
+          {formData.coverImage ? (
             <Image
-              source={profileImage}
+              source={formData.coverImage.uri}
               style={{ width: "100%", height: "100%" }}
             />
           ) : (
@@ -128,11 +155,65 @@ export const CNStepOne = ({
         </Animated.View>
       </Pressable>
 
-      <TextInput
-        placeholder="Roman Başlığı"
-        style={styles.input}
-        placeholderTextColor="#94a3b8"
-      />
+      <View style={styles.inputWrapper}>
+        <TextInput
+          placeholder="Roman Başlığı"
+          style={[
+            styles.input,
+            errors.title ? { borderBottomColor: "#ef4444" } : null,
+          ]}
+          placeholderTextColor="#94a3b8"
+          value={formData.title}
+          onChangeText={(text) => {
+            setFormData({ ...formData, title: text });
+            if (errors.title) {
+              setErrors({ ...errors, title: undefined });
+            }
+          }}
+        />
+
+        {errors.title && (
+          <Animated.View style={styles.errorContainer}>
+            <View style={styles.errorDot} />
+            <Text style={styles.errorText}>{errors.title}</Text>
+          </Animated.View>
+        )}
+      </View>
+
+      <View style={styles.inputWrapper}>
+        <TextInput
+          placeholder={"Slug (URL için benzersiz isim)"}
+          value={formData.slug}
+          style={[
+            styles.input,
+            errors.slug && { borderBottomColor: "#ef4444" },
+          ]}
+          placeholderTextColor="#94a3b8"
+          onChangeText={(text) => {
+            const newSlug = slugifyText(text);
+
+            setFormData({
+              ...formData,
+              slug: newSlug,
+            });
+
+            setErrors({ ...errors, slug: undefined });
+          }}
+        />
+        <Animated.View style={styles.errorContainer}>
+          <Text style={styles.infoText}>*</Text>
+          <Text style={styles.infoText}>
+            Önerilen Slug:{" "}
+            {formData.title ? slugifyText(formData.title) : "---"}
+          </Text>
+        </Animated.View>
+        {errors.slug && (
+          <Animated.View style={styles.errorContainer}>
+            <View style={styles.errorDot} />
+            <Text style={styles.errorText}>{errors.slug}</Text>
+          </Animated.View>
+        )}
+      </View>
     </View>
   );
 };
@@ -141,21 +222,17 @@ const styles = StyleSheet.create({
   mainContainer: {
     padding: 24,
     alignItems: "center",
-    gap: 48, // Input ve Kapak arası boşluk artırıldı
+    gap: 40,
     width: "100%",
   },
-  pressableContainer: {
-    // Pressable, Animated.View'dan bağımsız olmalı
-  },
   coverPlaceholder: {
-    width: 170, // Boyut çok hafif artırıldı
+    width: 150,
     aspectRatio: 2 / 3,
-    borderRadius: 36, // Apple Squircle formu
+    borderRadius: 36,
     alignItems: "center",
     justifyContent: "center",
-    overflow: "hidden", // Gradient taşmasın
+    overflow: "hidden",
     backgroundColor: "#fff",
-    // --- White Theme Gölge (Apple Soft Shadow) ---
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -168,14 +245,48 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  inputWrapper: {
+    width: "90%",
+  },
   input: {
     width: "100%",
     paddingHorizontal: 0,
-    height: 56,
+    height: 50,
     borderBottomWidth: 1.5,
     borderColor: "#f1f5f9",
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Mont-500",
     color: "#0f172a",
+  },
+  errorContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    marginTop: 8,
+    gap: 6,
+  },
+  errorDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#ef4444",
+  },
+  errorText: {
+    color: "#ef4444",
+    fontSize: 12,
+    fontFamily: "Mont-500",
+    fontWeight: "500",
+  },
+  infoDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#0f0e31",
+  },
+  infoText: {
+    color: "#0f0e31",
+    fontSize: 12,
+    fontFamily: "Mont-500",
+    fontWeight: "500",
   },
 });

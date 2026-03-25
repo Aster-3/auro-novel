@@ -34,6 +34,9 @@ export type RootStackParamList = {
   AuthorPanelScreen: undefined;
   SupportFeedback: undefined;
   CreateNovel: undefined;
+  NovelPanel: {
+    id: string;
+  };
 };
 
 export const TAB_ICONS: Record<

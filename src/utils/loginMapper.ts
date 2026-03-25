@@ -1,5 +1,4 @@
 import { UpdateProfileSchemaType } from "@/schemas/auth";
-import { UserMe } from "@/store/useAuthStore";
 
 export const loginMapper = (
   data: UpdateProfileSchemaType,

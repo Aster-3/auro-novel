@@ -44,6 +44,7 @@ export interface Category {
   id: number;
   enName: string;
   trName: string;
+  coverUrl: string | null;
 }
 
 export interface Tag {
@@ -74,4 +75,26 @@ export interface Novel {
   popularityScore: number;
   categories: Category[];
   tags: Tag[];
+}
+
+export interface CreateNovelFormData {
+  name: string;
+  coverImage: {
+    uri: string;
+    name: string;
+    type: string;
+  } | null;
+  slug: string;
+}
+
+export interface UpdateNovelFormData {
+  name?: string;
+  coverImage?: {
+    uri: string;
+    name: string;
+    type: string;
+  } | null;
+  slug?: string;
+  tags?: string[]; // Sadece tag ID'leri gönderilecek
+  categories?: number[]; // Sadece kategori ID'leri gönderilecek
 }

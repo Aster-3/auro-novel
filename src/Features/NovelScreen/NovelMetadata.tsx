@@ -5,7 +5,6 @@ import { ViewIcon } from "@/components/icons/ViewIcon";
 import { Author, Category, SeriesStatus } from "@/types/novel";
 import React, { useState } from "react";
 import {
-  Image as RNImage,
   Text,
   View,
   TouchableOpacity,
@@ -75,7 +74,7 @@ export const NovelMetaData = ({
         style={styles.posterContainer}
       >
         <Image
-          source={imageSource}
+          source={cover}
           style={styles.posterImage}
           contentFit="cover"
           transition={500}
