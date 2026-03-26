@@ -6,7 +6,6 @@ import { CreditCardIcon } from "@/components/icons/CreditCardIcon";
 import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
 import { LogoutIcon } from "@/components/icons/LogoutIcon";
 import { useModalStore } from "@/store/useModalStore";
-import { use } from "react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useNavigation } from "@react-navigation/native";
@@ -131,5 +130,5 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 12,
   },
-  text: { fontFamily: "Mont-500", fontSize: 15, color: "#03061E" },
+  text: { fontFamily: "Mont-500", fontSize: 14, color: "#03061E" },
 });

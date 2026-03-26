@@ -5,6 +5,8 @@ import { ProfileIcon } from "../components/icons/ProfileIcon";
 import { Text } from "react-native";
 import { LibraryIcon } from "../components/icons/LibraryIcon";
 import { NotificationIcon } from "../components/icons/NotificationIcon";
+import { Category } from "@/types/category";
+import { Tag } from "@/types/tag";
 
 export type RootStackParamList = {
   Main: undefined;
@@ -36,6 +38,11 @@ export type RootStackParamList = {
   CreateNovel: undefined;
   NovelPanel: {
     id: string;
+  };
+  UpdateTagCategory: {
+    id: string;
+    mode: "category" | "tag";
+    availableItems?: (Category | Tag)[];
   };
 };
 

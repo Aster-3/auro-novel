@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { SelectImageIcon } from "@/components/icons/SelectImageIcon";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { Image } from "expo-image";
@@ -17,10 +17,15 @@ import { SummaryPreview } from "./SummaryPreview";
 import { XIcon } from "@/components/icons/XIcon";
 import * as ImagePicker from "expo-image-picker";
 import { useModalStore } from "@/store/useModalStore";
+import { useNovelMutation } from "@/hooks/useNovelMutation";
+import { LoadingDots } from "@/components/LoadingDots";
+import { OverviewOptions } from "./OverviewOptions";
 
 export const OverviewTab = ({ route }: { route: any }) => {
   const { id } = route.params;
   const { data } = useNovelDetail(id);
+  const { mutate: updateNovel, isPending } = useNovelMutation(id);
+  const [isLoading, setIsLoading] = useState(false);
 
   const [name, setName] = useState(data?.name || "");
   const isChanged = name !== data?.name && name.trim() !== "";
@@ -57,7 +62,21 @@ export const OverviewTab = ({ route }: { route: any }) => {
       });
     }
   };
-  console.log("Novel detay verisi:", data);
+
+  const handleTitleChange = async () => {
+    if (!isChanged) return;
+    setIsLoading(true);
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    updateNovel(
+      { name },
+      {
+        onSettled: () => {
+          setIsLoading(false);
+        },
+      },
+    );
+  };
+
   return (
     <ScrollView
       nestedScrollEnabled
@@ -69,7 +88,11 @@ export const OverviewTab = ({ route }: { route: any }) => {
     >
       <View style={styles.headContainer}>
         <Pressable style={styles.imageWrapper} onPress={handleImagePress}>
-          <Image source={data?.coverImage} style={styles.image} />
+          <Image
+            blurRadius={1}
+            source={data?.coverImage}
+            style={styles.image}
+          />
           <View style={styles.imageOverlay} />
           <View style={styles.iconContainer}>
             <SelectImageIcon size={32} color="#ffffffd3" />
@@ -102,25 +125,34 @@ export const OverviewTab = ({ route }: { route: any }) => {
           {isChanged && (
             <TouchableOpacity
               style={styles.saveButton}
-              onPress={() => console.log("Kaydedildi:", name)}
+              onPress={handleTitleChange}
             >
-              <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+              {isLoading ? (
+                <LoadingDots />
+              ) : (
+                <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+              )}
             </TouchableOpacity>
           )}
         </View>
       </View>
 
       <View style={styles.body}>
-        <CategoryPreview categories={data?.categories} />
-        <TagsPreview tags={data?.tags} />
-        <SummaryPreview summary={data?.synopsis} />
+        <OverviewOptions
+          id={data?.id || ""}
+          tags={data?.tags || []}
+          categories={data?.categories || []}
+        />
+        {/* <CategoryPreview id={data?.id || ""} categories={data?.categories} />
+        <TagsPreview tags={data?.tags} novelId={data?.id || ""} />
+        <SummaryPreview summary={data?.synopsis} /> */}
       </View>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: { flex: 1 },
   tabContent: { paddingTop: 30, paddingBottom: 40, gap: 32 },
   headContainer: {
     alignItems: "center",
@@ -135,13 +167,14 @@ const styles = StyleSheet.create({
   image: { width: "100%", height: "100%", borderRadius: 20 },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
     borderRadius: 20,
   },
   iconContainer: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 10,
   },
 
   inputWrapper: { width: "100%", alignItems: "center" },
@@ -181,12 +214,12 @@ const styles = StyleSheet.create({
   saveButton: {
     marginTop: 15,
     backgroundColor: "#0d0638",
-    paddingVertical: 12,
+    height: 40,
     width: "60%",
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 8,
   },
   saveButtonText: { color: "#fff", fontFamily: "Mont-600", fontSize: 12 },
-  body: { paddingHorizontal: 16, gap: 40, width: "100%" },
+  body: { paddingHorizontal: 4, gap: 40, width: "100%" },
 });

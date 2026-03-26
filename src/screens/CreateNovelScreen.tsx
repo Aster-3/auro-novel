@@ -1,7 +1,6 @@
 import { Screen } from "@/components/layout/Screen";
 import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { CNStepOne } from "@/Features/CreateNovelScreen/CNStepOne";
-import { CNStepTwo } from "@/Features/CreateNovelScreen/CNStepTwo";
 import { NextButton } from "@/Features/CreateNovelScreen/NextButton";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useCreateNovelMutation } from "@/hooks/useCreateNovelMutation";

@@ -98,14 +98,6 @@ const getIconName = (type?: string) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: "absolute",
-    top: Platform.OS === "ios" ? 58 : 40,
-    left: 0,
-    right: 0,
-    alignItems: "center",
-    zIndex: 9999,
-  },
   wrapper: {
     marginBottom: 8,
   },
@@ -115,6 +107,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     paddingVertical: 8,
     paddingHorizontal: 16,
+    maxWidth: "90%",
     borderRadius: 50,
     backgroundColor: "#FFFFFF",
     ...Platform.select({

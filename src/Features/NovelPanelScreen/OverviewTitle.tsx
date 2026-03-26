@@ -1,9 +1,15 @@
 import { CircleEditIcon } from "@/components/icons/CircleEditIcon";
-import { Text, StyleSheet, View, TouchableOpacity } from "react-native";
+import { Text, StyleSheet, TouchableOpacity } from "react-native";
 
-export const OverviewTitle = ({ title }: { title: string }) => {
+export const OverviewTitle = ({
+  title,
+  onPress,
+}: {
+  title: string;
+  onPress: () => void;
+}) => {
   return (
-    <TouchableOpacity style={styles.container}>
+    <TouchableOpacity style={styles.container} onPress={onPress}>
       <Text style={styles.headerTitle}>{title}</Text>
       <CircleEditIcon size={20} />
     </TouchableOpacity>

@@ -2,7 +2,10 @@ import { getCategories } from "@/services/CategoryService";
 import { GetCategoriesRequest } from "@/types/category";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-export const useInfiniteCategories = (query: GetCategoriesRequest) => {
+export const useInfiniteCategories = (
+  query: GetCategoriesRequest,
+  enabled: boolean = true,
+) => {
   return useInfiniteQuery({
     queryKey: ["categories", query.search],
     queryFn: async ({ pageParam = 1 }) =>
@@ -12,5 +15,6 @@ export const useInfiniteCategories = (query: GetCategoriesRequest) => {
     }),
     initialPageParam: 1,
     getNextPageParam: (lastPage) => lastPage.nextPage,
+    enabled: enabled,
   });
 };

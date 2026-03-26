@@ -1,6 +1,6 @@
 import { DownChevronIcon } from "@/components/icons/DownChevronIcon";
 import { NovelTags } from "@/components/icons/NovelTags";
-import { Tag } from "@/types/novel";
+import { Tag } from "@/types/tag";
 import React, { useState } from "react";
 import {
   View,
@@ -70,46 +70,47 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-end",
+    paddingHorizontal: 2, // Başlığın kutuyla tam hizalanması için
   },
   title: {
-    fontSize: 16,
+    fontSize: 17, // iOS standart başlık boyutu
     fontFamily: "Mont-700",
-    letterSpacing: -0.2,
-    color: "#03061ed3",
+    letterSpacing: -0.4,
+    color: "#1C1C1E", // Daha net bir siyah
   },
   quoteIcon: {
-    fontSize: 40,
-    color: "#E0E0E0",
+    fontSize: 44,
+    color: "#E5E5EA", // Daha soft bir gri
     fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
-    lineHeight: 40,
-    marginBottom: -15,
+    lineHeight: 44,
+    marginBottom: -18,
   },
-
   contentWrapper: {
     backgroundColor: "#F8FAFC",
-    padding: 14,
+    padding: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: "#f0f0f0",
     gap: 8,
   },
   summaryText: {
     fontFamily: "Poppins-400",
-    fontSize: 13,
-    lineHeight: 21,
-    color: "#475569",
-    letterSpacing: -0.1,
+    fontSize: 13.5, // Okunabilirliği artırmak için hafif büyütüldü
+    lineHeight: 22,
+    color: "#3A3A3C", // Apple'ın ikincil metin rengi
+    letterSpacing: -0.2,
   },
   readMoreButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
+    gap: 4,
     alignSelf: "flex-start",
-    paddingVertical: 2,
+    marginTop: 4,
+    paddingVertical: 4,
   },
   readMoreText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#94A3B8",
+    fontSize: 12,
+    fontFamily: "Mont-600",
+    color: "#8E8E93", // Daha klas bir gri tonu
   },
 });

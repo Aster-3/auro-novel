@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { TagIcon } from "./TagIcon";
-import { Tag } from "@/types/novel";
+import { Tag } from "@/types/tag";
 
 export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
   if (!tags?.length) return null;
@@ -48,9 +48,9 @@ const s = StyleSheet.create({
     opacity: 0.6,
   },
   text: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: "500",
-    color: "#64748B",
+    color: "#4c5460",
     letterSpacing: -0.1,
   },
 });

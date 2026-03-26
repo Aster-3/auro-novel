@@ -1,3 +1,6 @@
+import { Category } from "./category";
+import { Tag } from "./tag";
+
 export enum SeriesStatus {
   ONGOING = "ongoing",
   COMPLETED = "completed",
@@ -38,18 +41,6 @@ export interface SearchNovelResult {
 export enum SourceType {
   LOCAL = "local",
   GLOBAL = "global",
-}
-
-export interface Category {
-  id: number;
-  enName: string;
-  trName: string;
-  coverUrl: string | null;
-}
-
-export interface Tag {
-  id: string;
-  name: string;
 }
 
 export interface Author {

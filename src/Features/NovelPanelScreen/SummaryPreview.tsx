@@ -10,7 +10,7 @@ export const SummaryPreview = ({
 
   return (
     <View style={styles.container}>
-      <OverviewTitle title="Özet" />
+      <OverviewTitle onPress={() => {}} title="Özet" />
       <View style={styles.contentWrapper}>
         <Text
           style={[styles.summaryText, !hasSummary && styles.placeholderText]}

@@ -4,7 +4,6 @@ import { createMaterialTopTabNavigator } from "@react-navigation/material-top-ta
 import { RootStackParamList } from "@/constants/navigation";
 import { Screen } from "@/components/layout/Screen";
 import { BackArrowIcon } from "@/components/icons/BackArrowIcon";
-import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { OverviewTab } from "@/Features/NovelPanelScreen/OverviewTab";
 
 const Tab = createMaterialTopTabNavigator();
@@ -25,7 +24,9 @@ const NovelPanelScreen = () => {
   const { id } = useRoute<RouteProp<RootStackParamList, "NovelPanel">>().params;
   console.log("NovelPanelScreen id:", id);
   return (
-    <Screen style={{ flex: 1, paddingHorizontal: 16 }}>
+    <Screen
+      style={{ flex: 1, paddingHorizontal: 16, backgroundColor: "#f5f5f5" }}
+    >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <BackArrowIcon size={24} color="#000" />
@@ -45,12 +46,14 @@ const NovelPanelScreen = () => {
             fontWeight: "600",
             textTransform: "none",
           },
+          sceneStyle: { backgroundColor: "#f5f5f5" },
           tabBarIndicatorStyle: { backgroundColor: "#000", height: 1 },
           tabBarStyle: {
             elevation: 0,
+            backgroundColor: "#f5f5f5",
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: "#eee",
+            borderBottomColor: "#efecec",
           },
         }}
       >
@@ -82,6 +85,7 @@ const NovelPanelScreen = () => {
 
 const styles = StyleSheet.create({
   header: {
+    backgroundColor: "#f5f5f5",
     flexDirection: "row",
     alignItems: "center",
     paddingTop: 12,
@@ -94,7 +98,6 @@ const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#fff",
   },
 });
 

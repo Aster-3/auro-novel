@@ -18,10 +18,20 @@ interface ToastState {
   removeToast: (id: string) => void;
 }
 
-export const useToastStore = create<ToastState>((set) => ({
+export const useToastStore = create<ToastState>((set, get) => ({
   toasts: [],
 
   showToast: (config) => {
+    const currentToasts = get().toasts;
+
+    const existingToast = currentToasts.find(
+      (t) => t.message === config.message,
+    );
+
+    if (existingToast) {
+      return existingToast.id;
+    }
+
     const id = Math.random().toString(36).substring(2, 9);
 
     set((state) => ({
@@ -35,6 +45,7 @@ export const useToastStore = create<ToastState>((set) => ({
         }));
       }, config.duration || 3000);
     }
+
     return id;
   },
 

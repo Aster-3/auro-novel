@@ -46,7 +46,7 @@ export const NovelMetaData = ({
       color: "#36e8ff",
     },
     hiatus: {
-      text: "Ara Verdi",
+      text: "Ara Verildi",
       color: "#c2f493",
     },
     cancelled: {
@@ -54,7 +54,7 @@ export const NovelMetaData = ({
       color: "#FF3D00",
     },
     draft: {
-      text: "Taslak",
+      text: "Hazırlıkta",
       color: "#FFD600",
     },
   };
