@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: "Mont-500",
-    fontSize: 15,
+    fontSize: 14,
     color: "#03061E",
   },
 });

@@ -160,22 +160,22 @@ export const CNStepOne = ({
           placeholder="Roman Başlığı"
           style={[
             styles.input,
-            errors.title ? { borderBottomColor: "#ef4444" } : null,
+            errors.name ? { borderBottomColor: "#ef4444" } : null,
           ]}
           placeholderTextColor="#94a3b8"
-          value={formData.title}
+          value={formData.name}
           onChangeText={(text) => {
-            setFormData({ ...formData, title: text });
-            if (errors.title) {
-              setErrors({ ...errors, title: undefined });
+            setFormData({ ...formData, name: text });
+            if (errors.name) {
+              setErrors({ ...errors, name: undefined });
             }
           }}
         />
 
-        {errors.title && (
+        {errors.name && (
           <Animated.View style={styles.errorContainer}>
             <View style={styles.errorDot} />
-            <Text style={styles.errorText}>{errors.title}</Text>
+            <Text style={styles.errorText}>{errors.name}</Text>
           </Animated.View>
         )}
       </View>
@@ -203,8 +203,7 @@ export const CNStepOne = ({
         <Animated.View style={styles.errorContainer}>
           <Text style={styles.infoText}>*</Text>
           <Text style={styles.infoText}>
-            Önerilen Slug:{" "}
-            {formData.title ? slugifyText(formData.title) : "---"}
+            Önerilen Slug: {formData.name ? slugifyText(formData.name) : "---"}
           </Text>
         </Animated.View>
         {errors.slug && (

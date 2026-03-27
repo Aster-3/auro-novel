@@ -2,7 +2,8 @@ import { AuthorIcon } from "@/components/icons/AuthorIcon";
 import { LikeIcon } from "@/components/icons/LikeIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
 import { ViewIcon } from "@/components/icons/ViewIcon";
-import { Author, Category, SeriesStatus } from "@/types/novel";
+import { Author, SeriesStatus } from "@/types/novel";
+import { Category } from "@/types/category";
 import React, { useState } from "react";
 import {
   Text,

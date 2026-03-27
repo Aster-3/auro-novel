@@ -85,6 +85,7 @@ export interface UpdateNovelFormData {
     name: string;
     type: string;
   } | null;
+  synopsis?: string;
   slug?: string;
   tags?: string[]; // Sadece tag ID'leri gönderilecek
   categories?: number[]; // Sadece kategori ID'leri gönderilecek

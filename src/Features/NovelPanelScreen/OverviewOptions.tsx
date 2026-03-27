@@ -1,10 +1,13 @@
 import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
-import { useNavigation } from "@react-navigation/native";
 import { CircleEditIcon } from "@/components/icons/CircleEditIcon";
 import { RightArrowIcon } from "@/components/icons/RightArrowIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { Tag } from "@/types/tag";
 import { Category } from "@/types/category";
+import { NameEditSheet } from "./NameEditSheet";
+import { useCallback, useRef, useState } from "react";
+import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { SynopsisEditSheet } from "./SynopsisEditSheet";
 
 const getPressStyle = (pressed: boolean) => ({
   backgroundColor: pressed ? "#f0f0f0" : "transparent",
@@ -35,10 +38,14 @@ export const OverviewOptions = ({
   id,
   tags,
   categories,
+  summary,
+  name,
 }: {
   id: string;
   tags: Tag[];
   categories: Category[];
+  summary: string;
+  name: string;
 }) => {
   const navigation = useAppNavigation();
 
@@ -55,8 +62,24 @@ export const OverviewOptions = ({
         availableItems: option.id === "category" ? categories : tags,
       });
       return;
+    } else {
+      if (option.id === "name") {
+        openNameEditSheet();
+      } else if (option.id === "summary") {
+        openSynopsisEditSheet();
+      }
     }
   };
+  const nameEditSheetRef = useRef<BottomSheetModal>(null);
+  const synopsisEditSheetRef = useRef<BottomSheetModal>(null);
+
+  const openNameEditSheet = useCallback(() => {
+    nameEditSheetRef.current?.present();
+  }, []);
+
+  const openSynopsisEditSheet = useCallback(() => {
+    synopsisEditSheetRef.current?.present();
+  }, []);
 
   return (
     <View style={styles.wrapper}>
@@ -80,6 +103,12 @@ export const OverviewOptions = ({
           </Pressable>
         ))}
       </View>
+      <NameEditSheet ref={nameEditSheetRef} id={id} initialName={name} />
+      <SynopsisEditSheet
+        ref={synopsisEditSheetRef}
+        id={id}
+        initialSynopsis={summary}
+      />
     </View>
   );
 };

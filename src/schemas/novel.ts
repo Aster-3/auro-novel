@@ -1,7 +1,7 @@
 import * as z from "zod";
 
 export const createNovelSchemaStepOne = z.object({
-  title: z
+  name: z
     .string()
     .min(4, "Roman başlığı en az 4 karakter olmalıdır")
     .max(100, "Roman başlığı en fazla 100 karakter olabilir")
@@ -32,3 +32,37 @@ export const createNovelSchemaStepOne = z.object({
     )
     .optional(),
 });
+
+export const titleValidationSchema = z
+  .string()
+  .min(4, "Roman başlığı en az 4 karakter olmalıdır")
+  .max(100, "Roman başlığı en fazla 100 karakter olabilir")
+  .refine(
+    (val) => val.trim() === val,
+    "Başlığın başında veya sonunda boşluk olamaz",
+  )
+  .refine(
+    (val) => !/\s{2,}/.test(val),
+    "Kelimeler arasında birden fazla boşluk olamaz",
+  )
+  .refine(
+    (val) => /^[a-zA-Z0-9ĞÜŞİÖÇğüşıöç\s:-]+$/.test(val),
+    "Sadece harf, rakam, tire, boşluk ve iki nokta kullanabilirsiniz.",
+  )
+  .refine(
+    (val) => !val.endsWith(":") && !val.endsWith(": "),
+    "Başlık iki nokta veya boşlukla bitemez, devamında bir karakter gelmelidir",
+  );
+
+export const synopsisValidationSchema = z
+  .string()
+  .min(20, "Özet en az 20 karakter olmalıdır")
+  .max(1500, "Özet en fazla 2000 karakter olabilir")
+  .refine(
+    (val) => val.trim() === val,
+    "Özetin başında veya sonunda boşluk olamaz",
+  )
+  .refine(
+    (val) => !/\s{2,}/.test(val),
+    "Kelimeler arasında birden fazla boşluk olamaz",
+  );

@@ -8,6 +8,7 @@ export const useNovelMutation = (novelId: string) => {
     mutationFn: (dto: UpdateNovelFormData) => updateNovel(novelId, dto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["novelDetail", novelId] });
+      queryClient.invalidateQueries({ queryKey: ["novels"] });
     },
   });
 };

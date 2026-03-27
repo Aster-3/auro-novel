@@ -4,7 +4,7 @@ import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { AuthorStats } from "@/Features/AuthorPanelScreen/AuthorStats";
 import { AuthorPanelHeader } from "@/Features/AuthorPanelScreen/AuthorPanelHeader";
 import { NovelParallax } from "@/Features/AuthorPanelScreen/NovelParallax";
-import { use, useCallback, useState } from "react";
+import { useState } from "react";
 import { useDashboardStatsQuery } from "@/hooks/useDashboardStatsQuery";
 import { AuthorPanelOptions } from "@/Features/AuthorPanelScreen/AuthorPanelOptions";
 

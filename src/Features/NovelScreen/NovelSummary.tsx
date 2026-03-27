@@ -8,7 +8,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   LayoutAnimation,
-  Platform,
 } from "react-native";
 
 export const NovelSummary = ({
@@ -26,18 +25,14 @@ export const NovelSummary = ({
   };
 
   return (
-    <View style={s.container}>
-      <View style={s.headerRow}>
-        <Text style={s.title}>Özet</Text>
-        <Text style={s.quoteIcon}>"</Text>
-      </View>
-
+    <View style={styles.container}>
+      <Text style={styles.title}>Hakkında</Text>
       <NovelTags tags={tags} />
 
-      <View style={s.contentWrapper}>
+      <View style={styles.quoteBlock}>
         <Text
           onPress={toggleExpanded}
-          style={s.summaryText}
+          style={styles.summaryText}
           numberOfLines={expanded ? undefined : 4}
         >
           {summary ? summary : "Yazar tarafından henüz bir özet girilmedi..."}
@@ -46,15 +41,15 @@ export const NovelSummary = ({
         <TouchableOpacity
           onPress={toggleExpanded}
           activeOpacity={0.7}
-          style={s.readMoreButton}
+          style={styles.readMoreButton}
         >
-          <Text style={s.readMoreText}>
-            {expanded ? "Küçült" : "Tümünü gör"}
+          <Text style={styles.readMoreText}>
+            {expanded ? "Kısalt" : "Devamını Gör"}
           </Text>
           <View
             style={{ transform: [{ rotate: expanded ? "180deg" : "0deg" }] }}
           >
-            <DownChevronIcon color="#94A3B8" size={14} />
+            <DownChevronIcon color="#111827" size={14} />
           </View>
         </TouchableOpacity>
       </View>
@@ -62,55 +57,39 @@ export const NovelSummary = ({
   );
 };
 
-const s = StyleSheet.create({
-  container: {
-    gap: 12,
-  },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-end",
-    paddingHorizontal: 2, // Başlığın kutuyla tam hizalanması için
-  },
+const styles = StyleSheet.create({
+  container: { gap: 12 },
   title: {
-    fontSize: 17, // iOS standart başlık boyutu
     fontFamily: "Mont-700",
-    letterSpacing: -0.4,
-    color: "#1C1C1E", // Daha net bir siyah
+    fontSize: 15,
+    color: "#03061ed3",
+    letterSpacing: -0.2,
   },
-  quoteIcon: {
-    fontSize: 44,
-    color: "#E5E5EA", // Daha soft bir gri
-    fontFamily: Platform.OS === "ios" ? "Georgia" : "serif",
-    lineHeight: 44,
-    marginBottom: -18,
-  },
-  contentWrapper: {
-    backgroundColor: "#F8FAFC",
-    padding: 16,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#f0f0f0",
+  quoteBlock: {
+    borderLeftWidth: 3,
+    borderLeftColor: "#111827be",
+    paddingLeft: 16,
+    marginLeft: 4,
     gap: 8,
   },
   summaryText: {
-    fontFamily: "Poppins-400",
-    fontSize: 13.5, // Okunabilirliği artırmak için hafif büyütüldü
-    lineHeight: 22,
-    color: "#3A3A3C", // Apple'ın ikincil metin rengi
-    letterSpacing: -0.2,
+    marginTop: 8,
+    fontFamily: "Mont-500",
+    fontSize: 13,
+    letterSpacing: -0.1,
+    lineHeight: 24,
+    color: "#29303b",
   },
   readMoreButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    alignSelf: "flex-start",
+    gap: 6,
     marginTop: 4,
-    paddingVertical: 4,
   },
   readMoreText: {
     fontSize: 12,
-    fontFamily: "Mont-600",
-    color: "#8E8E93", // Daha klas bir gri tonu
+    fontFamily: "Mont-700",
+    color: "#111827",
+    textDecorationLine: "underline",
   },
 });

@@ -12,7 +12,7 @@ import { View, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 
 export interface CreateNovelScreenProps {
-  title: string;
+  name: string;
   coverImage: {
     uri: string;
     name: string;
@@ -27,7 +27,7 @@ export type CreateNovelErrors = Partial<
 
 const CreateNovelScreen = () => {
   const [formData, setFormData] = useState<CreateNovelScreenProps>({
-    title: "",
+    name: "",
     coverImage: null,
     slug: "",
   });
@@ -37,7 +37,7 @@ const CreateNovelScreen = () => {
 
   const handleSubmit = () => {
     const result = createNovelSchemaStepOne.safeParse(formData);
-
+    console.log("Validation result:", result);
     if (!result.success) {
       const fieldErrors: CreateNovelErrors = {};
       result.error.flatten().fieldErrors &&
@@ -78,7 +78,7 @@ const CreateNovelScreen = () => {
 
   const onsuccess = () => {
     setFormData({
-      title: "",
+      name: "",
       coverImage: null,
       slug: "",
     });

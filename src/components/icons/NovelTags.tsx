@@ -19,7 +19,7 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
             key={tag.id}
             style={({ pressed }) => [s.chip, pressed && s.chipPressed]}
           >
-            <TagIcon size={13} color="#94A3B8" />
+            <TagIcon size={12} color="#6B7280" />
             <Text style={s.text}>{tag.name}</Text>
           </Pressable>
         ))}
@@ -29,28 +29,24 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
 });
 
 const s = StyleSheet.create({
-  scroll: {
-    gap: 6,
-    paddingVertical: 2,
-  },
+  scroll: { gap: 8, paddingVertical: 2 },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 4,
     borderWidth: 1,
-    borderColor: "#f1f5f9ce",
-    backgroundColor: "#f1f5f9ce",
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
+    borderColor: "#D1D5DB", // İnce zarif bir çizgi
+    backgroundColor: "transparent",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
   },
-  chipPressed: {
-    opacity: 0.6,
-  },
+  chipPressed: { backgroundColor: "#F3F4F6" },
   text: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#4c5460",
-    letterSpacing: -0.1,
+    fontFamily: "Mont-600",
+    fontSize: 11.5,
+    color: "#4B5563",
+    letterSpacing: 0.3,
+    textTransform: "uppercase", // Dergi tarzı için tümü büyük harf
   },
 });

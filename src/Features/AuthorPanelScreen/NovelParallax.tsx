@@ -68,6 +68,7 @@ export const NovelParallax = ({
         pagingEnabled
         style={{ width: width, justifyContent: "center" }}
         data={data.items}
+        // key={`carousel-${JSON.stringify(data.items.map((i) => i.id))}`}
         width={width * 0.45}
         loop={true}
         height={240}
