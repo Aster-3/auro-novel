@@ -15,6 +15,7 @@ import {
   Poppins_500Medium,
   Poppins_600SemiBold,
 } from "@expo-google-fonts/poppins";
+
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { enableFreeze } from "react-native-screens";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -37,6 +38,7 @@ export default function App() {
 
   let [fontsLoaded] = useFonts({
     "Mont-400": Montserrat_400Regular,
+    Montserrat: Montserrat_400Regular,
     "Mont-500": Montserrat_500Medium,
     "Mont-500-Italic": Montserrat_500Medium_Italic,
     "Mont-600": Montserrat_600SemiBold,
@@ -45,6 +47,16 @@ export default function App() {
     "Poppins-400": Poppins_400Regular,
     "Poppins-500": Poppins_500Medium,
     "Poppins-600": Poppins_600SemiBold,
+    Merriweather: require("@assets/fonts/Merriweather-VariableFont_opsz,wdth,wght.ttf"),
+    "Merriweather-Bold": require("@assets/fonts/Merriweather_36pt-Bold.ttf"),
+    Literata: require("@assets/fonts/Literata-VariableFont_opsz,wght.ttf"),
+    "Literata-Bold": require("@assets/fonts/Literata_24pt-Bold.ttf"),
+    Lora: require("@assets/fonts/Lora-VariableFont_wght.ttf"),
+    "Lora-Bold": require("@assets/fonts/Lora-Bold.ttf"),
+    Assistant: require("@assets/fonts/Assistant-Medium.ttf"),
+    "Assistant-Bold": require("@assets/fonts/Assistant-Bold.ttf"),
+    Inter: require("@assets/fonts/Inter-VariableFont_opsz,wght.ttf"),
+    "Inter-Bold": require("@assets/fonts/Inter_24pt-Bold.ttf"),
   });
 
   useEffect(() => {

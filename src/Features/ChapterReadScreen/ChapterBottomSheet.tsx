@@ -52,6 +52,11 @@ export const ChapterBottomSheet = forwardRef<
         backdropComponent={renderBackdrop}
         enableContentPanningGesture={false}
         animationConfigs={animationConfigs}
+        backgroundStyle={{
+          backgroundColor: "#F9F9F9",
+          borderTopLeftRadius: 26,
+          borderTopRightRadius: 26,
+        }}
         handleIndicatorStyle={styles.indicator}
       >
         <BottomSheetView style={styles.contentContainer}>
@@ -67,6 +72,7 @@ export const ChapterBottomSheet = forwardRef<
 const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 40,
+    flex: 1,
   },
   indicator: {
     backgroundColor: "#e4e4e4",
