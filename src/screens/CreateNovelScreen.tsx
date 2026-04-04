@@ -7,7 +7,7 @@ import { useCreateNovelMutation } from "@/hooks/useCreateNovelMutation";
 import { createNovelSchemaStepOne } from "@/schemas/novel";
 import { useToastStore } from "@/store/useToastStore";
 import { createNovelMapper } from "@/utils/createNovelMapper";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { KeyboardAwareScrollView } from "react-native-keyboard-controller";
 

@@ -19,6 +19,8 @@ import AuthorPanelScreen from "../screens/AuthorPanelScreen";
 import CreateNovelScreen from "@/screens/CreateNovelScreen";
 import NovelPanelScreen from "@/screens/NovelPanelScreen";
 import UpdateTagCategoryScreen from "@/screens/UpdateTagCategoryScreen";
+import ChapterEditScreen from "@/screens/ChapterEditScreen";
+import NovelReadScreen from "@/screens/ChapterReadScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -83,6 +85,8 @@ export const RootNavigator = () => {
           name="UpdateTagCategory"
           component={UpdateTagCategoryScreen}
         />
+        <Stack.Screen name="ChapterEdit" component={ChapterEditScreen} />
+        <Stack.Screen name="NovelRead" component={NovelReadScreen} />
       </Stack.Group>
 
       <Stack.Group screenOptions={{ presentation: "modal" }}>

@@ -1,9 +1,13 @@
 import { getChapters } from "@/services/ChapterService";
+import { GetChaptersRequest } from "@/types/chapter";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-export const useInfiniteChapters = (query: { id: string; limit?: number }) => {
+export const useInfiniteChapters = (
+  query: GetChaptersRequest,
+  enabled?: boolean,
+) => {
   return useInfiniteQuery({
-    queryKey: ["chapters", query.id, query.limit],
+    queryKey: ["chapters", query.id, query.limit, query.sort],
     queryFn: ({ pageParam = 1 }) => getChapters({ ...query, page: pageParam }),
     select: (data) => ({
       items: data.pages.flatMap((page) => page.items),
@@ -14,5 +18,6 @@ export const useInfiniteChapters = (query: { id: string; limit?: number }) => {
       lastPageResponse.nextPage || undefined,
     refetchOnWindowFocus: true,
     staleTime: 1000 * 60 * 5,
+    enabled: enabled ?? true,
   });
 };

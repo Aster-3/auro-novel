@@ -4,12 +4,14 @@ import {
   StyleSheet,
   useWindowDimensions,
   Pressable,
+  InteractionManager,
 } from "react-native";
 import { useNovels } from "@/hooks/useNovels";
 import Carousel from "react-native-reanimated-carousel";
 import { Image } from "expo-image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { globalNavigate } from "@/navigation/globalNavigate";
+import { useFocusEffect } from "@react-navigation/native";
 
 export const NovelParallax = ({
   onNovelSelect,
@@ -19,7 +21,23 @@ export const NovelParallax = ({
   const { data, isLoading } = useNovels();
   const { width } = useWindowDimensions();
   const carouselRef = useRef<any>(null);
+
+  const savedIndex = useRef(0);
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const GAP = 16;
+
+  useFocusEffect(
+    useCallback(() => {
+      const task = InteractionManager.runAfterInteractions(() => {
+        setRefreshKey((prev) => prev + 1);
+      });
+
+      return () => {
+        task.cancel();
+      };
+    }, []),
+  );
 
   if (isLoading) {
     return (
@@ -45,6 +63,7 @@ export const NovelParallax = ({
 
   const handleSnap = (newIndex: number) => {
     const realIndex = carouselRef.current?.getCurrentIndex();
+    savedIndex.current = realIndex;
     onNovelSelect(data.items[realIndex].id);
   };
 
@@ -61,6 +80,7 @@ export const NovelParallax = ({
       </Pressable>
     );
   };
+
   return (
     <View style={styles.container}>
       <Carousel
@@ -68,7 +88,8 @@ export const NovelParallax = ({
         pagingEnabled
         style={{ width: width, justifyContent: "center" }}
         data={data.items}
-        // key={`carousel-${JSON.stringify(data.items.map((i) => i.id))}`}
+        key={`carousel-refresh-${refreshKey}`}
+        defaultIndex={savedIndex.current}
         width={width * 0.45}
         loop={true}
         height={240}

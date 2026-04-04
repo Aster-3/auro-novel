@@ -61,8 +61,4 @@ export const synopsisValidationSchema = z
   .refine(
     (val) => val.trim() === val,
     "Özetin başında veya sonunda boşluk olamaz",
-  )
-  .refine(
-    (val) => !/\s{2,}/.test(val),
-    "Kelimeler arasında birden fazla boşluk olamaz",
   );

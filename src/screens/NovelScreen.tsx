@@ -48,7 +48,14 @@ const NovelScreen = () => {
         case "summary":
           return <NovelSummary tags={data.tags} summary={data.synopsis} />;
         case "chapters":
-          return <NovelChapters id={id} openChapterSheet={openChapterSheet} />;
+          return (
+            <NovelChapters
+              chapterCount={data.chapterCount}
+              lastChapterDate={data.lastChapterDate}
+              id={id}
+              openChapterSheet={openChapterSheet}
+            />
+          );
         case "comments":
           return <NovelComments novelId={id} />;
         case "similar":
@@ -124,7 +131,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "white",
-    paddingBottom: 50,
   },
   headerWrapper: {
     width: "100%",
@@ -147,7 +153,7 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    gap: 20,
+    gap: 24,
     paddingBottom: 80,
     paddingTop: 16,
   },

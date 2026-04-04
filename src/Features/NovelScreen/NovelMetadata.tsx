@@ -115,6 +115,25 @@ export const NovelMetaData = ({
         </View>
 
         <View style={styles.row}>
+          {genres && genres.length > 0 ? (
+            genres.map((genre, index) => (
+              <View key={genre.id} style={styles.genreWrapper}>
+                <Text style={styles.text}>{genre.trName}</Text>
+                {index !== genres.length - 1 && (
+                  <View style={styles.genreDot} />
+                )}
+              </View>
+            ))
+          ) : (
+            <View style={styles.genreWrapper}>
+              <View style={styles.genreDot} />
+
+              <Text style={styles.text}>Mevcut Kategori Yok</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.row}>
           <StatusIcon size={12} color={statusMap[status].color || "#ccc"} />
           <Text
             style={[
@@ -140,25 +159,6 @@ export const NovelMetaData = ({
                 : "Öneri Oranı Yok"}
             </Text>
           </View>
-        </View>
-
-        <View style={styles.row}>
-          {genres && genres.length > 0 ? (
-            genres.map((genre, index) => (
-              <View key={genre.id} style={styles.genreWrapper}>
-                <Text style={styles.text}>{genre.trName}</Text>
-                {index !== genres.length - 1 && (
-                  <View style={styles.genreDot} />
-                )}
-              </View>
-            ))
-          ) : (
-            <View style={styles.genreWrapper}>
-              <View style={styles.genreDot} />
-
-              <Text style={styles.text}>Mevcut Kategori Yok</Text>
-            </View>
-          )}
         </View>
       </View>
     </View>

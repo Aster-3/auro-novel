@@ -1,7 +1,7 @@
 import { memo } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
-import { TagIcon } from "./TagIcon";
 import { Tag } from "@/types/tag";
+import { TagIcon } from "./TagIcon";
 
 export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
   if (!tags?.length) return null;
@@ -19,7 +19,8 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
             key={tag.id}
             style={({ pressed }) => [s.chip, pressed && s.chipPressed]}
           >
-            <TagIcon size={12} color="#6B7280" />
+            <Text style={s.hash}>#</Text>
+            {/* <TagIcon size={12} color="#374151" /> */}
             <Text style={s.text}>{tag.name}</Text>
           </Pressable>
         ))}
@@ -29,24 +30,30 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
 });
 
 const s = StyleSheet.create({
-  scroll: { gap: 8, paddingVertical: 2 },
+  scroll: {
+    gap: 14,
+    paddingLeft: 6,
+  },
   chip: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: "#D1D5DB", // İnce zarif bir çizgi
-    backgroundColor: "transparent",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
+    justifyContent: "center",
+    gap: 2,
+    paddingVertical: 6,
+
+    paddingHorizontal: 2,
   },
-  chipPressed: { backgroundColor: "#F3F4F6" },
-  text: {
+  chipPressed: { opacity: 0.5 },
+  hash: {
+    fontSize: 13,
     fontFamily: "Mont-600",
-    fontSize: 11.5,
-    color: "#4B5563",
-    letterSpacing: 0.3,
-    textTransform: "uppercase", // Dergi tarzı için tümü büyük harf
+    color: "#282b2e",
+  },
+  text: {
+    fontFamily: "Mont-500-Italic",
+    fontSize: 13,
+    color: "#374151",
+    letterSpacing: -0.5,
+    textAlignVertical: "center",
   },
 });

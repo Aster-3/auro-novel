@@ -60,7 +60,7 @@ const AnimatedPressable = ({ option }: { option: any }) => {
         style={[styles.optionCard, { transform: [{ scale: scaleValue }] }]}
       >
         <View style={styles.iconContainer}>
-          <option.icon size={24} color="#1C274C" />
+          <option.icon size={20} color="#1C274C" />
         </View>
         <Text style={styles.label}>{option.label}</Text>
       </Animated.View>
@@ -92,13 +92,14 @@ const styles = StyleSheet.create({
     borderColor: "#e5e7eb",
   },
   iconContainer: {
-    padding: 10,
+    padding: 8,
+    paddingVertical: 10,
     borderRadius: 12,
     marginRight: 16,
   },
   label: {
-    fontSize: 14.5,
-    color: "#080d14",
     fontFamily: "Mont-500",
+    fontSize: 14,
+    color: "#03061E",
   },
 });

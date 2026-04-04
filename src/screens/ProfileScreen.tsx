@@ -7,10 +7,11 @@ import { ProfileBodyBottom } from "@/Features/ProfileScreen/ProfileBodyBottom";
 import { useRef } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { LoginSheet } from "@/Features/ProfileScreen/LoginSheet";
+import { useDynamicBottom } from "@/utils/useDynamicBottom";
 
 const ProfileScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
-
+  const dynamicBottom = useDynamicBottom();
   const openLoginSheet = () => {
     bottomSheetRef.current?.expand();
   };
@@ -21,7 +22,7 @@ const ProfileScreen = () => {
       <ScrollView
         style={{ width: "100%" }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ gap: 16, paddingBottom: dynamicBottom + 80 }}
       >
         <ProfileBodyTop />
         <ProfileBodyMiddle />

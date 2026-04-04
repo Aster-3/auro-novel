@@ -17,7 +17,7 @@ export const SeriesCardVertical = ({
     >
       <TouchableOpacity
         onPress={() => {
-          navigation.navigate("Novel", { id });
+          navigation.push("Novel", { id });
         }}
         style={{
           width: "100%",

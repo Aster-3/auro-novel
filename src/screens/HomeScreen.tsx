@@ -7,7 +7,9 @@ import { UpdatedSeries } from "@/Features/HomeScreen/UpdatedSeries";
 import { Categories } from "@/Features/HomeScreen/Categories";
 import { BestofCategory } from "@/Features/HomeScreen/BestofCategory";
 import { RecenltyAdded } from "@/Features/HomeScreen/RecenltyAdded";
+import { useDynamicBottom } from "@/utils/useDynamicBottom";
 const HomeScreen = () => {
+  const dynamicBottom = useDynamicBottom();
   return (
     <Screen style={{ flex: 1, backgroundColor: "white" }}>
       <View style={{ marginBottom: 16 }}>
@@ -15,7 +17,7 @@ const HomeScreen = () => {
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: 28, paddingBottom: 120 }}
+        contentContainerStyle={{ gap: 28, paddingBottom: dynamicBottom + 80 }}
       >
         <HomeCarousel />
         <WeeklyPopular />

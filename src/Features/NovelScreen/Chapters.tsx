@@ -1,39 +1,36 @@
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
-import { useChapterSummary } from "@/hooks/useChapterSummary";
 import { formatRelativeTime } from "@/utils/formatRelativeTime";
 
-export const NovelChapters = ({
-  id,
-  openChapterSheet,
-}: {
+interface NovelChaptersProps {
   id: string;
   openChapterSheet: () => void;
-}) => {
-  const { data, error, isLoading } = useChapterSummary(id);
-  if (isLoading) {
-    return <Text>Yükleniyor...</Text>;
-  }
-  if (error) {
-    return <Text>Hata: {error.message}</Text>;
-  }
-  if (!data) {
-    return <Text>Veri bulunamadı.</Text>;
-  }
+  chapterCount: number;
+  lastChapterDate: string;
+}
+
+export const NovelChapters = ({
+  openChapterSheet,
+  chapterCount,
+  lastChapterDate,
+}: NovelChaptersProps) => {
+  const updateStatusText = lastChapterDate
+    ? `En Son Güncelleme: ${formatRelativeTime(lastChapterDate)}`
+    : "Henüz Bölüm yayınlanmadı";
+
   return (
     <Pressable
       onPress={openChapterSheet}
       style={({ pressed }) => [styles.container, pressed && styles.pressed]}
     >
-      <Text style={styles.chapterText}>Bölümler: {data.total}</Text>
+      <View style={styles.leftContent}>
+        <Text style={styles.chapterText}>Bölümler</Text>
+        <Text style={styles.updateText}>{updateStatusText}</Text>
+      </View>
 
       <View style={styles.rightContent}>
-        <Text style={styles.updateText}>
-          {data.lastPublishedAt
-            ? `En Son Güncelleme: ${formatRelativeTime(data.lastPublishedAt)}`
-            : "Henüz bölüm yayınlanmadı"}
-        </Text>
-        <RightChevronIcon color="#2A2929" size={16} />
+        <Text style={styles.chapterCount}>{chapterCount} Bölüm</Text>
+        <RightChevronIcon color="#2A2929" size={24} />
       </View>
     </Pressable>
   );
@@ -49,21 +46,44 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
+  leftContent: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 6,
+  },
+  dotSeparator: {
+    padding: 1.5,
+    backgroundColor: "#3b3e42",
+    borderRadius: 99,
+  },
   chapterText: {
     fontFamily: "Mont-700",
     fontSize: 15,
-    letterSpacing: -0.2,
     color: "#03061ed3",
+    letterSpacing: -0.2,
   },
   rightContent: {
     flexDirection: "row",
+    justifyContent: "center",
     alignItems: "center",
     gap: 4,
+  },
+  chapterCount: {
+    fontFamily: "Mont-600",
+    fontSize: 14,
+    color: "#03061ed3",
   },
   updateText: {
     fontFamily: "Mont-500",
     fontSize: 12,
     color: "#5C5C5C",
     letterSpacing: -0.5,
+  },
+  statusText: {
+    fontFamily: "Mont-500",
+    fontSize: 14,
+    color: "#5C5C5C",
+    paddingVertical: 12,
+    textAlign: "center",
   },
 });

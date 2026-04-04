@@ -1,13 +1,18 @@
 import Svg, { Path } from "react-native-svg";
 
-export const ShareIcon = ({ color = "#ffffff" }: { color?: string }) => (
-  <Svg width={20} height={20} viewBox="0 0 20 20" fill="none">
+export const ShareIcon = ({
+  color = "#ffffff",
+  size = 22,
+}: {
+  color?: string;
+  size?: number;
+}) => (
+  <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
     <Path
-      d="M10 1.667V12.5M13.333 5L10 1.667 6.667 5M3.333 10v6.667A1.667 1.667 0 005 18.333h10a1.667 1.667 0 001.667-1.666V10"
+      d="M27.903 4.097a3.71 3.71 0 00-3.551-.984L6.868 7.485a5.107 5.107 0 00.065 9.926l6.195 1.457 1.461 6.199a5.031 5.031 0 004.934 3.937h.037a5.03 5.03 0 004.952-3.867l4.375-17.49a3.708 3.708 0 00-.984-3.55zm-.958 3.067l-4.37 17.481A3.067 3.067 0 0119.539 27a3.032 3.032 0 01-3.003-2.4l-1.467-6.253 5.638-5.64a1 1 0 00-1.414-1.414l-5.644 5.64-6.253-1.466a3.107 3.107 0 01-.041-6.039l17.482-4.373a1.751 1.751 0 011.19.123 1.734 1.734 0 01.918 1.986z"
+      fill={color}
       stroke={color}
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeWidth={0.00064}
     />
   </Svg>
 );

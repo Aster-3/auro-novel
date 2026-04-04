@@ -7,20 +7,19 @@ export const SelectImageIcon = ({
   color?: string;
   size?: number;
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <G
-      clipPath="url(#clip0_292_298)"
+  <Svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+    <Path
+      d="M11.968 28C5.406 28 4 26.594 4 20.032M28 20.032C28 26.594 26.594 28 20.032 28M20.032 4C26.594 4 28 5.406 28 11.968M4 11.968C4 5.406 5.406 4 11.968 4"
       stroke={color}
-      strokeWidth={1.52}
+      strokeWidth={1.92}
+      strokeLinecap="round"
+    />
+    <Path
+      d="M16 12.667v6.666M19.333 16h-6.666"
+      stroke={color}
+      strokeWidth={1.92}
       strokeLinecap="round"
       strokeLinejoin="round"
-    >
-      <Path d="M1.5 4.5a3 3 0 013-3M22.5 4.5a3 3 0 00-3-3M22.5 19.5a3 3 0 01-3 3M1.5 19.5a3 3 0 003 3M22.5 13.5v3M22.5 7.5v3M1.5 13.5v3M1.5 7.5v3M10.5 1.5h-3M16.5 1.5h-3M10.5 22.5h-3M16.5 22.5h-3M9 12h6M12 9v6" />
-    </G>
-    <Defs>
-      <ClipPath id="clip0_292_298">
-        <Path fill="#fff" d="M0 0H24V24H0z" />
-      </ClipPath>
-    </Defs>
+    />
   </Svg>
 );

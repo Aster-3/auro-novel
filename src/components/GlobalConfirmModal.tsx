@@ -16,7 +16,6 @@ export const GlobalConfirmModal = () => {
   const cancelAnim = useRef(new Animated.Value(1)).current;
   const confirmAnim = useRef(new Animated.Value(1)).current;
 
-  // ÇÖZÜM: Modal her açıldığında animasyonları varsayılan (1) değerine döndür
   useEffect(() => {
     if (isVisible) {
       cancelAnim.setValue(1);
@@ -43,12 +42,12 @@ export const GlobalConfirmModal = () => {
   };
 
   const onCancelPress = () => {
-    cancelAnim.setValue(1); // Yarıda kesilen animasyonu manuel sıfırla
+    cancelAnim.setValue(1);
     hideModal();
   };
 
   const onConfirmPress = () => {
-    confirmAnim.setValue(1); // Yarıda kesilen animasyonu manuel sıfırla
+    confirmAnim.setValue(1);
     config.onConfirm();
     hideModal();
   };
@@ -72,14 +71,16 @@ export const GlobalConfirmModal = () => {
               <View style={styles.buttons}>
                 {/* CANCEL */}
                 <Animated.View
-                  style={{
-                    flex: 1,
-                    transform: [{ scale: cancelAnim }],
-                    opacity: cancelAnim.interpolate({
-                      inputRange: [0.94, 1],
-                      outputRange: [0.7, 1],
-                    }),
-                  }}
+                  style={[
+                    styles.buttonContainer,
+                    {
+                      transform: [{ scale: cancelAnim }],
+                      opacity: cancelAnim.interpolate({
+                        inputRange: [0.94, 1],
+                        outputRange: [0.7, 1],
+                      }),
+                    },
+                  ]}
                 >
                   <TouchableOpacity
                     activeOpacity={0.85}
@@ -96,14 +97,16 @@ export const GlobalConfirmModal = () => {
 
                 {/* CONFIRM */}
                 <Animated.View
-                  style={{
-                    flex: 1,
-                    transform: [{ scale: confirmAnim }],
-                    opacity: confirmAnim.interpolate({
-                      inputRange: [0.94, 1],
-                      outputRange: [0.7, 1],
-                    }),
-                  }}
+                  style={[
+                    styles.buttonContainer,
+                    {
+                      transform: [{ scale: confirmAnim }],
+                      opacity: confirmAnim.interpolate({
+                        inputRange: [0.94, 1],
+                        outputRange: [0.7, 1],
+                      }),
+                    },
+                  ]}
                 >
                   <TouchableOpacity
                     activeOpacity={0.85}
@@ -138,13 +141,15 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 300,
     backgroundColor: "white",
-    padding: 18,
     borderRadius: 18,
+    paddingTop: 20,
+    paddingHorizontal: 18,
+    paddingBottom: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 3,
+    elevation: 5,
   },
   header: {
     marginBottom: 20,
@@ -154,11 +159,12 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: "700",
     color: "#000",
-    marginBottom: 4,
+    marginBottom: 6,
     fontFamily: "Mont-600",
+    textAlign: "center",
   },
   message: {
-    fontSize: 13.5,
+    fontSize: 12,
     color: "#6B7280",
     textAlign: "center",
     lineHeight: 19,
@@ -166,21 +172,30 @@ const styles = StyleSheet.create({
   },
   buttons: {
     flexDirection: "row",
-    gap: 10,
+    gap: 8,
+    alignItems: "stretch",
+    width: "100%",
+  },
+  buttonContainer: {
+    flex: 1,
+    minHeight: 40,
   },
   btn: {
-    height: 42,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    flexGrow: 1,
   },
   btnText: {
     fontWeight: "600",
-    fontSize: 13.5,
+    fontSize: 12,
     fontFamily: "Mont-600",
+    textAlign: "center",
   },
   cancelBtn: {
-    backgroundColor: "#e9e9e9",
+    backgroundColor: "#f3f4f6",
   },
   cancelBtnText: {
     color: "#1F2937",

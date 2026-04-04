@@ -26,7 +26,7 @@ export const NovelSummary = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Hakkında</Text>
+      <Text style={styles.title}>Özet</Text>
       <NovelTags tags={tags} />
 
       <View style={styles.quoteBlock}>
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   quoteBlock: {
-    borderLeftWidth: 3,
+    borderLeftWidth: 1.5,
     borderLeftColor: "#111827be",
     paddingLeft: 16,
     marginLeft: 4,
@@ -85,6 +85,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     marginTop: 4,
+    alignSelf: "flex-start",
+    zIndex: 1,
   },
   readMoreText: {
     fontSize: 12,

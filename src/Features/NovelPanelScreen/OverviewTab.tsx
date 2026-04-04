@@ -1,7 +1,8 @@
 import { useNovelDetail } from "@/hooks/useNovelDetail";
-import { ScrollView, View, StyleSheet, Pressable } from "react-native";
+import { ScrollView, View, StyleSheet } from "react-native";
 import { OverviewOptions } from "./OverviewOptions";
 import { OverviewImageEdit } from "./OverviewImageEdit";
+import { SeriesStatus } from "@/types/novel";
 
 export const OverviewTab = ({ route }: { route: any }) => {
   const { id } = route.params;
@@ -24,6 +25,7 @@ export const OverviewTab = ({ route }: { route: any }) => {
           categories={data?.categories || []}
           summary={data?.synopsis || ""}
           name={data?.name || ""}
+          status={data?.status || SeriesStatus.DRAFT}
         />
       </View>
     </ScrollView>

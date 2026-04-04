@@ -4,6 +4,7 @@ import { Text, View, StyleSheet, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { useToastStore } from "@/store/useToastStore";
+import { SelectImageIcon } from "@/components/icons/SelectImageIcon";
 
 export const OverviewImageEdit = ({
   novelId,
@@ -15,7 +16,6 @@ export const OverviewImageEdit = ({
   const { mutate: updateNovel } = useNovelMutation(novelId);
 
   const handleImagePress = async () => {
-    console.log("Resim seçme işlemi tetiklendi");
     const selectedImage = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ["images"],
       allowsEditing: true,
@@ -67,45 +67,91 @@ export const OverviewImageEdit = ({
         onError: () => {
           useToastStore.getState().showToast({
             type: "Hata",
-            message:
-              "Kapak fotoğrafı güncellenirken bir hata oluştu. Lütfen tekrar deneyin.",
+            message: "Kapak fotoğrafı güncellenirken bir hata oluştu.",
           });
         },
       },
     );
   };
+
   return (
     <View style={styles.headContainer}>
-      <Pressable style={styles.imageWrapper} onPress={handleImagePress}>
+      <Pressable
+        style={({ pressed }) => [
+          styles.imageWrapper,
+          {
+            opacity: pressed ? 0.7 : 1,
+            transform: [{ scale: pressed ? 0.98 : 1 }],
+          }, // Dokunma animasyonu
+        ]}
+        onPress={handleImagePress}
+      >
         <Image
-          blurRadius={1}
+          blurRadius={2} // Arka planı biraz daha bulanıklaştırdık ki ikon parlasın
           source={{ uri: coverImage }}
           style={styles.image}
         />
-        <View style={styles.imageOverlay} />
+        {/* Overlay ve İkon Konumlandırması */}
+        <View style={styles.imageOverlay}>
+          <SelectImageIcon size={32} color="#fff" />
+          <Text style={styles.overlayText}>Değiştir</Text>
+        </View>
       </Pressable>
+
+      <View style={styles.body}>
+        <Text style={styles.text}>
+          * En iyi görünüm için 2:3 oranında ve maksimum 5 MB boyutunda
+          görseller kullanın.
+        </Text>
+        <Text style={styles.text}>
+          * Yetişkin (Mature) içeriklere izin verilse de, aşırı müstehcenlik ve
+          pornografik içerik barındıran kapaklar kaldırılır.
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  tabContent: { paddingTop: 30, paddingBottom: 40, gap: 32 },
   headContainer: {
-    alignItems: "center",
-    paddingHorizontal: 20,
+    width: "100%",
+    flexDirection: "row",
+    paddingHorizontal: 8,
   },
   imageWrapper: {
-    width: 150,
+    width: 120,
     aspectRatio: 2 / 3,
-    marginBottom: 24,
     position: "relative",
+    borderRadius: 16,
+    overflow: "hidden",
+    backgroundColor: "#2c2c2c",
   },
-  image: { width: "100%", height: "100%", borderRadius: 20 },
+  image: {
+    width: "100%",
+    height: "100%",
+  },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
-    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
   },
-
-  body: { paddingHorizontal: 4, gap: 40, width: "100%" },
+  overlayText: {
+    color: "#FFFFFF",
+    fontSize: 9,
+    fontFamily: "Mont-600",
+    textTransform: "uppercase",
+  },
+  body: {
+    flex: 1,
+    marginLeft: 16,
+    gap: 8,
+  },
+  text: {
+    fontFamily: "Mont-500",
+    fontSize: 12,
+    color: "#828282",
+    letterSpacing: -0.5,
+  },
 });

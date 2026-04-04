@@ -1,9 +1,4 @@
-import { ChapterItem } from "@/components/ChapterItem";
-import { ChapterReverseIcon } from "@/components/icons/ChapterReverseIcon";
-import { useInfiniteChapters } from "@/hooks/useInfiniteChapters";
-import { Chapter } from "@/types/chapter";
-import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
-import {
+import React, {
   forwardRef,
   useImperativeHandle,
   useMemo,
@@ -18,26 +13,27 @@ import {
   ViewStyle,
   TextStyle,
 } from "react-native";
+import BottomSheet, { BottomSheetFlatList } from "@gorhom/bottom-sheet";
+
+import { ChapterItem } from "@/components/ChapterItem";
+import { ChapterReverseIcon } from "@/components/icons/ChapterReverseIcon";
+import { useInfiniteChapters } from "@/hooks/useInfiniteChapters";
+import { Chapter } from "@/types/chapter";
+import { SortType } from "@/types/constants";
 
 export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
+  const [sortType, setSortType] = useState<SortType>(SortType.ASC);
   const { id } = props;
-  const {
-    data,
-    error,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
-    isLoading,
-  } = useInfiniteChapters({ id });
+
+  const { data, isFetchingNextPage, fetchNextPage, hasNextPage, isLoading } =
+    useInfiniteChapters({ id, sort: sortType });
 
   const bottomSheetRef = useRef<BottomSheet>(null);
   const snapPoints = useMemo(() => ["50%", "90%"], []);
-  const [isShortTypeNew, setIsShortTypeNew] = useState(true);
 
   const chapters = useMemo(() => {
-    const allChapters = data?.items || [];
-    return isShortTypeNew ? allChapters : [...allChapters].reverse();
-  }, [data, isShortTypeNew]);
+    return data?.items || [];
+  }, [data]);
 
   useImperativeHandle(ref, () => ({
     expand: () => {
@@ -45,18 +41,29 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
     },
   }));
 
-  const renderItem = ({ item }: { item: Chapter }) => (
-    <ChapterItem key={item.id} chapter={item} />
-  );
+  const renderItem = ({ item, index }: { item: Chapter; index: number }) => {
+    const previousItem = chapters[index - 1];
 
-  if (isLoading) {
-    return <ActivityIndicator style={{ marginTop: 50 }} />;
-  }
+    const showVolumeHeader =
+      !previousItem || previousItem.volumeOrder !== item.volumeOrder;
+
+    return (
+      <ChapterItem
+        key={item.id}
+        index={index}
+        chapter={item}
+        showVolumeHeader={showVolumeHeader}
+      />
+    );
+  };
 
   return (
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
+      backgroundStyle={{
+        borderRadius: 26,
+      }}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
       enableDynamicSizing={false}
@@ -65,36 +72,53 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
         <View style={{ width: 24 }} />
         <Text style={styles.title}>{data?.total || 0} Bölüm</Text>
         <TouchableOpacity
-          onPress={() => setIsShortTypeNew(!isShortTypeNew)}
+          onPress={() =>
+            setSortType(
+              sortType === SortType.ASC ? SortType.DESC : SortType.ASC,
+            )
+          }
           style={{
-            transform: [{ rotate: isShortTypeNew ? "0deg" : "180deg" }],
+            transform: [
+              { rotate: sortType === SortType.ASC ? "0deg" : "180deg" },
+            ],
           }}
         >
           <ChapterReverseIcon />
         </TouchableOpacity>
       </View>
 
-      <BottomSheetFlatList
-        data={chapters}
-        keyExtractor={(item: Chapter) => item.id}
-        renderItem={renderItem}
-        onEndReached={() => {
-          if (hasNextPage && !isFetchingNextPage) {
-            fetchNextPage();
+      {isLoading ? (
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          <ActivityIndicator color="#03061E" />
+        </View>
+      ) : (
+        <BottomSheetFlatList
+          data={chapters}
+          keyExtractor={(item: Chapter) => item.id}
+          renderItem={renderItem}
+          onEndReached={() => {
+            if (hasNextPage && !isFetchingNextPage) {
+              fetchNextPage();
+            }
+          }}
+          onEndReachedThreshold={0.5}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          ListFooterComponent={() =>
+            isFetchingNextPage ? (
+              <ActivityIndicator
+                style={{ marginVertical: 20 }}
+                color="#03061E"
+              />
+            ) : (
+              <View style={{ height: 40 }} />
+            )
           }
-        }}
-        onEndReachedThreshold={0.5}
-        initialNumToRender={10}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        ListFooterComponent={() =>
-          isFetchingNextPage ? (
-            <ActivityIndicator style={{ marginVertical: 20 }} color="#03061E" />
-          ) : (
-            <View style={{ height: 40 }} />
-          )
-        }
-      />
+        />
+      )}
     </BottomSheet>
   );
 });
@@ -106,6 +130,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
+    paddingBottom: 10,
   } as ViewStyle,
   title: {
     fontFamily: "Mont-600",

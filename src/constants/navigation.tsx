@@ -44,6 +44,15 @@ export type RootStackParamList = {
     mode: "category" | "tag";
     availableItems?: (Category | Tag)[];
   };
+  ChapterEdit: {
+    novelId: string;
+    chapterId?: string;
+    isChapterAvailable: boolean;
+    isDraft?: boolean;
+  };
+  NovelRead: {
+    id: string;
+  };
 };
 
 export const TAB_ICONS: Record<

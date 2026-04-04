@@ -18,12 +18,12 @@ export const NovelHeader = () => {
           navigation.goBack();
         }}
       >
-        <BackArrowIcon color="white" />
+        <BackArrowIcon size={24} color="white" />
       </TouchableOpacity>
       <TouchableOpacity
         style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
       >
-        <ShareIcon />
+        <ShareIcon size={22} />
         <Text style={{ color: "white", fontFamily: "Mont-600" }}>Share</Text>
       </TouchableOpacity>
     </View>

@@ -8,6 +8,9 @@ import { NameEditSheet } from "./NameEditSheet";
 import { useCallback, useRef, useState } from "react";
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
 import { SynopsisEditSheet } from "./SynopsisEditSheet";
+import { StatusEditSheet } from "./StatusEditSheet";
+import { SeriesStatus } from "@/types/novel";
+import { ProfileHeaderText } from "../ProfileScreen/ProfileHeaderText";
 
 const getPressStyle = (pressed: boolean) => ({
   backgroundColor: pressed ? "#f0f0f0" : "transparent",
@@ -40,12 +43,14 @@ export const OverviewOptions = ({
   categories,
   summary,
   name,
+  status,
 }: {
   id: string;
   tags: Tag[];
   categories: Category[];
   summary: string;
   name: string;
+  status: SeriesStatus;
 }) => {
   const navigation = useAppNavigation();
 
@@ -56,7 +61,7 @@ export const OverviewOptions = ({
     }
 
     if (option.id === "category" || option.id === "tag") {
-      navigation.navigate("UpdateTagCategory", {
+      navigation.push("UpdateTagCategory", {
         id: id,
         mode: option.id === "category" ? "category" : "tag",
         availableItems: option.id === "category" ? categories : tags,
@@ -67,11 +72,14 @@ export const OverviewOptions = ({
         openNameEditSheet();
       } else if (option.id === "summary") {
         openSynopsisEditSheet();
+      } else if (option.id === "status") {
+        openStatusEditSheet();
       }
     }
   };
   const nameEditSheetRef = useRef<BottomSheetModal>(null);
   const synopsisEditSheetRef = useRef<BottomSheetModal>(null);
+  const statusEditSheetRef = useRef<BottomSheetModal>(null);
 
   const openNameEditSheet = useCallback(() => {
     nameEditSheetRef.current?.present();
@@ -81,8 +89,14 @@ export const OverviewOptions = ({
     synopsisEditSheetRef.current?.present();
   }, []);
 
+  const openStatusEditSheet = useCallback(() => {
+    statusEditSheetRef.current?.present();
+  }, []);
+
   return (
     <View style={styles.wrapper}>
+      <ProfileHeaderText title="Genel Bilgiler" />
+
       <View style={styles.container}>
         {options.map((option) => (
           <Pressable
@@ -109,13 +123,18 @@ export const OverviewOptions = ({
         id={id}
         initialSynopsis={summary}
       />
+      <StatusEditSheet
+        ref={statusEditSheetRef}
+        id={id}
+        initialStatus={status}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   wrapper: {
-    gap: 4,
+    gap: 8,
   },
   container: {
     flexWrap: "wrap",

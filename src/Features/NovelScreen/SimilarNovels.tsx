@@ -1,15 +1,16 @@
 import { ScrollView, Text, View } from "react-native";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
-import { data } from "../HomeScreen/UpdatedSeries";
-
+import { useNovels } from "@/hooks/useNovels";
 export const SimilarNovels = () => {
+  const { data, isLoading } = useNovels();
+
   return (
     <View style={{ gap: 16, marginTop: 16 }}>
       <Text
         style={{
           fontFamily: "Mont-700",
           fontSize: 15,
-          color: "#03061E",
+          color: "#03061ed3",
           letterSpacing: -0.2,
         }}
       >
@@ -22,12 +23,12 @@ export const SimilarNovels = () => {
         horizontal
         style={{ width: "100%" }}
       >
-        {data.map((i) => (
+        {data?.items.map((item) => (
           <SeriesCardVertical
-            id={i.id}
-            key={i.id}
-            cover={i.cover}
-            name={i.name}
+            id={item.id}
+            key={item.id}
+            cover={item.coverImage}
+            name={item.name}
           />
         ))}
       </ScrollView>

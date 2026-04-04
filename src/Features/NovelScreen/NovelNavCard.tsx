@@ -1,13 +1,19 @@
 import { BookmarkIcon } from "@/components/icons/BookmarkIcon";
 import { BookReadIcon } from "@/components/icons/BookReadIcon";
+import { useDynamicBottom } from "@/utils/useDynamicBottom";
 import { Text, TouchableOpacity, View, Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export const NovelNavCard = () => {
+  const insets = useSafeAreaInsets();
+
+  const dynamicBottom = useDynamicBottom();
+
   return (
     <View
       style={{
         position: "absolute",
-        bottom: 30,
+        bottom: dynamicBottom + 5,
         left: 20,
         right: 20,
         flexDirection: "row",

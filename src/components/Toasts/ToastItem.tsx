@@ -100,14 +100,16 @@ const getIconName = (type?: string) => {
 const styles = StyleSheet.create({
   wrapper: {
     marginBottom: 8,
+    zIndex: 9999,
   },
   toastItem: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 8,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     maxWidth: "90%",
+    alignSelf: "center",
     borderRadius: 50,
     backgroundColor: "#FFFFFF",
     ...Platform.select({
@@ -121,7 +123,7 @@ const styles = StyleSheet.create({
     }),
   },
   icon: { marginRight: 8 },
-  textContainer: { justifyContent: "center" },
+  textContainer: { justifyContent: "center", flexShrink: 1 },
   title: {
     fontSize: 13,
     fontWeight: "600",

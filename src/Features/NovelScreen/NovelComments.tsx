@@ -35,15 +35,15 @@ export const NovelComments = ({ novelId }: { novelId: string }) => {
         onPress={() => {
           navigation.navigate("Comment", { id: novelId });
         }}
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 8,
-        }}
+        style={styles.header}
       >
-        <Text style={styles.title}>Yorumlar ({data?.total})</Text>
-        <RightChevronIcon size={24} />
+        <Text style={styles.title}>Yorumlar</Text>
+        <View style={styles.rightContent}>
+          <Text style={styles.commentCount}>
+            {data ? `${data.total} Yorum` : "Yorumlar yükleniyor..."}
+          </Text>
+          <RightChevronIcon size={24} />
+        </View>
       </TouchableOpacity>
 
       {data && data.items.length > 0 ? (
@@ -71,13 +71,28 @@ const styles = StyleSheet.create({
   container: {
     gap: 16,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  rightContent: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 4,
+  },
   title: {
     fontFamily: "Mont-700",
     fontSize: 15,
     color: "#03061ed3",
     letterSpacing: -0.2,
   },
-
+  commentCount: {
+    fontFamily: "Mont-600",
+    fontSize: 14,
+    color: "#03061ed3",
+  },
   commentList: {
     marginTop: 8,
     gap: 40,

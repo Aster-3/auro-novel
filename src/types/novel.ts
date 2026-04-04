@@ -63,7 +63,8 @@ export interface Novel {
   positiveReviewsCount: number;
   totalReviewsCount: number;
   recommendationRate: number | null;
-  popularityScore: number;
+  chapterCount: number;
+  lastChapterDate: string;
   categories: Category[];
   tags: Tag[];
 }
@@ -86,6 +87,7 @@ export interface UpdateNovelFormData {
     type: string;
   } | null;
   synopsis?: string;
+  status?: SeriesStatus;
   slug?: string;
   tags?: string[]; // Sadece tag ID'leri gönderilecek
   categories?: number[]; // Sadece kategori ID'leri gönderilecek

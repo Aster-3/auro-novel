@@ -5,7 +5,6 @@ import {
   View,
   StyleSheet,
   TextInput,
-  Alert,
 } from "react-native";
 import { useEffect, useState } from "react";
 

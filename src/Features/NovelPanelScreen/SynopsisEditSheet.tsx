@@ -154,7 +154,7 @@ export const SynopsisEditSheet = forwardRef<
     );
   };
 
-  const snapPoints = useMemo(() => ["50%", "90%"], []);
+  const snapPoints = useMemo(() => ["52%", "90%"], []);
 
   return (
     <BottomSheetModal
