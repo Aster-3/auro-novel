@@ -14,7 +14,7 @@ export interface Chapter {
   volumeId: number;
   isLocked: boolean;
   publishedAt: string;
-  isUnpublished: boolean;
+  isUnpublished?: boolean;
 }
 
 export interface ChapterDetail {
@@ -22,8 +22,9 @@ export interface ChapterDetail {
   title: string;
   content: string;
   chapterOrder: number;
-  volumeOrder: number;
-  volumeId: string;
+  isLocked: boolean;
+  nextChapterId: string | null;
+  previousChapterId: string | null;
 }
 
 export interface GetChapters {
@@ -82,7 +83,6 @@ export interface UpdateChapterRequest {
   id: string;
   title?: string;
   content?: string;
-  volumeId?: string;
 }
 
 export interface CreateChapterRequest {

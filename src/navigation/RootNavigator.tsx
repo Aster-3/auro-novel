@@ -24,11 +24,17 @@ import NovelReadScreen from "@/screens/ChapterReadScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useReaderStore } from "@/store/useReaderStore";
+import { de } from "zod/v4/locales";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator = () => {
   const { data: meData, isLoading } = useMeQuery([]);
+
+  const navBackgroundColor = useReaderStore((state) => state.isDarkMode)
+    ? "#090910"
+    : "rgb(255, 255, 255)";
 
   if (isLoading) {
     return null;
@@ -44,10 +50,12 @@ export const RootNavigator = () => {
         headerShown: false,
         gestureEnabled: true,
         fullScreenGestureEnabled: true,
-        contentStyle: { backgroundColor: "white" },
         animation: "slide_from_right",
         orientation: "portrait",
         freezeOnBlur: true,
+        contentStyle: { backgroundColor: navBackgroundColor },
+        // cardStyle: { backgroundColor: navBackgroundColor },
+        // headerStyle: { backgroundColor: navBackgroundColor },
       }}
     >
       <Stack.Screen name="Main" component={TabNavigator} />
@@ -86,7 +94,14 @@ export const RootNavigator = () => {
           component={UpdateTagCategoryScreen}
         />
         <Stack.Screen name="ChapterEdit" component={ChapterEditScreen} />
-        <Stack.Screen name="NovelRead" component={NovelReadScreen} />
+        <Stack.Screen
+          name="ChapterRead"
+          options={{
+            animation: "fade",
+            contentStyle: { backgroundColor: navBackgroundColor },
+          }}
+          component={NovelReadScreen}
+        />
       </Stack.Group>
 
       <Stack.Group screenOptions={{ presentation: "modal" }}>

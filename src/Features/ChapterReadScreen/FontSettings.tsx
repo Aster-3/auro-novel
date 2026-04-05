@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import {
   View,
   StyleSheet,
@@ -12,6 +12,7 @@ import { FontTypeIcon } from "@/components/icons/FontTypeIcon";
 import { SlidingHorizontalIcon } from "@/components/icons/SlidingHorizontalIcon";
 import { FontIncrementIcon } from "@/components/icons/FontIncrementIcon";
 import { FontDecrementIcon } from "@/components/icons/FontDecrementIcon";
+import { useReaderStore } from "@/store/useReaderStore"; // Store import edildi
 
 const FONT_OPTIONS = [
   "Literata",
@@ -34,6 +35,15 @@ export const FontSettingsControl = ({
   setFontSize,
   setCurrentFont,
 }: FontSettingsProps) => {
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Paleti
+  const colors = {
+    cardBg: isDarkMode ? "#000000" : "#FFFFFF", // Beyaz -> Saf Siyah
+    primary: isDarkMode ? "#fcf3e6" : "#09244B", // Lacivert -> Açık Bej/Gold
+    secondaryText: isDarkMode ? "#fcf3e6" : "#606060", // Orta Gri -> Açık Gri (Okunabilirlik için)
+  };
+
   const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const index = Math.round(x / ITEM_WIDTH);
@@ -44,8 +54,8 @@ export const FontSettingsControl = ({
 
   return (
     <View style={styles.row}>
-      <View style={styles.fontFamilyCard}>
-        <FontTypeIcon size={16} color="#09244B" />
+      <View style={[styles.fontFamilyCard, { backgroundColor: colors.cardBg }]}>
+        <FontTypeIcon size={16} color={colors.primary} />
 
         <View style={{ width: ITEM_WIDTH }}>
           <FlatList
@@ -60,7 +70,10 @@ export const FontSettingsControl = ({
             onMomentumScrollEnd={onScrollEnd}
             renderItem={({ item }) => (
               <View style={[styles.fontItem, { width: ITEM_WIDTH }]}>
-                <Text style={styles.fontName} numberOfLines={1}>
+                <Text
+                  style={[styles.fontName, { color: colors.secondaryText }]}
+                  numberOfLines={1}
+                >
                   {item}
                 </Text>
               </View>
@@ -69,23 +82,29 @@ export const FontSettingsControl = ({
           />
         </View>
 
-        <SlidingHorizontalIcon size={16} strokeWidth={0.5} color="#09244B" />
+        <SlidingHorizontalIcon
+          size={16}
+          strokeWidth={0.5}
+          color={colors.primary}
+        />
       </View>
 
-      <View style={styles.fontSizeCard}>
+      <View style={[styles.fontSizeCard, { backgroundColor: colors.cardBg }]}>
         <TouchableOpacity
           onPress={() => {
             if (fontSize > 14) {
               setFontSize(fontSize - 1);
             }
           }}
-          hitSlop={{ top: 15, bottom: 15, left: 15, right: 10 }} // Tıklama alanını genişlettik
+          hitSlop={{ top: 15, bottom: 15, left: 15, right: 10 }}
           activeOpacity={0.6}
         >
-          <FontDecrementIcon />
+          <FontDecrementIcon color={colors.primary} />
         </TouchableOpacity>
 
-        <Text style={styles.fontSizeText}>{fontSize}</Text>
+        <Text style={[styles.fontSizeText, { color: colors.primary }]}>
+          {fontSize}
+        </Text>
 
         <TouchableOpacity
           onPress={() => {
@@ -96,7 +115,7 @@ export const FontSettingsControl = ({
           hitSlop={{ top: 15, bottom: 15, left: 10, right: 15 }}
           activeOpacity={0.6}
         >
-          <FontIncrementIcon />
+          <FontIncrementIcon color={colors.primary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -113,7 +132,6 @@ const styles = StyleSheet.create({
   fontFamilyCard: {
     flex: 2.5,
     height: 45,
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -123,7 +141,6 @@ const styles = StyleSheet.create({
   fontSizeCard: {
     flex: 1,
     height: 45,
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -138,15 +155,11 @@ const styles = StyleSheet.create({
   fontName: {
     fontFamily: "Mont-500",
     fontSize: 12,
-    color: "#606060",
   },
   fontSizeText: {
     fontFamily: "Mont-600",
     fontSize: 11,
-    color: "#09244B",
     minWidth: 35,
     textAlign: "center",
   },
-  iconLeft: { marginLeft: 4 },
-  iconRight: { marginRight: 4 },
 });

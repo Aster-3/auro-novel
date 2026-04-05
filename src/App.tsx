@@ -29,13 +29,15 @@ import { useAuthStore } from "./store/useAuthStore";
 import { ToastContainer } from "./components/Toasts/ToastContainer";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ActivityIndicator } from "react-native";
+import { useReaderStore } from "./store/useReaderStore";
 
 enableFreeze(false);
 const queryClient = new QueryClient();
 
 export default function App() {
   const [isReady, setIsReady] = useState(false);
-
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const appBackgroundColor = isDarkMode ? "#090910" : "#ffffff";
   let [fontsLoaded] = useFonts({
     "Mont-400": Montserrat_400Regular,
     Montserrat: Montserrat_400Regular,
@@ -84,14 +86,46 @@ export default function App() {
     );
   }
 
+  const myTheme = {
+    dark: true,
+    colors: {
+      primary: isDarkMode ? "#fcf3e6" : "#09244B",
+      background: isDarkMode ? "#090910" : "#ffffff",
+      card: isDarkMode ? "#1a1a1a" : "#f0f0f0",
+      text: isDarkMode ? "#ffffff" : "#000000",
+      border: isDarkMode ? "#cccccc" : "#dddddd",
+      notification: "#ff0000",
+    },
+    fonts: {
+      regular: {
+        fontFamily: "Mont-400",
+        fontWeight: "normal" as const,
+      },
+      medium: {
+        fontFamily: "Mont-500",
+        fontWeight: "500" as const,
+      },
+      bold: {
+        fontFamily: "Mont-700", // Varsa bold fontun, yoksa Mont-500 kullanabilirsin
+        fontWeight: "bold" as const,
+      },
+      heavy: {
+        fontFamily: "Mont-900", // Varsa en kalın fontun
+        fontWeight: "900" as const,
+      },
+    },
+  };
+
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: appBackgroundColor }}
+    >
       <KeyboardProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
             <PortalProvider>
               <SafeAreaProvider>
-                <NavigationContainer ref={navigationRef}>
+                <NavigationContainer ref={navigationRef} theme={myTheme}>
                   <RootNavigator />
                   <GlobalConfirmModal />
                   <ToastContainer />

@@ -1,8 +1,11 @@
+import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { AlignLeftIcon } from "@/components/icons/AlignLeftIcon";
 import { AlignCenterIcon } from "@/components/icons/AlignCenterIcon";
 import { AlignRightIcon } from "@/components/icons/AlignRightIcon";
 import { AlignJustifyIcon } from "@/components/icons/AlignJustifyIcon";
+import { useReaderStore } from "@/store/useReaderStore";
+
 const TEXT_ALIGN_OPTIONS = ["left", "center", "right", "justify"] as const;
 
 export const TextAlignSettings = ({
@@ -12,27 +15,42 @@ export const TextAlignSettings = ({
   textAlign: string;
   setTextAlign: (align: (typeof TEXT_ALIGN_OPTIONS)[number]) => void;
 }) => {
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Karşılıkları
+  const colors = {
+    cardBg: isDarkMode ? "#000000" : "#ffffff",
+    primary: isDarkMode ? "#fcf3e6" : "#09244B",
+  };
+
   return (
-    <View style={styles.aligmentContainer}>
+    <View
+      style={[styles.aligmentContainer, { backgroundColor: colors.cardBg }]}
+    >
       {TEXT_ALIGN_OPTIONS.map((option) => (
         <TouchableOpacity
           key={option}
           style={[
             styles.aligmentItem,
+            { backgroundColor: colors.cardBg },
             textAlign === option && {
               borderWidth: 1,
-              borderColor: "#09244B",
+              borderColor: colors.primary,
             },
           ]}
           onPress={() => setTextAlign(option)}
         >
-          {option === "left" && <AlignLeftIcon size={16} color={"#09244B"} />}
-          {option === "center" && (
-            <AlignCenterIcon size={16} color={"#09244B"} />
+          {option === "left" && (
+            <AlignLeftIcon size={16} color={colors.primary} />
           )}
-          {option === "right" && <AlignRightIcon size={16} color={"#09244B"} />}
+          {option === "center" && (
+            <AlignCenterIcon size={16} color={colors.primary} />
+          )}
+          {option === "right" && (
+            <AlignRightIcon size={16} color={colors.primary} />
+          )}
           {option === "justify" && (
-            <AlignJustifyIcon size={16} color={"#09244B"} />
+            <AlignJustifyIcon size={16} color={colors.primary} />
           )}
         </TouchableOpacity>
       ))}
@@ -42,7 +60,6 @@ export const TextAlignSettings = ({
 
 const styles = StyleSheet.create({
   aligmentContainer: {
-    backgroundColor: "#ffffff",
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
@@ -55,14 +72,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
     flex: 1,
-    backgroundColor: "#ffffff",
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
   aligmentText: {
     fontSize: 12,
-    color: "#1A1A1A",
     fontFamily: "Mont-500",
   },
 });

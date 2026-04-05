@@ -11,6 +11,7 @@ import { FontTypeIcon } from "@/components/icons/FontTypeIcon";
 import { SlidingHorizontalIcon } from "@/components/icons/SlidingHorizontalIcon";
 import { PaddingHorizontalIcon } from "@/components/icons/PaddingHorizontalIcon";
 import { LineHeightIcon } from "@/components/icons/LineHeightIcon";
+import { useReaderStore } from "@/store/useReaderStore";
 
 const LINE_HEIGHT_LABELS = ["Küçük Aralık", "Orta Aralık", "Büyük Aralık"];
 const PADDING_LABELS = ["Küçük Genişlik", "Orta Genişlik", "Büyük Genişlik"];
@@ -30,6 +31,15 @@ export const LayoutSettings = ({
   paddingHorizontal,
   setPaddingHorizontal,
 }: LayoutSettingsProps) => {
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Karşılıkları
+  const colors = {
+    cardBg: isDarkMode ? "#000000" : "#FFFFFF",
+    primary: isDarkMode ? "#fcf3e6" : "#09244B",
+    secondaryText: isDarkMode ? "#fcf3e6" : "#606060",
+  };
+
   const onLineHeightScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
     const index = Math.round(x / ITEM_WIDTH);
@@ -38,10 +48,8 @@ export const LayoutSettings = ({
     }
   };
 
-  // Padding Horizontal için kaydırma kontrolü
   const onPaddingScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const x = e.nativeEvent.contentOffset.x;
-    const index = Math.round(x / PADDING_LABELS.length); // Hatalı bölme düzeltildi: ITEM_WIDTH olmalı
     const actualIndex = Math.round(x / ITEM_WIDTH);
     if (actualIndex >= 0 && actualIndex < PADDING_LABELS.length) {
       setPaddingHorizontal(actualIndex + 1);
@@ -50,8 +58,8 @@ export const LayoutSettings = ({
 
   return (
     <View style={styles.row}>
-      <View style={styles.card}>
-        <LineHeightIcon size={16} strokeWidth={0.1} color="#09244B" />
+      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+        <LineHeightIcon size={16} strokeWidth={0.1} color={colors.primary} />
 
         <View style={{ width: ITEM_WIDTH }}>
           <FlatList
@@ -66,7 +74,10 @@ export const LayoutSettings = ({
             onMomentumScrollEnd={onLineHeightScroll}
             renderItem={({ item }) => (
               <View style={[styles.swipeItem, { width: ITEM_WIDTH }]}>
-                <Text style={styles.swipeText} numberOfLines={1}>
+                <Text
+                  style={[styles.swipeText, { color: colors.secondaryText }]}
+                  numberOfLines={1}
+                >
                   {item}
                 </Text>
               </View>
@@ -74,11 +85,19 @@ export const LayoutSettings = ({
             keyExtractor={(item) => `lh-${item}`}
           />
         </View>
-        <SlidingHorizontalIcon size={16} strokeWidth={0.5} color="#09244B" />
+        <SlidingHorizontalIcon
+          size={16}
+          strokeWidth={0.5}
+          color={colors.primary}
+        />
       </View>
 
-      <View style={styles.card}>
-        <PaddingHorizontalIcon size={16} strokeWidth={1.5} color="#09244B" />
+      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+        <PaddingHorizontalIcon
+          size={16}
+          strokeWidth={1.5}
+          color={colors.primary}
+        />
 
         <View style={{ width: ITEM_WIDTH }}>
           <FlatList
@@ -93,7 +112,10 @@ export const LayoutSettings = ({
             onMomentumScrollEnd={onPaddingScroll}
             renderItem={({ item }) => (
               <View style={[styles.swipeItem, { width: ITEM_WIDTH }]}>
-                <Text style={styles.swipeText} numberOfLines={1}>
+                <Text
+                  style={[styles.swipeText, { color: colors.secondaryText }]}
+                  numberOfLines={1}
+                >
                   {item}
                 </Text>
               </View>
@@ -101,7 +123,11 @@ export const LayoutSettings = ({
             keyExtractor={(item) => `ph-${item}`}
           />
         </View>
-        <SlidingHorizontalIcon size={16} strokeWidth={0.5} color="#09244B" />
+        <SlidingHorizontalIcon
+          size={16}
+          strokeWidth={0.5}
+          color={colors.primary}
+        />
       </View>
     </View>
   );
@@ -115,9 +141,8 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   card: {
-    flex: 1, // İkisi de eşit yer kaplar
+    flex: 1,
     height: 45,
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     flexDirection: "row",
     alignItems: "center",
@@ -132,7 +157,6 @@ const styles = StyleSheet.create({
   swipeText: {
     fontFamily: "Mont-500",
     fontSize: 12,
-    color: "#606060",
     textAlign: "center",
   },
 });

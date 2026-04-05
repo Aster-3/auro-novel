@@ -10,6 +10,7 @@ import { TableOfContentsView } from "./TableOfContentsView";
 import { SettingsView } from "./SettingsView";
 import { SheetType } from "@/screens/ChapterReadScreen";
 import { Portal } from "@gorhom/portal";
+import { useReaderStore } from "@/store/useReaderStore";
 
 interface ChapterBottomSheetProps {
   activeSheet: SheetType;
@@ -41,6 +42,7 @@ export const ChapterBottomSheet = forwardRef<
     ),
     [],
   );
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
 
   return (
     <Portal>
@@ -53,13 +55,18 @@ export const ChapterBottomSheet = forwardRef<
         enableContentPanningGesture={false}
         animationConfigs={animationConfigs}
         backgroundStyle={{
-          backgroundColor: "#F9F9F9",
+          backgroundColor: isDarkMode ? "#0e0e0e" : "#F8F9FA",
           borderTopLeftRadius: 26,
           borderTopRightRadius: 26,
         }}
         handleIndicatorStyle={styles.indicator}
       >
-        <BottomSheetView style={styles.contentContainer}>
+        <BottomSheetView
+          style={[
+            styles.contentContainer,
+            { backgroundColor: isDarkMode ? "#0e0e0e" : "#F8F9FA" },
+          ]}
+        >
           {activeSheet === "SETTINGS" && <SettingsView />}
           {activeSheet === "TOC" && <TableOfContentsView />}
           {activeSheet === "MORE" && <MoreOptions />}
@@ -73,6 +80,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingBottom: 40,
     flex: 1,
+    minHeight: 200,
   },
   indicator: {
     backgroundColor: "#e4e4e4",

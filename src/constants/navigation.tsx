@@ -50,7 +50,7 @@ export type RootStackParamList = {
     isChapterAvailable: boolean;
     isDraft?: boolean;
   };
-  NovelRead: {
+  ChapterRead: {
     id: string;
   };
 };

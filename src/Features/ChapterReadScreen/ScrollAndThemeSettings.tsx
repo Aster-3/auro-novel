@@ -1,15 +1,11 @@
 import React from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
-// İhtiyacın olmayan ikonları ve lodash'i kaldırdım
-import { AlignLeftIcon } from "@/components/icons/AlignLeftIcon";
-import { AlignRightIcon } from "@/components/icons/AlignRightIcon";
 import { DayIcon } from "@/components/icons/DayIcon";
-import { AlignJustifyIcon } from "@/components/icons/AlignJustifyIcon"; // Gece ikonu için başka ikonun yoksa kalsın
 import { NightIcon } from "@/components/icons/NightIcon";
 import { ScrollVerticalIcon } from "@/components/icons/ScrollVerticalIcon";
 import { ScrollHorizontalIcon } from "@/components/icons/ScrollHorizontalIcon";
+import { useReaderStore } from "@/store/useReaderStore";
 
-// Tipleri tanımlayalım
 const SCROLL_MODE_OPTIONS = ["vertical", "horizontal"] as const;
 const THEME_MODE_OPTIONS = ["day", "night"] as const;
 
@@ -29,27 +25,39 @@ export const ScrollAndThemeSettings = ({
   themeMode,
   setThemeMode,
 }: Props) => {
-  // İkonları bir nesne içinde tutmak JSX'i daha temiz hale getirir
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Karşılıkları
+  const colors = {
+    cardBg: isDarkMode ? "#000000" : "#FFFFFF",
+    primary: isDarkMode ? "#fcf3e6" : "#09244B",
+  };
+
   const scrollIcons = {
-    vertical: <ScrollVerticalIcon size={16} color={"#09244B"} />,
-    horizontal: <ScrollHorizontalIcon size={16} color={"#09244B"} />,
+    vertical: <ScrollVerticalIcon size={16} color={colors.primary} />,
+    horizontal: <ScrollHorizontalIcon size={16} color={colors.primary} />,
   };
 
   const themeIcons = {
-    day: <DayIcon size={16} color={"#09244B"} />,
-    night: <NightIcon size={16} color={"#09244B"} />, // Buraya uygun bir NightIcon koymanı öneririm
+    day: <DayIcon size={16} color={colors.primary} />,
+    night: <NightIcon size={16} color={colors.primary} />,
   };
 
   return (
     <View style={styles.wrapper}>
-      <View style={styles.alignmentContainer}>
+      <View
+        style={[styles.alignmentContainer, { backgroundColor: colors.cardBg }]}
+      >
         {SCROLL_MODE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             activeOpacity={0.7}
             style={[
               styles.alignmentItem,
-              scrollMode === option && styles.activeItem,
+              scrollMode === option && [
+                styles.activeItem,
+                { borderColor: colors.primary },
+              ],
             ]}
             onPress={() => setScrollMode(option)}
           >
@@ -58,14 +66,19 @@ export const ScrollAndThemeSettings = ({
         ))}
       </View>
 
-      <View style={styles.alignmentContainer}>
+      <View
+        style={[styles.alignmentContainer, { backgroundColor: colors.cardBg }]}
+      >
         {THEME_MODE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             activeOpacity={0.7}
             style={[
               styles.alignmentItem,
-              themeMode === option && styles.activeItem,
+              themeMode === option && [
+                styles.activeItem,
+                { borderColor: colors.primary },
+              ],
             ]}
             onPress={() => setThemeMode(option)}
           >
@@ -86,7 +99,6 @@ const styles = StyleSheet.create({
   },
   alignmentContainer: {
     flex: 1,
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
     height: 45,
@@ -103,6 +115,5 @@ const styles = StyleSheet.create({
   },
   activeItem: {
     borderWidth: 1,
-    borderColor: "#09244B",
   },
 });

@@ -8,6 +8,7 @@ import Animated, {
   clamp,
 } from "react-native-reanimated";
 import { RightArrowIcon } from "@/components/icons/RightArrowIcon";
+import { useReaderStore } from "@/store/useReaderStore";
 
 interface ProgressSliderProps {
   initialProgress: number;
@@ -24,6 +25,14 @@ export const ProgressSlider = ({
 }: ProgressSliderProps) => {
   const trackWidth = useSharedValue(0);
   const progress = useSharedValue(initialProgress);
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Karşılıkları
+  const colors = {
+    background: isDarkMode ? "#000000" : "#ffffff", // ffffff -> 000000
+    primary: isDarkMode ? "#fcf3e6" : "#09244B", // 09244B (Koyu Lacivert) -> Açık Bej/Gold (Kontrast için)
+    track: isDarkMode ? "#3A3A3C" : "#D1D1D6", // D1D1D6 -> 3A3A3C (iOS Dark Gray)
+  };
 
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
@@ -37,18 +46,22 @@ export const ProgressSlider = ({
 
   const animatedFillStyle = useAnimatedStyle(() => ({
     width: `${progress.value * 100}%`,
+    backgroundColor: colors.primary,
   }));
 
   const animatedKnobStyle = useAnimatedStyle(() => ({
     left: `${progress.value * 100}%`,
     transform: [{ translateX: -6 }],
+    backgroundColor: colors.primary,
   }));
 
   return (
-    <View style={styles.itemContainer}>
+    <View
+      style={[styles.itemContainer, { backgroundColor: colors.background }]}
+    >
       <View style={styles.arrowBox} onTouchEnd={onPrev}>
         <View style={{ transform: [{ rotate: "180deg" }] }}>
-          <RightArrowIcon size={18} strokeWidth={2.2} color="#09244B" />
+          <RightArrowIcon size={18} strokeWidth={2.2} color={colors.primary} />
         </View>
       </View>
 
@@ -57,7 +70,7 @@ export const ProgressSlider = ({
           style={styles.sliderZone}
           onLayout={(e) => (trackWidth.value = e.nativeEvent.layout.width)}
         >
-          <View style={styles.track}>
+          <View style={[styles.track, { backgroundColor: colors.track }]}>
             <Animated.View style={[styles.fill, animatedFillStyle]} />
           </View>
           <Animated.View style={[styles.knob, animatedKnobStyle]} />
@@ -65,7 +78,7 @@ export const ProgressSlider = ({
       </GestureDetector>
 
       <View style={styles.arrowBox} onTouchEnd={onNext}>
-        <RightArrowIcon size={18} strokeWidth={2.2} color="#09244B" />
+        <RightArrowIcon size={18} strokeWidth={2.2} color={colors.primary} />
       </View>
     </View>
   );
@@ -73,7 +86,6 @@ export const ProgressSlider = ({
 
 const styles = StyleSheet.create({
   itemContainer: {
-    backgroundColor: "#ffffff",
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
@@ -93,20 +105,17 @@ const styles = StyleSheet.create({
   },
   track: {
     height: 4,
-    backgroundColor: "#D1D1D6",
     borderRadius: 2,
     width: "100%",
     overflow: "hidden",
   },
   fill: {
     height: "100%",
-    backgroundColor: "#09244B",
   },
   knob: {
     position: "absolute",
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: "#09244B",
   },
 });

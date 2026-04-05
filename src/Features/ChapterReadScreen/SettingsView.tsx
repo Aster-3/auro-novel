@@ -12,7 +12,6 @@ export const SettingsView = () => {
   const fontSize = useReaderStore((state) => state.fontSize);
   const setFontSize = useReaderStore((state) => state.setFontSize);
 
-  const fontFamily = useReaderStore((state) => state.fontFamily);
   const setFontFamily = useReaderStore((state) => state.setFontFamily);
 
   const lineHeight = useReaderStore((state) => state.lineHeight);
@@ -37,12 +36,17 @@ export const SettingsView = () => {
   const handleProgressChange = (val: number) => {
     setProgressText((val * 100).toFixed(1).replace(".", ","));
   };
-
   return (
     <View style={styles.container}>
-      {/* İlerleme Bölümü */}
       <View style={styles.progressWrapper}>
-        <Text style={styles.progressText}>{progressText}%</Text>
+        <Text
+          style={[
+            styles.progressText,
+            { color: isDarkMode ? "#fcf3e6" : "#1A1A1A" },
+          ]}
+        >
+          {progressText}%
+        </Text>
         <ProgressSlider
           initialProgress={0.098}
           onProgressChange={handleProgressChange}
@@ -51,14 +55,12 @@ export const SettingsView = () => {
         />
       </View>
 
-      {/* Font Ayarları (Store'dan geliyor) */}
       <FontSettingsControl
         fontSize={fontSize}
         setFontSize={setFontSize}
         setCurrentFont={setFontFamily}
       />
 
-      {/* Layout Ayarları (Store'dan geliyor) */}
       <LayoutSettings
         lineHeight={lineHeight}
         setLineHeight={setLineHeight}
@@ -66,12 +68,10 @@ export const SettingsView = () => {
         setPaddingHorizontal={setPaddingHorizontal}
       />
 
-      {/* Hizalama Ayarları (Store'dan geliyor) */}
       <TextAlignSettings textAlign={textAlign} setTextAlign={setTextAlign} />
 
-      {/* Tema ve Kaydırma (isDarkMode store'dan) */}
       <ScrollAndThemeSettings
-        scrollMode={scrollMode} // Şimdilik statik veya store'a eklenebilir
+        scrollMode={scrollMode}
         setScrollMode={setScrollMode}
         themeMode={isDarkMode ? "night" : "day"}
         setThemeMode={toggleDarkMode}
@@ -84,15 +84,14 @@ const styles = StyleSheet.create({
   container: {
     paddingHorizontal: 20,
     gap: 16,
-    backgroundColor: "#F8F9FA",
   },
   progressWrapper: {
     alignItems: "center",
   },
   progressText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
-    color: "#1A1A1A",
-    marginBottom: 8,
+    marginVertical: 8,
+    paddingBottom: 4,
   },
 });

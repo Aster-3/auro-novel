@@ -7,14 +7,13 @@ import Animated, {
   withSpring,
 } from "react-native-reanimated";
 
-// Orijinal İkonlar ve Tipler
 import { ChapterCommentIcon } from "@/components/icons/ChapterCommentIcon";
 import { ChapterMoreOptions } from "@/components/icons/ChapterMoreOptions";
 import { SettingsIcon } from "@/components/icons/SettingsIcon";
 import { TableOfContentsIcon } from "@/components/icons/TableOfContentsIcon";
 import { SheetType } from "@/screens/ChapterReadScreen";
+import { useReaderStore } from "@/store/useReaderStore";
 
-// Etkileşimli Buton Bileşeni (Dışarıya etkisi yok, sadece iç animasyon)
 const NavButton = ({
   children,
   onPress,
@@ -26,23 +25,28 @@ const NavButton = ({
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: withTiming(scale.value === 1 ? 1 : 0.7, { duration: 100 }), // Bastığında hafif solma hissi
+    opacity: withTiming(scale.value === 1 ? 1 : 0.8, { duration: 60 }),
   }));
 
   return (
     <Pressable
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       onPressIn={() => {
-        // Çok hızlı ve sert bir yay (damping yüksek, stiffness yüksek)
-        // Bu "fiziksel buton" hissini verir, yaylanma yapmaz
-        scale.value = withSpring(0.92, { damping: 20, stiffness: 300 });
+        scale.value = withSpring(0.9, {
+          damping: 15,
+          stiffness: 400,
+          mass: 0.5,
+        });
       }}
       onPressOut={() => {
-        scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+        scale.value = withSpring(1, { damping: 15, stiffness: 400 });
       }}
       onPress={onPress}
       style={styles.menuItem}
     >
-      <Animated.View style={animatedStyle}>{children}</Animated.View>
+      <Animated.View style={[styles.iconContainer, animatedStyle]}>
+        {children}
+      </Animated.View>
     </Pressable>
   );
 };
@@ -54,32 +58,50 @@ export const BottomMenu = ({
   isMenuVisible: boolean;
   handleOpenSheet: (type: SheetType) => void;
 }) => {
+  // 1. TEMA DEĞERLERİNİ ALALIM
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  // Renk Paleti (Apple Tarzı Sistem Renkleri)
+  const theme = {
+    background: isDarkMode ? "#101011" : "#FFFFFF",
+    border: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#E5E5E5",
+    icon: isDarkMode ? "#E5E5EA" : "#1A1A1A",
+  };
+
   const bottomBarStyle = useAnimatedStyle(() => ({
     transform: [
       {
-        translateY: withTiming(isMenuVisible ? 0 : 100, {
+        translateY: withTiming(isMenuVisible ? 0 : 120, {
           duration: 300,
         }),
       },
     ],
+    // Arka plan rengini de yumuşak bir geçişle değiştirebiliriz (isteğe bağlı)
+    backgroundColor: withTiming(theme.background, { duration: 300 }),
   }));
 
   return (
-    <Animated.View style={[styles.bottomBar, bottomBarStyle]}>
+    <Animated.View
+      style={[
+        styles.bottomBar,
+        bottomBarStyle,
+        { borderTopColor: theme.border }, // Sınır çizgisi rengi
+      ]}
+    >
       <NavButton onPress={() => handleOpenSheet("TOC")}>
-        <TableOfContentsIcon size={22} color="#1A1A1A" />
-      </NavButton>
-
-      <NavButton onPress={() => handleOpenSheet("SETTINGS")}>
-        <SettingsIcon size={22} color="#1A1A1A" />
+        <TableOfContentsIcon size={22} color={theme.icon} />
       </NavButton>
 
       <NavButton onPress={() => {}}>
-        <ChapterCommentIcon size={22} color="#1A1A1A" />
+        <ChapterCommentIcon size={22} color={theme.icon} />
+      </NavButton>
+
+      <NavButton onPress={() => handleOpenSheet("SETTINGS")}>
+        <SettingsIcon size={22} color={theme.icon} />
       </NavButton>
 
       <NavButton onPress={() => handleOpenSheet("MORE")}>
-        <ChapterMoreOptions size={22} color="#1A1A1A" />
+        <ChapterMoreOptions size={22} color={theme.icon} />
       </NavButton>
     </Animated.View>
   );
@@ -91,31 +113,34 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 75,
-    backgroundColor: "#FFFFFF", // %100 mat beyaz
+    height: Platform.OS === "ios" ? 85 : 70,
     flexDirection: "row",
     justifyContent: "space-around",
-    alignItems: "center",
-    paddingBottom: Platform.OS === "ios" ? 25 : 10,
-    zIndex: 100,
+    alignItems: "stretch",
+    zIndex: 1000,
     borderTopWidth: 0.5,
-    borderTopColor: "#E5E5E5",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 5,
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
       },
       android: {
-        elevation: 4,
+        elevation: 10,
       },
     }),
   },
   menuItem: {
     flex: 1,
-    height: "100%",
-    alignItems: "center",
     justifyContent: "center",
+    alignItems: "center",
+  },
+  iconContainer: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: Platform.OS === "ios" ? 20 : 10,
   },
 });

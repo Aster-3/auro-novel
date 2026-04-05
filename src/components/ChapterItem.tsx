@@ -29,7 +29,7 @@ export const ChapterItem = ({
   const navigation = useAppNavigation();
 
   const handlePress = () => {
-    navigation.navigate("NovelRead", {
+    navigation.navigate("ChapterRead", {
       id: chapter.id,
     });
   };
