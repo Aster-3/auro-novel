@@ -13,23 +13,19 @@ import {
   TouchableOpacity,
   Platform,
   Keyboard,
-  TextInput,
 } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
-import {
-  BottomSheetModal,
+import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetTextInput,
 } from "@gorhom/bottom-sheet";
+import { Portal } from "@gorhom/portal";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { LoadingDots } from "@/components/LoadingDots";
 import { useToastStore } from "@/store/useToastStore";
-import {
-  synopsisValidationSchema,
-  titleValidationSchema,
-} from "@/schemas/novel";
+import { synopsisValidationSchema } from "@/schemas/novel";
 
 export interface SynopsisEditSheetRef {
   present: () => void;
@@ -46,26 +42,19 @@ export const SynopsisEditSheet = forwardRef<
   SynopsisEditSheetRef,
   SynopsisEditSheetProps
 >(({ id, initialSynopsis, onClose }, ref) => {
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
   const currentIndex = useRef<number>(-1);
 
-  // Uncontrolled yaklaşım: değeri ref'te tutuyoruz, state'e almıyoruz.
-  // Bu sayede her render'da input'un value'su resetlenmiyor ve imleç yerinde kalıyor.
   const synopsisValue = useRef(initialSynopsis);
-
   const { mutate: updateNovel, isPending } = useNovelMutation(id);
 
-  const animationConfigs = useMemo(
-    () => ({
-      duration: 280,
-    }),
-    [],
-  );
+  const animationConfigs = useMemo(() => ({ duration: 280 }), []);
+  const snapPoints = useMemo(() => ["52%", "90%"], []);
 
   useEffect(() => {
-    // Sheet kapalıyken dışarıdan gelen prop değişikliklerini yakala
     if (currentIndex.current === -1) {
       synopsisValue.current = initialSynopsis;
       setIsDirty(false);
@@ -80,13 +69,13 @@ export const SynopsisEditSheet = forwardRef<
 
     const showSub = Keyboard.addListener(showEvent, () => {
       if (currentIndex.current !== -1) {
-        bottomSheetModalRef.current?.expand();
+        bottomSheetRef.current?.expand();
       }
     });
 
     const hideSub = Keyboard.addListener(hideEvent, () => {
       if (currentIndex.current !== -1) {
-        bottomSheetModalRef.current?.snapToIndex(0);
+        bottomSheetRef.current?.snapToIndex(0);
       }
     });
 
@@ -96,24 +85,26 @@ export const SynopsisEditSheet = forwardRef<
     };
   }, []);
 
-  const handleDismiss = useCallback(() => {
+  const handleClose = useCallback(() => {
     synopsisValue.current = initialSynopsis;
     setIsDirty(false);
     setError(null);
     currentIndex.current = -1;
+    setIsVisible(false);
     Keyboard.dismiss();
     if (onClose) onClose();
   }, [initialSynopsis, onClose]);
 
   useImperativeHandle(ref, () => ({
     present: () => {
-      // Sheet açılırken değeri sıfırla
       synopsisValue.current = initialSynopsis;
       setIsDirty(false);
       setError(null);
-      bottomSheetModalRef.current?.present();
+      setIsVisible(true);
+      // Portal render olduktan sonra sheet'i aç
+      setTimeout(() => bottomSheetRef.current?.snapToIndex(0), 10);
     },
-    close: () => bottomSheetModalRef.current?.dismiss(),
+    close: () => bottomSheetRef.current?.close(),
   }));
 
   const renderBackdrop = useCallback(
@@ -145,7 +136,7 @@ export const SynopsisEditSheet = forwardRef<
             type: "Başarılı",
             message: "Özet başarıyla güncellendi!",
           });
-          bottomSheetModalRef.current?.dismiss();
+          bottomSheetRef.current?.close();
         },
         onError: (err: any) => {
           setError(err?.message || "Bir hata oluştu.");
@@ -154,81 +145,82 @@ export const SynopsisEditSheet = forwardRef<
     );
   };
 
-  const snapPoints = useMemo(() => ["52%", "90%"], []);
+  if (!isVisible) return null;
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetModalRef}
-      index={0}
-      snapPoints={snapPoints}
-      backdropComponent={renderBackdrop}
-      enableContentPanningGesture={false}
-      enablePanDownToClose={false}
-      enableHandlePanningGesture={false}
-      backgroundStyle={styles.sheetBackground}
-      animationConfigs={animationConfigs}
-      handleIndicatorStyle={styles.indicator}
-      enableDynamicSizing={false}
-      onDismiss={handleDismiss}
-      onAnimate={(_from, to) => {
-        currentIndex.current = to;
-      }}
-    >
-      <BottomSheetView style={styles.container}>
-        <Text style={styles.title}>Özet</Text>
+    <Portal>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enableContentPanningGesture={false}
+        enablePanDownToClose={true}
+        backgroundStyle={styles.sheetBackground}
+        animationConfigs={animationConfigs}
+        handleIndicatorStyle={styles.indicator}
+        enableDynamicSizing={false}
+        onClose={handleClose}
+        onChange={(index) => {
+          currentIndex.current = index;
+          if (index === -1) handleClose();
+        }}
+      >
+        <BottomSheetView style={styles.container}>
+          <Text style={styles.title}>Özet</Text>
 
-        <BottomSheetTextInput
-          style={[styles.input, error ? styles.inputError : null]}
-          defaultValue={initialSynopsis}
-          onChangeText={(text) => {
-            synopsisValue.current = text;
-            const dirty = text !== initialSynopsis;
-            setIsDirty(dirty);
-            if (error) setError(null);
-          }}
-          multiline
-          placeholder="Roman özetini girin..."
-          textAlignVertical="top"
-          placeholderTextColor="#94A3B8"
-        />
+          <BottomSheetTextInput
+            style={[styles.input, error ? styles.inputError : null]}
+            defaultValue={initialSynopsis}
+            onChangeText={(text) => {
+              synopsisValue.current = text;
+              const dirty = text !== initialSynopsis;
+              setIsDirty(dirty);
+              if (error) setError(null);
+            }}
+            multiline
+            placeholder="Roman özetini girin..."
+            textAlignVertical="top"
+            placeholderTextColor="#94A3B8"
+            editable={!isPending}
+          />
 
-        {error && (
-          <Animated.Text
-            entering={FadeInUp}
-            exiting={FadeOutUp}
-            style={styles.errorText}
-          >
-            {error}
-          </Animated.Text>
-        )}
-
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (isPending || !isDirty) && {
-              opacity: 0.6,
-            },
-          ]}
-          activeOpacity={0.8}
-          onPress={handleSave}
-          disabled={isPending || !isDirty}
-        >
-          {isPending ? (
-            <LoadingDots />
-          ) : (
-            <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+          {error && (
+            <Animated.Text
+              entering={FadeInUp}
+              exiting={FadeOutUp}
+              style={styles.errorText}
+            >
+              {error}
+            </Animated.Text>
           )}
-        </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => bottomSheetModalRef.current?.dismiss()}
-          style={styles.cancelButton}
-          disabled={isPending}
-        >
-          <Text style={styles.cancelButtonText}>İptal</Text>
-        </TouchableOpacity>
-      </BottomSheetView>
-    </BottomSheetModal>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (isPending || !isDirty) && { opacity: 0.6 },
+            ]}
+            activeOpacity={0.8}
+            onPress={handleSave}
+            disabled={isPending || !isDirty}
+          >
+            {isPending ? (
+              <LoadingDots />
+            ) : (
+              <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={() => bottomSheetRef.current?.close()}
+            style={styles.cancelButton}
+            disabled={isPending}
+          >
+            <Text style={styles.cancelButtonText}>İptal</Text>
+          </TouchableOpacity>
+        </BottomSheetView>
+      </BottomSheet>
+    </Portal>
   );
 });
 

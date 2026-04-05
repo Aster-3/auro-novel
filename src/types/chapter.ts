@@ -1,4 +1,5 @@
 import { SortType } from "./constants";
+import { SeriesStatus } from "./novel";
 
 export enum PublicationStatus {
   PUBLISHED = "published",
@@ -25,6 +26,7 @@ export interface ChapterDetail {
   isLocked: boolean;
   nextChapterId: string | null;
   previousChapterId: string | null;
+  novelStatus: SeriesStatus;
 }
 
 export interface GetChapters {

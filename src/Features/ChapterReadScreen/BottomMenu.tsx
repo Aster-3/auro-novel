@@ -63,7 +63,7 @@ export const BottomMenu = ({
 
   // Renk Paleti (Apple Tarzı Sistem Renkleri)
   const theme = {
-    background: isDarkMode ? "#101011" : "#FFFFFF",
+    background: isDarkMode ? "#1C1C1E" : "#FFFFFF",
     border: isDarkMode ? "rgba(255, 255, 255, 0.1)" : "#E5E5E5",
     icon: isDarkMode ? "#E5E5EA" : "#1A1A1A",
   };

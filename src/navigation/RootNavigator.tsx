@@ -20,12 +20,11 @@ import CreateNovelScreen from "@/screens/CreateNovelScreen";
 import NovelPanelScreen from "@/screens/NovelPanelScreen";
 import UpdateTagCategoryScreen from "@/screens/UpdateTagCategoryScreen";
 import ChapterEditScreen from "@/screens/ChapterEditScreen";
-import NovelReadScreen from "@/screens/ChapterReadScreen";
+import ChapterReadScreen from "@/screens/ChapterReadScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useReaderStore } from "@/store/useReaderStore";
-import { de } from "zod/v4/locales";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -54,8 +53,6 @@ export const RootNavigator = () => {
         orientation: "portrait",
         freezeOnBlur: true,
         contentStyle: { backgroundColor: navBackgroundColor },
-        // cardStyle: { backgroundColor: navBackgroundColor },
-        // headerStyle: { backgroundColor: navBackgroundColor },
       }}
     >
       <Stack.Screen name="Main" component={TabNavigator} />
@@ -100,7 +97,7 @@ export const RootNavigator = () => {
             animation: "fade",
             contentStyle: { backgroundColor: navBackgroundColor },
           }}
-          component={NovelReadScreen}
+          component={ChapterReadScreen}
         />
       </Stack.Group>
 

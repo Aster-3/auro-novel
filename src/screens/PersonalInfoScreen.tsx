@@ -149,10 +149,6 @@ const PersonalInfoScreen = () => {
     }
   }, [userData]);
 
-  if (isLoading || error) {
-    return <Text>{error?.message || "Yükleniyor..."}</Text>;
-  }
-
   const isFormReady = () => {
     if (!userData) return false;
     return (
@@ -163,6 +159,10 @@ const PersonalInfoScreen = () => {
       formData.profileBackgroundImageUrl !== userData.profileBackgroundImageUrl
     );
   };
+
+  if (isLoading || error) {
+    return <Text>{error?.message || "Yükleniyor..."}</Text>;
+  }
 
   return (
     <Screen>

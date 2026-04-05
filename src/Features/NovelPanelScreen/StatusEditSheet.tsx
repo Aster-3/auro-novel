@@ -5,15 +5,15 @@ import React, {
   useMemo,
   useRef,
   useState,
-  useEffect,
 } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import {
-  BottomSheetModal,
+import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
 } from "@gorhom/bottom-sheet";
+
+import { Portal } from "@gorhom/portal";
 import { SeriesStatus } from "@/types/novel";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { LoadingDots } from "@/components/LoadingDots";
@@ -42,19 +42,27 @@ export const StatusEditSheet = forwardRef<
   StatusEditSheetRef,
   StatusEditSheetProps
 >(({ id, initialStatus, onClose }, ref) => {
-  const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+  const bottomSheetRef = useRef<BottomSheet>(null);
+  const [isVisible, setIsVisible] = useState(false); // Portal render kontrolü
   const [selectedStatus, setSelectedStatus] =
     useState<SeriesStatus>(initialStatus);
   const { mutate: updateNovel, isPending } = useNovelMutation(id);
 
   const isDirty = selectedStatus !== initialStatus;
 
+  const handleClose = useCallback(() => {
+    setIsVisible(false);
+    if (onClose) onClose();
+  }, [onClose]);
+
   useImperativeHandle(ref, () => ({
     present: () => {
       setSelectedStatus(initialStatus);
-      bottomSheetModalRef.current?.present();
+      setIsVisible(true);
+      // Portal'ın render olması için kısa bir süre tanıyalım
+      setTimeout(() => bottomSheetRef.current?.expand(), 10);
     },
-    close: () => bottomSheetModalRef.current?.dismiss(),
+    close: () => bottomSheetRef.current?.close(),
   }));
 
   const handleSave = () => {
@@ -66,9 +74,8 @@ export const StatusEditSheet = forwardRef<
             type: "Başarılı",
             message: "Durum başarıyla güncellendi!",
           });
-          bottomSheetModalRef.current?.dismiss();
+          bottomSheetRef.current?.close();
         },
-
         onError: () => {
           useToastStore.getState().showToast({
             type: "Hata",
@@ -94,68 +101,72 @@ export const StatusEditSheet = forwardRef<
 
   const snapPoints = useMemo(() => ["55%"], []);
 
+  if (!isVisible) return null;
+
   return (
-    <BottomSheetModal
-      ref={bottomSheetModalRef}
-      index={0}
-      snapPoints={snapPoints}
-      backdropComponent={renderBackdrop}
-      enablePanDownToClose={true}
-      backgroundStyle={styles.sheetBackground}
-      enableDynamicSizing={false}
-      handleIndicatorStyle={styles.indicator}
-      onDismiss={onClose}
-    >
-      <BottomSheetView style={styles.container}>
-        <Text style={styles.title}>Yayın Durumu</Text>
+    <Portal>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={0}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        enablePanDownToClose={true}
+        backgroundStyle={styles.sheetBackground}
+        enableDynamicSizing={false}
+        handleIndicatorStyle={styles.indicator}
+        onClose={handleClose}
+      >
+        <BottomSheetView style={styles.container}>
+          <Text style={styles.title}>Yayın Durumu</Text>
 
-        <View style={styles.optionsContainer}>
-          {STATUS_OPTIONS.map((option) => {
-            const isSelected = selectedStatus === option.value;
-            return (
-              <TouchableOpacity
-                key={option.value}
-                style={styles.optionRow}
-                activeOpacity={0.7}
-                onPress={() => setSelectedStatus(option.value)}
-              >
-                <Text
-                  style={[
-                    styles.optionLabel,
-                    isSelected && styles.optionLabelActive,
-                  ]}
+          <View style={styles.optionsContainer}>
+            {STATUS_OPTIONS.map((option) => {
+              const isSelected = selectedStatus === option.value;
+              return (
+                <TouchableOpacity
+                  key={option.value}
+                  style={styles.optionRow}
+                  activeOpacity={0.7}
+                  onPress={() => setSelectedStatus(option.value)}
                 >
-                  {option.label}
-                </Text>
-                <View
-                  style={[
-                    styles.radioOuter,
-                    isSelected && styles.radioOuterActive,
-                  ]}
-                >
-                  {isSelected && <View style={styles.radioInner} />}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                  <Text
+                    style={[
+                      styles.optionLabel,
+                      isSelected && styles.optionLabelActive,
+                    ]}
+                  >
+                    {option.label}
+                  </Text>
+                  <View
+                    style={[
+                      styles.radioOuter,
+                      isSelected && styles.radioOuterActive,
+                    ]}
+                  >
+                    {isSelected && <View style={styles.radioInner} />}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
-        <TouchableOpacity
-          style={[
-            styles.saveButton,
-            (isPending || !isDirty) && styles.disabledButton,
-          ]}
-          onPress={handleSave}
-          disabled={isPending || !isDirty}
-        >
-          {isPending ? (
-            <LoadingDots />
-          ) : (
-            <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
-          )}
-        </TouchableOpacity>
-      </BottomSheetView>
-    </BottomSheetModal>
+          <TouchableOpacity
+            style={[
+              styles.saveButton,
+              (isPending || !isDirty) && styles.disabledButton,
+            ]}
+            onPress={handleSave}
+            disabled={isPending || !isDirty}
+          >
+            {isPending ? (
+              <LoadingDots />
+            ) : (
+              <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+            )}
+          </TouchableOpacity>
+        </BottomSheetView>
+      </BottomSheet>
+    </Portal>
   );
 });
 
@@ -235,14 +246,5 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     fontWeight: "600",
     fontSize: 15,
-  },
-  cancelButton: {
-    marginTop: 12,
-    padding: 8,
-  },
-  cancelButtonText: {
-    color: "#64748B",
-    textAlign: "center",
-    fontSize: 14,
   },
 });

@@ -55,6 +55,7 @@ export const OverviewOptions = ({
   const navigation = useAppNavigation();
 
   const handlePress = (option: any) => {
+    console.log("Tıklandı");
     if (option.id === "logout") {
       option.callback?.();
       return;

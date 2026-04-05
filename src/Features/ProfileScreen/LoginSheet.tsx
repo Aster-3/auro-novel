@@ -1,9 +1,4 @@
-import {
-  BottomSheetModal,
-  BottomSheetBackdrop,
-  BottomSheetBackdropProps,
-} from "@gorhom/bottom-sheet";
-import {
+import React, {
   forwardRef,
   useCallback,
   useImperativeHandle,
@@ -12,9 +7,17 @@ import {
   useState,
 } from "react";
 import { StyleSheet, Platform, Keyboard } from "react-native";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetBackdropProps,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { Portal } from "@gorhom/portal";
+import { useFocusEffect } from "@react-navigation/native";
+
+// Projenize özel importlar
 import { LoginBody } from "./LoginBody";
 import { globalNavigate } from "@/navigation/globalNavigate";
-import { useFocusEffect } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 
@@ -26,41 +29,29 @@ export interface LoginSheetRef {
 export interface LoginSheetProps {}
 
 export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
-  (props: LoginSheetProps, ref) => {
+  (props, ref) => {
     const user = useAuthStore((state) => state.user);
-    const bottomSheetModalRef = useRef<BottomSheetModal>(null);
+    const bottomSheetRef = useRef<BottomSheet>(null);
 
     const currentIndex = useRef<number>(-1);
     const [canClose, setCanClose] = useState<boolean>(true);
-
-    const navigateToRegister = () => {
-      bottomSheetModalRef.current?.dismiss();
-
-      setTimeout(() => {
-        globalNavigate("Register");
-      }, 200);
-    };
-
-    const navigateToVerify = (email: string) => {
-      bottomSheetModalRef.current?.dismiss();
-      setTimeout(() => {
-        globalNavigate("VerifyUser", { email });
-      }, 200);
-    };
-
-    const onLoginSuccess = (
-      data: any,
-      accessToken: string,
-      refreshToken: string,
-    ) => {
-      console.log("Login Başarılı:", data);
-      useAuthStore.setState({ user: data.user });
-      TokenStorage.saveTokens(accessToken, refreshToken);
-      bottomSheetModalRef.current?.dismiss();
-    };
+    const [isVisible, setIsVisible] = useState<boolean>(false);
 
     const snapPoints = useMemo(() => ["60%", "97%"], []);
 
+    const animationConfigs = useMemo(
+      () => ({
+        damping: 20, // Yaylanma direnci (ne kadar yüksekse o kadar az zıplar)
+        stiffness: 90, // Yayın sertliği
+        mass: 0.2,
+        overshootClamping: true, // Hedefi aşmasını engeller
+        restDisplacementThreshold: 0.01,
+        restSpeedThreshold: 0.01,
+      }),
+      [],
+    );
+
+    // Klavye yönetimi
     useFocusEffect(
       useCallback(() => {
         const showEvent =
@@ -72,23 +63,22 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
 
         const showSubscription = Keyboard.addListener(showEvent, () => {
           if (currentIndex.current === -1) return;
-
           clearTimeout(timeoutId);
           timeoutId = setTimeout(() => {
-            if (currentIndex.current === 1) return;
-            bottomSheetModalRef.current?.expand();
-          }, 150);
+            if (currentIndex.current !== 1) {
+              bottomSheetRef.current?.expand();
+            }
+          }, 50);
         });
 
         const hideSubscription = Keyboard.addListener(hideEvent, () => {
           if (currentIndex.current === -1) return;
-
           clearTimeout(timeoutId);
           timeoutId = setTimeout(() => {
             if (currentIndex.current === 1) {
-              bottomSheetModalRef.current?.snapToIndex(0);
+              bottomSheetRef.current?.snapToIndex(0);
             }
-          }, 150);
+          }, 50);
         });
 
         return () => {
@@ -99,6 +89,28 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
       }, []),
     );
 
+    // Navigasyon ve Başarı Fonksiyonları
+    const navigateToRegister = () => {
+      bottomSheetRef.current?.close();
+      setTimeout(() => globalNavigate("Register"), 300);
+    };
+
+    const navigateToVerify = (email: string) => {
+      bottomSheetRef.current?.close();
+      setTimeout(() => globalNavigate("VerifyUser", { email }), 300);
+    };
+
+    const onLoginSuccess = (
+      data: any,
+      accessToken: string,
+      refreshToken: string,
+    ) => {
+      useAuthStore.setState({ user: data.user });
+      TokenStorage.saveTokens(accessToken, refreshToken);
+      bottomSheetRef.current?.close();
+    };
+
+    // Backdrop (Arka plan karartması)
     const renderBackdrop = useCallback(
       (props: BottomSheetBackdropProps) => (
         <BottomSheetBackdrop
@@ -111,48 +123,56 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
       [],
     );
 
+    // Dışarıdan tetiklenecek metodlar
     useImperativeHandle(ref, () => ({
       expand: () => {
-        bottomSheetModalRef.current?.present();
+        setIsVisible(true);
+        // requestAnimationFrame, Portal render edildikten sonraki karede animasyonu başlatır
+        requestAnimationFrame(() => {
+          bottomSheetRef.current?.snapToIndex(0);
+        });
       },
       close: () => {
         currentIndex.current = -1;
         Keyboard.dismiss();
-        bottomSheetModalRef.current?.dismiss();
+        bottomSheetRef.current?.close();
       },
     }));
 
-    if (user) {
-      return null;
-    }
+    if (user || !isVisible) return null;
 
     return (
-      <BottomSheetModal
-        ref={bottomSheetModalRef}
-        index={0}
-        snapPoints={snapPoints}
-        backdropComponent={renderBackdrop}
-        backgroundStyle={styles.sheetBackground}
-        handleIndicatorStyle={styles.indicator}
-        enablePanDownToClose={canClose}
-        enableDynamicSizing={false}
-        onAnimate={(fromIndex, toIndex) => {
-          currentIndex.current = toIndex;
-        }}
-        onChange={(index) => {
-          if (index === 1) {
-            setCanClose(false);
-          } else {
-            setCanClose(true);
-          }
-        }}
-      >
-        <LoginBody
-          navigateToVerify={navigateToVerify}
-          navigateToRegister={navigateToRegister}
-          onLoginSuccess={onLoginSuccess}
-        />
-      </BottomSheetModal>
+      <Portal>
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1} // Başlangıçta gizli (Altta bekler)
+          snapPoints={snapPoints}
+          backdropComponent={renderBackdrop}
+          backgroundStyle={styles.sheetBackground}
+          handleIndicatorStyle={styles.indicator}
+          enablePanDownToClose={canClose}
+          enableDynamicSizing={false}
+          animateOnMount={true} // Mount edildiğinde animasyon yapmasını sağlar
+          animationConfigs={animationConfigs} // Özel yumuşaklık ayarları
+          onAnimate={(_, toIndex) => {
+            currentIndex.current = toIndex;
+          }}
+          onChange={(index) => {
+            setCanClose(index !== 1);
+            if (index === -1) {
+              setIsVisible(false);
+            }
+          }}
+        >
+          <BottomSheetView style={styles.contentContainer}>
+            <LoginBody
+              navigateToVerify={navigateToVerify}
+              navigateToRegister={navigateToRegister}
+              onLoginSuccess={onLoginSuccess}
+            />
+          </BottomSheetView>
+        </BottomSheet>
+      </Portal>
     );
   },
 );
@@ -176,5 +196,8 @@ const styles = StyleSheet.create({
   indicator: {
     backgroundColor: "#E0E0E0",
     width: 40,
+  },
+  contentContainer: {
+    flex: 1,
   },
 });

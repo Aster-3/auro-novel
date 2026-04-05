@@ -27,7 +27,6 @@ export const ProgressSlider = ({
   const progress = useSharedValue(initialProgress);
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
 
-  // Renk Karşılıkları
   const colors = {
     background: isDarkMode ? "#000000" : "#ffffff", // ffffff -> 000000
     primary: isDarkMode ? "#fcf3e6" : "#09244B", // 09244B (Koyu Lacivert) -> Açık Bej/Gold (Kontrast için)

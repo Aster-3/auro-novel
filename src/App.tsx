@@ -125,7 +125,7 @@ export default function App() {
           <BottomSheetModalProvider>
             <PortalProvider>
               <SafeAreaProvider>
-                <NavigationContainer ref={navigationRef} theme={myTheme}>
+                <NavigationContainer ref={navigationRef}>
                   <RootNavigator />
                   <GlobalConfirmModal />
                   <ToastContainer />
