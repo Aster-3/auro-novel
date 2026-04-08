@@ -27,6 +27,12 @@ export interface ChapterDetail {
   nextChapterId: string | null;
   previousChapterId: string | null;
   novelStatus: SeriesStatus;
+  premiumPrice: number;
+  freemiumPrice: number;
+  isDiscountActive: boolean;
+  discountRate: number;
+  discountedEndDate: string;
+  discountedPremiumPrice: number;
 }
 
 export interface GetChapters {

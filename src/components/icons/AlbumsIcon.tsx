@@ -7,32 +7,13 @@ export const AlbumsIcon = ({
   color?: string;
   size?: number;
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 512 512">
-    <Rect
-      x={64}
-      y={176}
-      width={384}
-      height={256}
-      rx={28.87}
-      ry={28.87}
-      fill="none"
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Path
+      d="M7 2h10M5 5h14M19 8H5a2 2 0 00-2 2v8a2 2 0 002 2h14a2 2 0 002-2v-8a2 2 0 00-2-2z"
       stroke={color}
+      strokeWidth={1.5}
+      strokeLinecap="round"
       strokeLinejoin="round"
-      strokeWidth="32px"
-    />
-    <Path
-      d="M144 80L368 80"
-      stroke={color}
-      strokeLinecap="round"
-      strokeMiterlimit={10}
-      strokeWidth="32px"
-    />
-    <Path
-      d="M112 128L400 128"
-      stroke={color}
-      strokeLinecap="round"
-      strokeMiterlimit={10}
-      strokeWidth="32px"
     />
   </Svg>
 );

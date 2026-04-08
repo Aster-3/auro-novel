@@ -34,6 +34,8 @@ import Animated, {
 import { useQueryClient } from "@tanstack/react-query";
 import { getChapterDetail } from "@/services/ChapterService";
 import { LockedContentOverlay } from "@/Features/ChapterReadScreen/LockContentOverlay";
+import { CoinType } from "@/types/wallet";
+import { usePurchaseChapter } from "@/hooks/usePurchaseChapter";
 
 // Route tipini tanımlayalım
 interface RouteParams {
@@ -47,6 +49,7 @@ export type SheetType = "SETTINGS" | "TOC" | "MORE" | null;
 const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const { id } = route.params;
   const { data: chapterData, isLoading } = useGetOneChapter(id, true);
+  const { mutate: purchaseChapter, isPending } = usePurchaseChapter(id);
 
   const { width } = useWindowDimensions();
   const navigation = useAppNavigation();
@@ -185,6 +188,10 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     em: { fontStyle: "italic", color: colors.text },
   };
 
+  const handleUnlockChapter = (coinType: CoinType) => {
+    purchaseChapter(coinType);
+  };
+
   return (
     <Screen
       style={StyleSheet.flatten([
@@ -251,10 +258,12 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                     "Merriweather",
                   ]}
                 />
-                <SlideForNextChapter
-                  novelStatus={chapterData?.novelStatus}
-                  lastChapterAvailable={!!chapterData?.nextChapterId}
-                />
+                {!chapterData?.isLocked && (
+                  <SlideForNextChapter
+                    novelStatus={chapterData?.novelStatus}
+                    lastChapterAvailable={!!chapterData?.nextChapterId}
+                  />
+                )}
               </ScrollView>
             </Animated.View>
           )}
@@ -262,11 +271,14 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
       </GestureDetector>
       {chapterData?.isLocked && (
         <LockedContentOverlay
-          onUnlock={() => {
-            console.log("Bölüm satın alma işlemi tetiklendi");
-          }}
-          sunPrice={5}
-          nightPrice={10}
+          onUnlock={handleUnlockChapter}
+          premiumPrice={chapterData.premiumPrice}
+          freemiumPrice={chapterData.freemiumPrice}
+          isDiscountActive={chapterData.isDiscountActive}
+          discountRate={chapterData.discountRate}
+          discountedEndDate={chapterData.discountedEndDate}
+          discountedPremiumPrice={chapterData.discountedPremiumPrice}
+          translateX={translateX}
         />
       )}
 

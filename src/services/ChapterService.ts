@@ -9,6 +9,7 @@ import {
   PublishChapterRequest,
   UpdateChapterRequest,
 } from "@/types/chapter";
+import { CoinType } from "@/types/wallet";
 
 export const getChapters = async (
   query: GetChaptersRequest,
@@ -76,5 +77,15 @@ export const changeChapterPublicationStatus = async (
       publicationStatus,
     },
   );
+  return data;
+};
+
+export const purchaseChapter = async (
+  chapterId: string,
+  coinType: CoinType,
+) => {
+  const { data } = await api.post(`/chapters/${chapterId}/purchase`, {
+    coinType,
+  });
   return data;
 };

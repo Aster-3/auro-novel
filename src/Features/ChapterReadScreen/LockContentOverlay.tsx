@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -17,66 +17,131 @@ import { SunShardIcon } from "@/components/icons/SunShardIcon";
 import { SparkleIcon } from "@/components/icons/SparkleIcon";
 import { AlbumsIcon } from "@/components/icons/AlbumsIcon";
 
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolateColor,
+  SharedValue,
+} from "react-native-reanimated";
+import { CoinType } from "@/types/wallet";
+import { useWalletQuery } from "@/hooks/useWalletQuery";
+
+interface Props {
+  premiumPrice: number;
+  freemiumPrice: number;
+  discountRate?: number;
+  isDiscountActive: boolean;
+  discountedEndDate: string | null;
+  discountedPremiumPrice: number;
+  onUnlock: (coinType: CoinType) => void;
+  onTopUp?: () => void;
+  translateX: SharedValue<number>;
+}
+
 export const LockedContentOverlay = ({
-  nightPrice,
-  sunPrice,
+  premiumPrice,
+  freemiumPrice,
+  discountRate = 0,
+  isDiscountActive,
+  discountedEndDate,
+  discountedPremiumPrice,
   onUnlock,
-}: {
-  nightPrice: number;
-  sunPrice: number;
-  onUnlock: () => void;
-}) => {
+  onTopUp,
+  translateX,
+}: Props) => {
+  const { data: wallet } = useWalletQuery();
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
   const insets = useSafeAreaInsets();
-  const [selectedToken, setSelectedToken] = useState<"night" | "sun">("night");
+  const [selectedToken, setSelectedToken] = useState<CoinType>(CoinType.MOON);
 
-  // Tema objesi ikonlar ve checkmark için daha yetenekli hale getirildi
+  // --- ANİMASYON DEĞERLERİ ---
+  const nightActive = useSharedValue(1);
+  const sunActive = useSharedValue(0);
+
+  useEffect(() => {
+    nightActive.value = withTiming(selectedToken === CoinType.MOON ? 1 : 0, {
+      duration: 250,
+    });
+    sunActive.value = withTiming(selectedToken === CoinType.SUN ? 1 : 0, {
+      duration: 250,
+    });
+  }, [selectedToken]);
+
+  const animatedSyncStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
+
+  // --- BUSINESS LOGIC ---
+  // Ay Parçası için: İndirim varsa discountedPremiumPrice, yoksa premiumPrice
+  const currentMoonPrice = isDiscountActive
+    ? discountedPremiumPrice
+    : premiumPrice;
+
+  // Buton ve bakiye kontrolleri
+  const currentRequiredPrice =
+    selectedToken === CoinType.MOON ? currentMoonPrice : freemiumPrice;
+  const currentBalance =
+    selectedToken === CoinType.MOON ? wallet?.moonCoins : wallet?.sunCoins;
+  const hasEnoughBalance =
+    currentBalance !== undefined && currentBalance >= currentRequiredPrice;
+
   const theme = {
     blurTint: isDarkMode ? "dark" : "light",
-    gradient: isDarkMode
-      ? (["rgba(0, 0, 0, 0.0)", "rgba(0, 0, 0, 0.9)"] as const)
-      : (["rgba(255, 255, 255, 0.0)", "rgba(255, 255, 255, 1.0)"] as const),
-    overlayBg: isDarkMode
-      ? "rgba(18, 18, 18, 0.2)"
-      : "rgba(255, 255, 255, 0.2)",
     title: isDarkMode ? "#FFFFFF" : "#1A1A1B",
     description: isDarkMode ? "#A1A1AA" : "#71717A",
     buttonBg: isDarkMode ? "#FFFFFF" : "#0F172A",
     buttonText: isDarkMode ? "#000000" : "#FFFFFF",
-    buttonIcon: isDarkMode ? "#000000" : "#FFFFFF",
     iconColor: isDarkMode ? "#E4E4E7" : "#1C1C1E",
     divider: isDarkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.07)",
-    selectedBorder: isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.25)",
-    unselectedBorder: isDarkMode
-      ? "rgba(255,255,255,0.07)"
-      : "rgba(0,0,0,0.07)",
-    selectedLabel: isDarkMode ? "#FFFFFF" : "#0F172A",
-    unselectedLabel: isDarkMode ? "#52525B" : "#A1A1AA",
-    badge: isDarkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)",
-    checkDotBg: isDarkMode ? "#FFFFFF" : "#1A1A1B",
-    checkDotIcon: isDarkMode ? "#000000" : "#FFFFFF",
+    selectedBorder: isDarkMode ? "#FFFFFF" : "#0F172A",
+    unselectedBorder: isDarkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)",
+    selectedBg: isDarkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.02)",
+    discountColor: isDarkMode ? "#4ADE80" : "#16A34A",
+    oldPriceColor: isDarkMode ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.3)",
   };
 
+  const createCardStyle = (activeValue: SharedValue<number>) =>
+    useAnimatedStyle(() => ({
+      borderColor: interpolateColor(
+        activeValue.value,
+        [0, 1],
+        [theme.unselectedBorder, theme.selectedBorder],
+      ),
+      backgroundColor: interpolateColor(
+        activeValue.value,
+        [0, 1],
+        ["transparent", theme.selectedBg],
+      ),
+    }));
+
+  const createCheckStyle = (activeValue: SharedValue<number>) =>
+    useAnimatedStyle(() => ({
+      opacity: activeValue.value,
+      transform: [{ scale: activeValue.value }],
+    }));
+
   return (
-    <View style={styles.fullScreenWrapper} pointerEvents="box-none">
+    <Animated.View
+      style={[styles.fullScreenWrapper, animatedSyncStyle]}
+      pointerEvents="box-none"
+    >
       <LinearGradient
-        colors={theme.gradient}
+        colors={
+          isDarkMode
+            ? ["rgba(0,0,0,0)", "rgba(0,0,0,1)"]
+            : ["rgba(255,255,255,0)", "rgba(255,255,255,1)"]
+        }
         style={StyleSheet.absoluteFill}
-        locations={[0, 0.5, 1]}
+        locations={[0, 0.54, 1]}
         pointerEvents="none"
       />
 
       <View style={styles.sheetWrapper}>
         <BlurView
-          intensity={50}
+          intensity={80}
           tint={theme.blurTint as any}
           style={StyleSheet.absoluteFillObject}
-        />
-        <View
-          style={[
-            StyleSheet.absoluteFillObject,
-            { backgroundColor: theme.overlayBg },
-          ]}
         />
 
         <View
@@ -85,7 +150,6 @@ export const LockedContentOverlay = ({
             { paddingBottom: Math.max(insets.bottom + 12, 24) },
           ]}
         >
-          {/* Icon + Title */}
           <View style={styles.headerRow}>
             <ChapterLockIcon size={18} color={theme.iconColor} />
             <Text style={[styles.title, { color: theme.title }]}>
@@ -97,169 +161,196 @@ export const LockedContentOverlay = ({
             Devam etmek için token seçin ve kilidi açın.
           </Text>
 
-          {/* Divider */}
           <View style={[styles.divider, { backgroundColor: theme.divider }]} />
 
-          {/* Token Selector */}
           <View style={styles.tokenRow}>
-            {/* Night Shard */}
+            {/* AY PARÇASI (PREMIUM) */}
             <Pressable
-              onPress={() => setSelectedToken("night")}
-              style={[
-                styles.tokenCard,
-                {
-                  borderColor:
-                    selectedToken === "night"
-                      ? theme.selectedBorder
-                      : theme.unselectedBorder,
-                },
-              ]}
+              onPress={() => setSelectedToken(CoinType.MOON)}
+              style={{ flex: 1 }}
             >
-              <NightShardIcon size={28} isDarkMode={isDarkMode} />
-              <View style={styles.tokenInfo}>
-                <Text
-                  style={[
-                    styles.tokenName,
-                    {
-                      color:
-                        selectedToken === "night"
-                          ? theme.selectedLabel
-                          : theme.unselectedLabel,
-                    },
-                  ]}
-                >
-                  Gece Parçası
-                </Text>
-                <Text
-                  style={[
-                    styles.tokenPrice,
-                    {
-                      color:
-                        selectedToken === "night"
-                          ? theme.title
-                          : theme.unselectedLabel,
-                    },
-                  ]}
-                >
-                  {nightPrice}
-                </Text>
-              </View>
-              {selectedToken === "night" && (
-                <View
-                  style={[
-                    styles.checkDot,
-                    { backgroundColor: theme.checkDotBg },
-                  ]}
-                >
-                  <Ionicons
-                    name="checkmark"
-                    size={12}
-                    color={theme.checkDotIcon}
-                  />
-                </View>
-              )}
-            </Pressable>
-
-            <Pressable
-              onPress={() => setSelectedToken("sun")}
-              style={[
-                styles.tokenCard,
-                {
-                  borderColor:
-                    selectedToken === "sun"
-                      ? theme.selectedBorder
-                      : theme.unselectedBorder,
-                },
-              ]}
-            >
-              <SunShardIcon size={28} />
-              <View style={styles.tokenInfo}>
-                <Text
-                  style={[
-                    styles.tokenName,
-                    {
-                      color:
-                        selectedToken === "sun"
-                          ? theme.selectedLabel
-                          : theme.unselectedLabel,
-                    },
-                  ]}
-                >
-                  Güneş Parçası
-                </Text>
-                <View style={styles.sunPriceRow}>
-                  <Text
-                    style={[
-                      styles.tokenPrice,
-                      {
-                        color:
-                          selectedToken === "sun"
-                            ? theme.title
-                            : theme.unselectedLabel,
-                      },
-                    ]}
-                  >
-                    {sunPrice}
-                  </Text>
-                  <View
-                    style={[
-                      styles.discountBadge,
-                      { backgroundColor: theme.badge },
-                    ]}
-                  >
+              <Animated.View
+                style={[styles.tokenCard, createCardStyle(nightActive)]}
+              >
+                {isDiscountActive && discountRate > 0 && (
+                  <View style={styles.discountBadge}>
                     <Text
                       style={[
                         styles.discountText,
-                        { color: isDarkMode ? "#86EFAC" : "#16A34A" },
+                        { color: theme.discountColor },
                       ]}
                     >
-                      %50
+                      %{discountRate} İNDİRİM
                     </Text>
                   </View>
+                )}
+
+                <NightShardIcon size={24} isDarkMode={isDarkMode} />
+                <View style={styles.tokenInfo}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tokenName,
+                      { color: isDarkMode ? "#FFF" : "#000" },
+                    ]}
+                  >
+                    Ay Parçası
+                  </Text>
+                  <View style={styles.priceRow}>
+                    {isDiscountActive && (
+                      <Text
+                        style={[
+                          styles.oldPrice,
+                          { color: theme.oldPriceColor },
+                        ]}
+                      >
+                        {premiumPrice}
+                      </Text>
+                    )}
+                    <Text
+                      style={[
+                        styles.tokenPrice,
+                        { color: isDarkMode ? "#FFF" : "#000" },
+                      ]}
+                    >
+                      {currentMoonPrice}
+                    </Text>
+                  </View>
+                  <Text
+                    style={[styles.balanceText, { color: theme.description }]}
+                  >
+                    Bakiye: {wallet?.moonCoins ?? 0}
+                  </Text>
+
+                  {/* İndirim Bitiş Süresi (Küçük Bilgi) */}
+                  {isDiscountActive && discountedEndDate && (
+                    <Text style={styles.timerText} numberOfLines={1}>
+                      Süreli Teklif
+                    </Text>
+                  )}
                 </View>
-              </View>
-              {selectedToken === "sun" && (
-                <View
-                  style={[
-                    styles.checkDot,
-                    { backgroundColor: theme.checkDotBg },
-                  ]}
-                >
-                  <Ionicons
-                    name="checkmark"
-                    size={12}
-                    color={theme.checkDotIcon}
-                  />
+
+                <View style={styles.checkContainer}>
+                  <Animated.View
+                    style={[
+                      styles.checkDot,
+                      createCheckStyle(nightActive),
+                      { backgroundColor: isDarkMode ? "#FFF" : "#1A1A1B" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="checkmark"
+                      size={12}
+                      color={isDarkMode ? "#000" : "#FFF"}
+                    />
+                  </Animated.View>
                 </View>
-              )}
+              </Animated.View>
+            </Pressable>
+
+            {/* GÜNEŞ PARÇASI (STANDART) */}
+            <Pressable
+              onPress={() => setSelectedToken(CoinType.SUN)}
+              style={{ flex: 1 }}
+            >
+              <Animated.View
+                style={[styles.tokenCard, createCardStyle(sunActive)]}
+              >
+                <SunShardIcon size={24} />
+                <View style={styles.tokenInfo}>
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.tokenName,
+                      { color: isDarkMode ? "#FFF" : "#000" },
+                    ]}
+                  >
+                    Güneş Parçası
+                  </Text>
+                  <Text
+                    style={[
+                      styles.tokenPrice,
+                      { color: isDarkMode ? "#FFF" : "#000" },
+                    ]}
+                  >
+                    {freemiumPrice}
+                  </Text>
+                  <Text
+                    style={[styles.balanceText, { color: theme.description }]}
+                  >
+                    Bakiye: {wallet?.sunCoins ?? 0}
+                  </Text>
+                </View>
+
+                <View style={styles.checkContainer}>
+                  <Animated.View
+                    style={[
+                      styles.checkDot,
+                      createCheckStyle(sunActive),
+                      { backgroundColor: isDarkMode ? "#FFF" : "#1A1A1B" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="checkmark"
+                      size={12}
+                      color={isDarkMode ? "#000" : "#FFF"}
+                    />
+                  </Animated.View>
+                </View>
+              </Animated.View>
             </Pressable>
           </View>
 
-          {/* Divider */}
           <View style={[styles.divider, { backgroundColor: theme.divider }]} />
 
-          {/* CTA Button */}
           <TouchableOpacity
             activeOpacity={0.82}
-            style={[styles.button, { backgroundColor: theme.buttonBg }]}
-            onPress={onUnlock}
+            style={[
+              styles.button,
+              {
+                backgroundColor: hasEnoughBalance
+                  ? theme.buttonBg
+                  : isDarkMode
+                    ? "rgba(255,255,255,0.1)"
+                    : "rgba(15,23,42,0.05)",
+              },
+            ]}
+            onPress={hasEnoughBalance ? () => onUnlock(selectedToken) : onTopUp}
           >
-            <SparkleIcon size={18} color={theme.buttonIcon} />
-            <Text style={[styles.buttonLabel, { color: theme.buttonText }]}>
-              Bölümün Kilidini Aç
+            {hasEnoughBalance ? (
+              <SparkleIcon size={18} color={theme.buttonText} />
+            ) : (
+              <Ionicons
+                name="wallet-outline"
+                size={18}
+                color={theme.description}
+              />
+            )}
+            <Text
+              style={[
+                styles.buttonLabel,
+                {
+                  color: hasEnoughBalance
+                    ? theme.buttonText
+                    : theme.description,
+                },
+              ]}
+            >
+              {hasEnoughBalance
+                ? "Bölümün Kilidini Aç"
+                : "Bakiye Yetersiz - Şimdi Yükle"}
             </Text>
           </TouchableOpacity>
 
-          {/* Secondary */}
           <TouchableOpacity activeOpacity={0.7} style={styles.secondaryButton}>
-            <AlbumsIcon size={16} color="#ffff" />
+            <AlbumsIcon size={16} color={theme.iconColor} />
             <Text style={[styles.secondaryText, { color: theme.description }]}>
               Toplu Kilit Aç
             </Text>
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -275,83 +366,69 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     borderWidth: 1,
     borderColor: "rgba(150, 150, 150, 0.12)",
-    borderBottomWidth: 0,
   },
-  content: {
-    paddingHorizontal: 24,
-    paddingTop: 26,
-    alignItems: "center",
-  },
+  content: { paddingHorizontal: 24, paddingTop: 26, alignItems: "center" },
   headerRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
     marginBottom: 6,
   },
-  title: {
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: -0.3,
-  },
+  title: { fontSize: 17, fontWeight: "700", letterSpacing: -0.3 },
   description: {
     fontSize: 13,
     textAlign: "center",
     lineHeight: 19,
     paddingHorizontal: 16,
   },
-  divider: {
-    width: "100%",
-    height: 1,
-    marginVertical: 20,
-  },
-  tokenRow: {
-    flexDirection: "row",
-    width: "100%",
-    gap: 12,
-    marginBottom: 4,
-  },
+  divider: { width: "100%", height: 1, marginVertical: 20 },
+  tokenRow: { flexDirection: "row", width: "100%", gap: 10, marginBottom: 4 },
   tokenCard: {
-    flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-    paddingVertical: 14,
-    paddingHorizontal: 14,
-    borderRadius: 16,
+    gap: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    borderRadius: 18,
     borderWidth: 1.5,
+    overflow: "hidden",
   },
-  tokenInfo: {
-    flex: 1,
-    gap: 2,
-  },
+  tokenInfo: { flex: 1 },
   tokenName: {
-    fontSize: 12,
+    fontSize: 9,
+    fontWeight: "700",
+    textTransform: "uppercase",
+    letterSpacing: 0.2,
+    marginBottom: 2,
+  },
+  priceRow: { flexDirection: "row", alignItems: "center", gap: 4 },
+  oldPrice: {
+    fontSize: 13,
     fontWeight: "600",
-    letterSpacing: 0.1,
+    textDecorationLine: "line-through",
+    marginTop: 1,
   },
-  tokenPrice: {
-    fontSize: 17,
-    fontWeight: "700",
-    letterSpacing: -0.4,
+  tokenPrice: { fontSize: 19, fontWeight: "800", letterSpacing: -0.5 },
+  balanceText: { fontSize: 9, fontWeight: "600", marginTop: 1, opacity: 0.7 },
+  timerText: {
+    fontSize: 8,
+    fontWeight: "600",
+    color: "#FF9500",
+    marginTop: 2,
+    textTransform: "uppercase",
   },
-  sunPriceRow: {
-    flexDirection: "row",
+  discountBadge: { position: "absolute", top: 6, left: 12, zIndex: 10 },
+  discountText: { fontSize: 8, fontWeight: "900", letterSpacing: 0.5 },
+  checkContainer: {
+    width: 20,
+    height: 20,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-  },
-  discountBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-  },
-  discountText: {
-    fontSize: 11,
-    fontWeight: "700",
   },
   checkDot: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -365,11 +442,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 10,
   },
-  buttonLabel: {
-    fontSize: 15,
-    fontWeight: "700",
-    letterSpacing: -0.2,
-  },
+  buttonLabel: { fontSize: 15, fontWeight: "700" },
   secondaryButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -378,8 +451,5 @@ const styles = StyleSheet.create({
     height: 44,
     gap: 6,
   },
-  secondaryText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
+  secondaryText: { fontSize: 14, fontWeight: "600" },
 });

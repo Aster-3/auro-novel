@@ -53,3 +53,7 @@ export const addCategoryToNovel = async (
   });
   return data;
 };
+
+export const incrementNovelViewCount = async (novelId: string) => {
+  await api.post(`/novels/${novelId}/views`);
+};

@@ -3,8 +3,8 @@ import { Text, View, StyleSheet, Image, Pressable } from "react-native";
 import logo from "@assets/lost-ghost.jpg";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PlusIcon } from "@/components/icons/PlusIcon";
-import gcoin from "@assets/rune.png";
 import { NightShardIcon } from "@/components/icons/NightShardIcon";
+import { useWalletQuery } from "@/hooks/useWalletQuery";
 
 export const ProfileHeader = ({
   openLoginSheet,
@@ -12,6 +12,7 @@ export const ProfileHeader = ({
   openLoginSheet: () => void;
 }) => {
   const user = useAuthStore((state) => state.user);
+  const { data: wallet, isLoading } = useWalletQuery();
 
   return (
     <View style={styles.card}>
@@ -64,7 +65,7 @@ export const ProfileHeader = ({
               >
                 <NightShardIcon size={26} />
                 <View style={styles.currencyContent}>
-                  <Text style={styles.currencyText}>1.250</Text>
+                  <Text style={styles.currencyText}>{wallet?.moonCoins}</Text>
                   <View style={styles.plusIconWrapper}>
                     <PlusIcon size={10} color="#FFF" />
                   </View>

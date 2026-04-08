@@ -20,6 +20,7 @@ import { ChapterSheet } from "@/Features/NovelScreen/ChapterSheet";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
 import { LinearGradient } from "expo-linear-gradient";
+import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
 
 const SECTIONS = [
   { key: "summary" },
@@ -33,6 +34,11 @@ const NovelScreen = () => {
   const { id } = route.params;
 
   const { data, isLoading, error } = useNovelDetail(id);
+  const { mutate: incrementViewCount } = useIncrementNovelView(id);
+
+  React.useEffect(() => {
+    incrementViewCount();
+  }, [incrementViewCount]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 

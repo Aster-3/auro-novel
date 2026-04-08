@@ -64,7 +64,10 @@ export const NovelMetaData = ({
     if (count >= 10000) {
       return (count / 1000).toFixed(1).replace(/\.0$/, "") + "B";
     }
-    return count === 0 ? "Görüntülenme Yok" : count;
+
+    if (count === 0) return "Görüntülenme Yok";
+
+    return count.toString().padStart(4, "0");
   };
   const [isImageOpen, setIsImageOpen] = useState(false);
   return (
@@ -149,7 +152,7 @@ export const NovelMetaData = ({
         <View style={[styles.row, styles.rowSpace]}>
           <View style={styles.row}>
             <ViewIcon color="white" size={14} />
-            <Text style={styles.text}>{formatViewCount(15362)}</Text>
+            <Text style={styles.text}>{formatViewCount(viewCount)}</Text>
           </View>
           <View style={styles.row}>
             <LikeIcon color="white" />
