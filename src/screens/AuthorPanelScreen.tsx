@@ -7,6 +7,7 @@ import { NovelParallax } from "@/Features/AuthorPanelScreen/NovelParallax";
 import { useState } from "react";
 import { useDashboardStatsQuery } from "@/hooks/useDashboardStatsQuery";
 import { AuthorPanelOptions } from "@/Features/AuthorPanelScreen/AuthorPanelOptions";
+import { Header } from "@/components/Header";
 
 const AuthorPanelScreen = () => {
   const [selectedNovelIndex, setSelectedNovelIndex] = useState<string | null>(
@@ -19,16 +20,13 @@ const AuthorPanelScreen = () => {
   console.log("Seçili Kitap ID:", selectedNovelIndex);
 
   return (
-    <Screen
-      backgroundColor="#ffffff"
-      style={{ gap: 12, paddingHorizontal: 0, paddingVertical: 0 }}
-    >
+    <Screen style={{ gap: 12, paddingHorizontal: 0, paddingVertical: 0 }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ gap: 8 }}
       >
         <View style={{ paddingHorizontal: 16 }}>
-          <ProfileSettingsHeader title="Yazar Paneli" />
+          <Header title="Yazar Paneli" isAdjacent={false} />
         </View>
         <View style={{ gap: 12 }}>
           <AuthorStats stats={statsData ?? null} isLoading={isLoading} />

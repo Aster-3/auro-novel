@@ -1,18 +1,12 @@
 import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
 import { ProfileHeaderText } from "./ProfileHeaderText";
-import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
-import { LogoutIcon } from "@/components/icons/LogoutIcon";
 import { ThemeIcon } from "@/components/icons/ThemeIcon";
 import { TicketIcon } from "@/components/icons/TicketIcon";
 import { NotificationSettingsIcon } from "@/components/icons/NotificationSettingsIcon";
 import { BeAuthorIcon } from "@/components/icons/BeAuthorIcon";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
-
-const getPressStyle = (pressed: boolean) => ({
-  backgroundColor: pressed ? "#f0f0f0" : "transparent",
-  opacity: pressed ? 0.7 : 1,
-});
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 const iconMap = {
   app_theme: ThemeIcon,
@@ -39,6 +33,7 @@ const options = [
 export const ProfileBodyMiddle = () => {
   const navigation = useNavigation<any>();
   const isLoggedIn = !!useAuthStore((state) => state.user);
+  const { theme, isDarkMode } = useAppTheme(); // Renkleri aldık
 
   const handlePress = (option: any) => {
     if (option.id === "reedem_code") return;
@@ -56,7 +51,14 @@ export const ProfileBodyMiddle = () => {
   return (
     <View style={styles.wrapper}>
       <ProfileHeaderText title="Tercihler" />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDarkMode ? theme.backgroundSecondary : "#F9F9F9",
+          },
+        ]}
+      >
         {options.map((option) => {
           const IconComponent = iconMap[option.id as keyof typeof iconMap];
           return (
@@ -64,17 +66,26 @@ export const ProfileBodyMiddle = () => {
               key={option.id}
               style={({ pressed }) => [
                 styles.subcontainer,
-                getPressStyle(pressed),
+                {
+                  backgroundColor: pressed
+                    ? isDarkMode
+                      ? "rgba(255,255,255,0.05)"
+                      : "#f0f0f0"
+                    : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
               onPress={() => handlePress(option)}
             >
               {IconComponent && (
                 <IconComponent
-                  color={option.id !== "logout" ? "#1C274C" : "#da0303"}
+                  color={theme.textPrimary} // Statik lacivert yerine dinamik renk
                   size={18}
                 />
               )}
-              <Text style={styles.text}>{option.label}</Text>
+              <Text style={[styles.text, { color: theme.textPrimary }]}>
+                {option.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -92,7 +103,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 16,
-    backgroundColor: "white",
     paddingHorizontal: 12,
     borderRadius: 16,
     alignItems: "center",
@@ -110,6 +120,5 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "Mont-500",
     fontSize: 14,
-    color: "#03061E",
   },
 });

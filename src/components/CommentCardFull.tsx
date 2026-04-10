@@ -1,79 +1,133 @@
-import React, { useState, memo, useCallback } from "react";
+import React, { useState, memo, useCallback, useMemo } from "react";
 import {
   LayoutAnimation,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
+  Pressable,
 } from "react-native";
 import { Image } from "expo-image";
-import { LikeIcon } from "./icons/LikeIcon";
-import { LikeİconFill } from "./icons/LikeİconFill";
+import { CommentLikeIcon } from "./icons/CommentLikeIcon";
 import { ReplyIcon } from "./icons/ReplyIcon";
 import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import { useCommentLikeMutation } from "@/hooks/useCommentLikeMutation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useReaderStore } from "@/store/useReaderStore";
+import { RecommendIcon } from "./icons/RecommendIcon";
+import { DoubleDateIcon } from "./icons/DoubleDateIcon";
+import { TotalReviewsIcon } from "./icons/TotalReviewsIcon";
 
 interface Props {
   comment: Comment;
   novelId: string;
 }
 
-export const CommentCardFull = memo(
-  ({ comment, novelId }: Props) => {
-    const [expanded, setExpanded] = useState(false);
-    const [isTruncated, setIsTruncated] = useState(false);
-    const [measured, setMeasured] = useState(false);
-    const { mutate } = useCommentLikeMutation(novelId);
-    const user = useAuthStore((state) => state.user);
-    const navigation = useAppNavigation();
+export const CommentCardFull = memo(({ comment, novelId }: Props) => {
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [measured, setMeasured] = useState(false);
 
-    const toggleExpanded = useCallback(() => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      setExpanded((prev) => !prev);
-    }, []);
+  const { mutate } = useCommentLikeMutation(novelId);
+  const user = useAuthStore((state) => state.user);
+  const navigation = useAppNavigation();
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
 
-    const toggleLike = useCallback(() => {
-      if (!user) return;
-      mutate(comment.id);
-    }, [user, mutate, comment.id]);
+  const toggleExpanded = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded((prev) => !prev);
+  }, []);
 
-    return (
-      <View style={s.card}>
-        <View style={s.header}>
-          <Image
-            source={{ uri: comment.user.profileImageUrl }}
-            style={s.avatar}
-            contentFit="cover"
-            transition={150}
-            priority="high"
-            cachePolicy="disk"
-          />
-          <View style={s.meta}>
-            <Text style={s.userName} numberOfLines={1}>
-              {comment.user.nickname}
-            </Text>
-            <Text style={s.date}>{formatSmartDate(comment.createdAt)}</Text>
-          </View>
+  const toggleLike = useCallback(() => {
+    if (!user) return;
+    mutate(comment.id);
+  }, [user, mutate, comment.id]);
 
-          <View
-            style={[
-              s.badge,
-              comment.isRecommend ? s.badgePos : s.badgeNeg,
-              !comment.isRecommend && { transform: [{ rotate: "180deg" }] },
-            ]}
-          >
-            <LikeIcon
-              color={comment.isRecommend ? "#059358df" : "#ff0000df"}
-              size={15}
-            />
+  const theme = useMemo(
+    () => ({
+      title: isDarkMode ? "#F0F5FF" : "#1B2838",
+      text: isDarkMode ? "#CBD5E1" : "#475569",
+      subText: isDarkMode
+        ? "rgba(148, 163, 184, 0.6)"
+        : "rgba(8, 27, 52, 0.37)",
+
+      commentLike: {
+        liked: isDarkMode ? "#0064f1" : "#080441db", // Deep Emerald
+        default: isDarkMode ? "#94A3B8" : "#64748B",
+      },
+      recommend: {
+        posAccent: "#0ab17c", // Deep Emerald
+        posBg: isDarkMode
+          ? "rgba(29, 255, 180, 0.1)"
+          : "rgba(16, 185, 129, 0.08)",
+        negAccent: "#BE123C", // Deep Rose/Wine
+        negBg: isDarkMode
+          ? "rgba(225, 29, 72, 0.1)"
+          : "rgba(225, 29, 71, 0.07)",
+      },
+      actions: isDarkMode ? "#94A3B8" : "#64748B",
+    }),
+    [isDarkMode],
+  );
+
+  return (
+    <View style={s.card}>
+      {/* HEADER */}
+      <View style={s.header}>
+        <Image
+          source={{ uri: comment.user.profileImageUrl }}
+          style={s.avatar}
+          contentFit="cover"
+        />
+        <View style={s.meta}>
+          <Text style={[s.userName, { color: theme.title }]}>
+            {comment.user.nickname}
+          </Text>
+          <View style={s.subMeta}>
+            <View style={s.iconInfo}>
+              <DoubleDateIcon color={theme.subText} size={10} />
+              <Text style={[s.microDate, { color: theme.subText }]}>
+                {formatSmartDate(comment.createdAt)}
+              </Text>
+            </View>
+            <View style={s.iconInfo}>
+              <TotalReviewsIcon color={theme.subText} size={10} />
+              <Text style={[s.microDate, { color: theme.subText }]}>
+                25 İnceleme
+              </Text>
+            </View>
           </View>
         </View>
 
+        {/* Minimalist Badge - Sadece İkon */}
+        <View
+          style={[
+            s.miniBadge,
+            {
+              backgroundColor: comment.isRecommend
+                ? theme.recommend.posBg
+                : theme.recommend.negBg,
+              transform: [{ rotate: comment.isRecommend ? "0deg" : "180deg" }],
+            },
+          ]}
+        >
+          <RecommendIcon
+            color={
+              comment.isRecommend
+                ? theme.recommend.posAccent
+                : theme.recommend.negAccent
+            }
+            size={14}
+          />
+        </View>
+      </View>
+
+      {/* BODY */}
+      <Pressable onPress={() => isTruncated && toggleExpanded()} style={s.body}>
         <Text
-          style={s.commentText}
+          style={[s.commentText, { color: theme.text }]}
           numberOfLines={measured && !expanded ? 5 : undefined}
           onTextLayout={(e) => {
             if (!measured) {
@@ -81,162 +135,157 @@ export const CommentCardFull = memo(
               setMeasured(true);
             }
           }}
-          onPress={() => isTruncated && toggleExpanded()}
         >
           {comment.content}
         </Text>
-
         {isTruncated && (
-          <TouchableOpacity
-            onPress={toggleExpanded}
-            hitSlop={{ top: 8, bottom: 8 }}
-          >
-            <Text style={s.toggleText}>
-              {expanded ? "Daha az" : "Devamını oku..."}
-            </Text>
-          </TouchableOpacity>
+          <Text style={[s.toggleText, { color: theme.actions }]}>
+            {expanded ? "KÜÇÜLT" : "OKUMAYA DEVAM ET"}
+          </Text>
         )}
+      </Pressable>
 
-        <View style={s.footer}>
-          <TouchableOpacity
-            style={[s.action, comment.viewerHasLiked && s.actionLiked]}
-            activeOpacity={0.6}
-            onPress={toggleLike}
-          >
-            {comment.viewerHasLiked ? (
-              <LikeİconFill color="#4aeeaa" borderColor="#00b067" size={16} />
-            ) : (
-              <LikeIcon color="#94A3B8" size={15} />
-            )}
-            <Text
-              style={[
-                s.actionText,
-                comment.viewerHasLiked && s.actionTextLiked,
-              ]}
-            >
-              {comment.likeCount === 0 ? "Beğen" : comment.likeCount}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={s.action}
-            activeOpacity={0.6}
-            onPress={() =>
-              navigation.navigate("Reply", { commentId: comment.id, novelId })
+      {/* FOOTER - Ergonomik & Apple Stil */}
+      <View style={s.footer}>
+        <TouchableOpacity
+          style={[
+            s.action,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.03)"
+                : "#F8FAFC",
+            },
+          ]}
+          onPress={toggleLike}
+          activeOpacity={0.7}
+        >
+          <CommentLikeIcon
+            isLiked={comment.viewerHasLiked}
+            color={
+              comment.viewerHasLiked
+                ? theme.commentLike.liked
+                : theme.commentLike.default
             }
+            size={15}
+          />
+          <Text
+            style={[
+              s.actionText,
+              {
+                color: comment.viewerHasLiked
+                  ? theme.commentLike.liked
+                  : theme.commentLike.default,
+              },
+            ]}
           >
-            <ReplyIcon color="#94A3B8" size={13} />
-            <Text style={s.actionText}>
-              {comment.replyCount === 0 ? "Yanıtla" : comment.replyCount}
-            </Text>
-          </TouchableOpacity>
-        </View>
+            {comment.likeCount > 0 ? comment.likeCount : "BEĞEN"}
+          </Text>
+        </TouchableOpacity>
 
-        <View style={s.separator} />
+        <TouchableOpacity
+          style={[
+            s.action,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.03)"
+                : "#F8FAFC",
+            },
+          ]}
+          onPress={() =>
+            navigation.navigate("Reply", { commentId: comment.id, novelId })
+          }
+          activeOpacity={0.7}
+        >
+          <ReplyIcon color={theme.actions} size={15} />
+          <Text style={[s.actionText, { color: theme.actions }]}>
+            {comment.replyCount > 0 ? comment.replyCount : "YANITLA"}
+          </Text>
+        </TouchableOpacity>
       </View>
-    );
-  },
-  (prev, next) => {
-    // Sadece bu değerler değiştiğinde render et
-    return (
-      prev.comment.id === next.comment.id &&
-      prev.comment.likeCount === next.comment.likeCount &&
-      prev.comment.replyCount === next.comment.replyCount &&
-      prev.comment.viewerHasLiked === next.comment.viewerHasLiked &&
-      prev.comment.content === next.comment.content
-    );
-  },
-);
+    </View>
+  );
+});
 
 const s = StyleSheet.create({
   card: {
-    paddingHorizontal: 14,
-    gap: 8,
-    paddingTop: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 20,
+    width: "100%",
   },
-
-  // ── Üst satır ────────────────────────────────────────
   header: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    marginBottom: 12,
   },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F1F5F9",
+    width: 38,
+    height: 38,
+    borderRadius: 16,
+    marginRight: 12,
   },
   meta: {
     flex: 1,
-    gap: 1,
+  },
+  subMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginTop: 2,
+  },
+  iconInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
   },
   userName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#1E293B",
+    fontSize: 14,
+    fontFamily: "Mont-700",
+    letterSpacing: -0.2,
   },
-  date: {
-    fontSize: 10,
-    color: "#94A3B8",
+  microDate: {
+    fontSize: 9, // İnanılmaz küçük font
+    fontFamily: "Mont-600",
+    letterSpacing: 0.1,
   },
-  badge: {
+  miniBadge: {
     width: 32,
     height: 32,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  badgePos: { backgroundColor: "#00ce7831" },
-  badgeNeg: { backgroundColor: "#ff000018" },
-
-  // ── İçerik — tam genişlik ─────────────────────────────
+  body: {
+    marginBottom: 14,
+  },
   commentText: {
-    fontFamily: "Poppins-400",
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#475569",
-    letterSpacing: -0.1,
+    fontFamily: "Mont-500",
+    fontSize: 12.5,
+    lineHeight: 19,
   },
   toggleText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#a8a8a8",
+    fontSize: 9,
+    fontFamily: "Mont-700",
+    marginTop: 6,
+    letterSpacing: 0.2,
   },
-
-  // ── Footer ───────────────────────────────────────────
   footer: {
     flexDirection: "row",
-    gap: 6,
-    marginTop: 4,
+    gap: 8,
+    alignItems: "center",
+    marginTop: 6,
   },
   action: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
-  },
-  actionLiked: {
-    backgroundColor: "#ECFDF5",
+    paddingVertical: 8,
+    borderRadius: 12,
   },
   actionText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#94A3B8",
-  },
-  actionTextLiked: {
-    color: "#059669",
-  },
-
-  // ── Ayraç ────────────────────────────────────────────
-  separator: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
-    opacity: 0.8,
-    marginTop: 16,
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
   },
 });

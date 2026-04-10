@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { AlignLeftIcon } from "@/components/icons/AlignLeftIcon";
 import { AlignCenterIcon } from "@/components/icons/AlignCenterIcon";
@@ -7,51 +7,42 @@ import { AlignJustifyIcon } from "@/components/icons/AlignJustifyIcon";
 import { useReaderStore } from "@/store/useReaderStore";
 
 const TEXT_ALIGN_OPTIONS = ["left", "center", "right", "justify"] as const;
+type TextAlign = (typeof TEXT_ALIGN_OPTIONS)[number];
 
-export const TextAlignSettings = ({
-  textAlign,
-  setTextAlign,
-}: {
-  textAlign: string;
-  setTextAlign: (align: (typeof TEXT_ALIGN_OPTIONS)[number]) => void;
-}) => {
-  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+const ICONS: Record<TextAlign, (color: string) => React.ReactNode> = {
+  left: (color) => <AlignLeftIcon size={16} color={color} />,
+  center: (color) => <AlignCenterIcon size={16} color={color} />,
+  right: (color) => <AlignRightIcon size={16} color={color} />,
+  justify: (color) => <AlignJustifyIcon size={16} color={color} />,
+};
 
-  // Renk Karşılıkları
-  const colors = {
-    cardBg: isDarkMode ? "#000000" : "#ffffff",
-    primary: isDarkMode ? "#fcf3e6" : "#09244B",
-  };
+export const TextAlignSettings = () => {
+  const { isDarkMode, setTextAlign, textAlign } = useReaderStore();
+
+  const cardBg = isDarkMode ? "#000000" : "#ffffff";
+  const primary = isDarkMode ? "#fcf3e6" : "#09244B";
+
+  const handlePress = useCallback(
+    (option: TextAlign) => setTextAlign(option),
+    [setTextAlign],
+  );
 
   return (
-    <View
-      style={[styles.aligmentContainer, { backgroundColor: colors.cardBg }]}
-    >
+    <View style={[styles.container, { backgroundColor: cardBg }]}>
       {TEXT_ALIGN_OPTIONS.map((option) => (
         <TouchableOpacity
           key={option}
+          activeOpacity={0.7}
+          onPress={() => handlePress(option)}
+          // StyleSheet'ten sabit style + sadece border rengi dinamik
           style={[
-            styles.aligmentItem,
-            { backgroundColor: colors.cardBg },
-            textAlign === option && {
-              borderWidth: 1,
-              borderColor: colors.primary,
-            },
+            styles.item,
+            { backgroundColor: cardBg },
+            textAlign === option && styles.itemActive,
+            textAlign === option && { borderColor: primary },
           ]}
-          onPress={() => setTextAlign(option)}
         >
-          {option === "left" && (
-            <AlignLeftIcon size={16} color={colors.primary} />
-          )}
-          {option === "center" && (
-            <AlignCenterIcon size={16} color={colors.primary} />
-          )}
-          {option === "right" && (
-            <AlignRightIcon size={16} color={colors.primary} />
-          )}
-          {option === "justify" && (
-            <AlignJustifyIcon size={16} color={colors.primary} />
-          )}
+          {ICONS[option](primary)}
         </TouchableOpacity>
       ))}
     </View>
@@ -59,7 +50,7 @@ export const TextAlignSettings = ({
 };
 
 const styles = StyleSheet.create({
-  aligmentContainer: {
+  container: {
     flexDirection: "row",
     alignItems: "center",
     width: "100%",
@@ -68,16 +59,18 @@ const styles = StyleSheet.create({
     gap: 16,
     paddingHorizontal: 12,
   },
-  aligmentItem: {
+  item: {
+    flex: 1,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    flex: 1,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+    // Border her zaman var ama transparan — layout shift olmaz
+    borderWidth: 1,
+    borderColor: "transparent",
   },
-  aligmentText: {
-    fontSize: 12,
-    fontFamily: "Mont-500",
+  itemActive: {
+    // Sadece rengi değişir, borderWidth sabit kalır → layout recalculation yok
   },
 });

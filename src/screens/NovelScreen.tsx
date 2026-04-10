@@ -1,13 +1,24 @@
 import React, { useRef, useCallback } from "react";
-import { View, FlatList, StyleSheet } from "react-native";
+import {
+  View,
+  FlatList,
+  StyleSheet,
+  StatusBar,
+  InteractionManager,
+} from "react-native";
 import { Image } from "expo-image";
-
-import { RouteProp, useRoute } from "@react-navigation/native";
+import {
+  RouteProp,
+  useNavigation,
+  useNavigationState,
+  useRoute,
+} from "@react-navigation/native";
 import { RootStackParamList } from "@/constants/navigation";
-
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomSheet from "@gorhom/bottom-sheet";
+import { LinearGradient } from "expo-linear-gradient";
 
+// Bileşenlerin
 import { NovelHeader } from "@/Features/NovelScreen/Header";
 import { NovelMetaData } from "@/Features/NovelScreen/NovelMetadata";
 import { NovelSummary } from "@/Features/NovelScreen/NovelSummary";
@@ -16,11 +27,13 @@ import { NovelComments } from "@/Features/NovelScreen/NovelComments";
 import { SimilarNovels } from "@/Features/NovelScreen/SimilarNovels";
 import { NovelNavCard } from "@/Features/NovelScreen/NovelNavCard";
 import { ChapterSheet } from "@/Features/NovelScreen/ChapterSheet";
-
-import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
-import { LinearGradient } from "expo-linear-gradient";
+
+// Hooklar
+import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
+import { useReaderStore } from "@/store/useReaderStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 const SECTIONS = [
   { key: "summary" },
@@ -32,13 +45,18 @@ const SECTIONS = [
 const NovelScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Novel">>();
   const { id } = route.params;
-
+  const [isReady, setIsReady] = React.useState(false);
   const { data, isLoading, error } = useNovelDetail(id);
   const { mutate: incrementViewCount } = useIncrementNovelView(id);
 
+  // Tema Renkleri
+  const { theme } = useAppTheme();
+
   React.useEffect(() => {
-    incrementViewCount();
-  }, [incrementViewCount]);
+    if (id) {
+      incrementViewCount();
+    }
+  }, [id]);
 
   const bottomSheetRef = useRef<BottomSheet>(null);
 
@@ -49,7 +67,6 @@ const NovelScreen = () => {
   const renderItem = useCallback(
     ({ item }: { item: { key: string } }) => {
       if (!data) return null;
-
       switch (item.key) {
         case "summary":
           return <NovelSummary tags={data.tags} summary={data.synopsis} />;
@@ -73,31 +90,41 @@ const NovelScreen = () => {
     [data, id, openChapterSheet],
   );
 
-  if (isLoading || error || !data) return <NovelSkeleton />;
+  React.useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+    return () => task.cancel();
+  }, []);
+
+  if (isLoading || error || !data || !isReady) return <NovelSkeleton />;
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={theme.statusbarStyle as any} />
+
+      {/* Üst Kısım: Kapak ve Blur Efekti */}
       <View style={styles.headerWrapper}>
         <Image
           source={data.coverImage}
           style={StyleSheet.absoluteFillObject}
-          blurRadius={11}
+          blurRadius={12} // Bir tık artırıldı daha yumuşak geçiş için
           contentFit="cover"
           transition={500}
         />
         <View
           style={[
             StyleSheet.absoluteFillObject,
-            { backgroundColor: "rgba(0,0,0,0.4)" },
+            { backgroundColor: theme.headerOverlay },
           ]}
         />
         <LinearGradient
-          colors={["transparent", "rgba(0,0,0,0.8)"]}
+          colors={theme.headerGradient as any}
           style={StyleSheet.absoluteFillObject}
         />
 
         <SafeAreaView edges={["top"]} style={styles.headerContainer}>
           <NovelHeader />
-
           <NovelMetaData
             name={data.name}
             author={data.author}
@@ -110,22 +137,26 @@ const NovelScreen = () => {
         </SafeAreaView>
       </View>
 
-      <SafeAreaView edges={["bottom"]} style={styles.contentContainer}>
+      {/* Alt Kısım: İçerik FlatList */}
+      <SafeAreaView
+        edges={["bottom"]}
+        style={[styles.contentContainer, { backgroundColor: theme.background }]}
+      >
         <FlatList
           data={SECTIONS}
           keyExtractor={(item) => item.key}
           renderItem={renderItem}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
-          initialNumToRender={2}
-          maxToRenderPerBatch={2}
-          windowSize={3}
+          initialNumToRender={4} // Sayfa dolana kadar render etsin
           removeClippedSubviews={true}
         />
       </SafeAreaView>
 
+      {/* Sabit Navigasyon Kartı (Okumaya Başla vb.) */}
       <NovelNavCard />
 
+      {/* Bölüm Listesi Sheet */}
       <ChapterSheet id={id} ref={bottomSheetRef} />
     </View>
   );
@@ -136,7 +167,6 @@ export default NovelScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "white",
   },
   headerWrapper: {
     width: "100%",
@@ -150,17 +180,15 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
-    marginTop: -32,
-    backgroundColor: "white",
+    marginTop: -36, // Daha derin bir kıvrım
     borderTopRightRadius: 32,
     borderTopLeftRadius: 32,
     paddingHorizontal: 20,
-    overflow: "hidden",
+    overflow: "hidden", // Köşelerin FlatList altında kalmasını sağlar
   },
-
   scrollContent: {
     gap: 24,
-    paddingBottom: 80,
-    paddingTop: 16,
+    paddingBottom: 100, // NavCard için ekstra boşluk
+    paddingTop: 24, // Kıvrımdan sonra metnin nefes alması için
   },
 });

@@ -1,5 +1,5 @@
 import { AuthorIcon } from "@/components/icons/AuthorIcon";
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { LikeIcon } from "@/components/icons/CommentLikeIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
 import { ViewIcon } from "@/components/icons/ViewIcon";
 import { Image, ImageSourcePropType, Text, View } from "react-native";

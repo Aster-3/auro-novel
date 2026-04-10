@@ -1,6 +1,7 @@
 import { Text, TextInput, View, StyleSheet } from "react-native";
 import { SearchIcon } from "./icons/SearchIcon";
-import React, { useRef, useState } from "react";
+import React, { useRef } from "react";
+import { useAppTheme } from "../hooks/useTheme";
 
 export const SearchBar = ({
   value,
@@ -10,21 +11,34 @@ export const SearchBar = ({
   setValue: (val: string) => void;
 }) => {
   const inputRef = useRef<TextInput>(null);
+  const { theme, isDarkMode } = useAppTheme();
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDarkMode ? theme.surface : "#F0F4FF" },
+      ]}
+    >
       <TextInput
         ref={inputRef}
         value={value}
         onChangeText={setValue}
-        style={styles.input}
+        style={[styles.input, { color: theme.textPrimary }]}
         autoFocus={true}
+        // Klavye tarafındaki belirteç rengini de temaya uydurduk
+        selectionColor={theme.accent}
+        keyboardAppearance={isDarkMode ? "dark" : "light"}
       />
 
       <View style={styles.placeholderContainer} pointerEvents="none">
-        <SearchIcon />
+        <SearchIcon color={theme.textSecondary} />
         {value.length === 0 && (
-          <Text style={styles.placeholderText}>Search by Title</Text>
+          <Text
+            style={[styles.placeholderText, { color: theme.textSecondary }]}
+          >
+            Search by Title
+          </Text>
         )}
       </View>
     </View>
@@ -34,7 +48,6 @@ export const SearchBar = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F0F4FF",
     borderRadius: 999,
     height: 40,
     position: "relative",
@@ -43,7 +56,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: "#363b60",
     paddingHorizontal: 16,
     paddingLeft: 42,
   },
@@ -56,6 +68,5 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 14,
-    color: "gray",
   },
 });

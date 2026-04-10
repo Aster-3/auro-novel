@@ -1,4 +1,10 @@
-import React, { useMemo, useRef, useState, useEffect } from "react";
+import React, {
+  useMemo,
+  useRef,
+  useState,
+  useEffect,
+  useCallback,
+} from "react";
 import {
   Text,
   StyleSheet,
@@ -6,7 +12,6 @@ import {
   View,
   StatusBar,
   ActivityIndicator,
-  TextStyle,
 } from "react-native";
 import { Screen } from "@/components/layout/Screen";
 import { useGetOneChapter } from "@/hooks/useGetOneChapter";
@@ -37,7 +42,6 @@ import { LockedContentOverlay } from "@/Features/ChapterReadScreen/LockContentOv
 import { CoinType } from "@/types/wallet";
 import { usePurchaseChapter } from "@/hooks/usePurchaseChapter";
 
-// Route tipini tanımlayalım
 interface RouteParams {
   params: {
     id: string;
@@ -48,8 +52,9 @@ export type SheetType = "SETTINGS" | "TOC" | "MORE" | null;
 
 const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const { id } = route.params;
-  const { data: chapterData, isLoading } = useGetOneChapter(id, true);
-  const { mutate: purchaseChapter, isPending } = usePurchaseChapter(id);
+  const [selectedId, setId] = useState(id);
+  const { data: chapterData, isLoading } = useGetOneChapter(selectedId, true);
+  const { mutate: purchaseChapter } = usePurchaseChapter(selectedId);
 
   const { width } = useWindowDimensions();
   const navigation = useAppNavigation();
@@ -72,33 +77,57 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const queryClient = useQueryClient();
 
-  const colors = {
-    background: isDarkMode ? "#090910" : "rgb(255, 255, 255)",
-    text: isDarkMode ? "#ffffff" : "#606060",
-    title: isDarkMode ? "#ffffff" : "#09244B",
-  };
+  const colors = useMemo(
+    () => ({
+      background: isDarkMode ? "#07070e" : "rgb(255, 255, 255)",
+      text: isDarkMode ? "#d3d3d3" : "#282727",
+      title: isDarkMode ? "#E0E0E0" : "#09244B",
+    }),
+    [isDarkMode],
+  );
 
-  // --- KRİTİK DÜZELTME: Animasyon ve Mount Mantığı ---
+  // Handler'ları useCallback ile sarmaladık
+  const toggleMenu = useCallback(() => {
+    setIsMenuVisible((prev) => !prev);
+  }, []);
+
+  const selectChapter = useCallback((chapterId: string) => {
+    setId(chapterId);
+    bottomSheetRef.current?.close();
+  }, []);
+
+  const handleOpenSheet = useCallback((type: SheetType) => {
+    setActiveSheet(type);
+    bottomSheetRef.current?.expand();
+  }, []);
+
+  const handleUnlockChapter = useCallback(
+    (coinType: CoinType) => {
+      purchaseChapter(coinType);
+    },
+    [purchaseChapter],
+  );
+
   useEffect(() => {
-    // Sayfa her açıldığında scroll'un ve pan'ın sıfırlanmasını garanti et
+    contentOpacity.value = 0;
     scrollViewRef.current?.scrollTo({ y: 0, animated: false });
     translateX.value = 0;
-  }, []);
+
+    setIsMenuVisible(false);
+    bottomSheetRef.current?.close();
+  }, [id, contentOpacity, translateX]);
 
   useEffect(() => {
     if (!isLoading && chapterData?.content) {
-      // Veri cache'den anında gelse bile, gözün o titremeyi görmemesi için
-      // 0'dan 1'e yumuşakça (fade-in) çıkartıyoruz.
       contentOpacity.value = withTiming(1, { duration: 350 });
     } else {
       contentOpacity.value = 0;
     }
-  }, [isLoading, chapterData?.content]);
+  }, [isLoading, chapterData?.content, contentOpacity]);
 
   // --- PREFETCH MANTIĞI ---
   useEffect(() => {
     const nextId = chapterData?.nextChapterId;
-
     if (nextId) {
       queryClient.prefetchQuery({
         queryKey: ["chapterDetail", nextId],
@@ -109,14 +138,9 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   }, [chapterData?.nextChapterId, queryClient]);
 
   const actualPadding =
-    paddingHorizontal === 3 ? 28 : paddingHorizontal === 2 ? 18 : 14;
+    paddingHorizontal === 3 ? 20 : paddingHorizontal === 2 ? 16 : 12;
   const actualLineHeight =
     fontSize * (lineHeight === 3 ? 1.8 : lineHeight === 2 ? 1.5 : 1.2);
-
-  const handleOpenSheet = (type: SheetType) => {
-    setActiveSheet(type);
-    bottomSheetRef.current?.expand();
-  };
 
   // --- ANIMASYON STİLLERİ ---
   const mainAnimatedStyle = useAnimatedStyle(() => ({
@@ -137,6 +161,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     const panGesture = Gesture.Pan()
       .activeOffsetX([-20, 20])
       .onUpdate((event) => {
+        "worklet"; // İşlemlerin sadece UI thread'de kalmasını garantiler
         if (event.translationX > 0 && !chapterData?.previousChapterId) {
           translateX.value = event.translationX * 0.2;
         } else if (event.translationX < 0 && !chapterData?.nextChapterId) {
@@ -146,69 +171,89 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
         }
       })
       .onEnd((event) => {
+        "worklet";
         const threshold = width * 0.2;
         const prevId = chapterData?.previousChapterId;
         const nextId = chapterData?.nextChapterId;
 
         if (event.translationX > threshold && prevId) {
           translateX.value = withTiming(width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", { id: prevId! });
+            runOnJS(navigation.replace)("ChapterRead", { id: prevId });
           });
         } else if (event.translationX < -threshold && nextId) {
           translateX.value = withTiming(-width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", { id: nextId! });
+            runOnJS(navigation.replace)("ChapterRead", { id: nextId });
           });
         } else {
           translateX.value = withTiming(0, { duration: 200 });
         }
-      })
-      .runOnJS(true);
+      });
+    // .runOnJS(true) BURADAN KALDIRILDI -> Çünkü animasyonu bozuyor. Sadece onEnd içinde runOnJS kullanıldı.
 
     const tapGesture = Gesture.Tap()
       .numberOfTaps(1)
       .onEnd(() => {
-        runOnJS(setIsMenuVisible)(!isMenuVisible);
-      })
-      .runOnJS(true);
+        "worklet";
+        runOnJS(toggleMenu)();
+      });
 
     return Gesture.Exclusive(panGesture, tapGesture);
-  }, [chapterData, isMenuVisible, width, navigation, translateX]);
+  }, [
+    chapterData?.previousChapterId,
+    chapterData?.nextChapterId,
+    width,
+    navigation,
+    translateX,
+    toggleMenu,
+  ]);
 
-  const tagsStyles: Record<string, MixedStyleDeclaration> = {
-    p: {
-      fontSize: fontSize,
-      fontFamily: fontFamily,
-      lineHeight: actualLineHeight,
-      textAlign: textAlign as any,
-      marginBottom: 30,
-      color: colors.text,
-      fontWeight: "600",
-    },
-    strong: { fontWeight: "bold", color: colors.text },
-    em: { fontStyle: "italic", color: colors.text },
-  };
+  // RenderHtml çok ağır olduğu için prop'ları kesinlikle useMemo ile sarmalanmalı
+  const tagsStyles: Record<string, MixedStyleDeclaration> = useMemo(
+    () => ({
+      p: {
+        fontSize: fontSize,
+        fontFamily: fontFamily,
+        lineHeight: actualLineHeight,
+        textAlign: textAlign as any,
+        marginBottom: 30,
+        color: colors.text,
+        fontWeight: "600",
+      },
+      strong: { fontWeight: "bold", color: colors.text },
+      em: { fontStyle: "italic", color: colors.text },
+    }),
+    [fontSize, fontFamily, actualLineHeight, textAlign, colors.text],
+  );
 
-  const handleUnlockChapter = (coinType: CoinType) => {
-    purchaseChapter(coinType);
-  };
+  const systemFonts = useMemo(
+    () => [
+      fontFamily,
+      `${fontFamily}-Medium`,
+      `${fontFamily}-Bold`,
+      "Merriweather",
+    ],
+    [fontFamily],
+  );
+
+  const littleTitle = chapterData?.volumeTitle
+    ? `${chapterData.volumeTitle}: ${chapterData.title}`
+    : `Cilt ${chapterData?.volumeOrder}: ${chapterData?.title}`;
 
   return (
     <Screen
-      style={StyleSheet.flatten([
-        styles.container,
-        { backgroundColor: colors.background },
-      ])}
+      style={[styles.container, { backgroundColor: colors.background }] as any}
     >
       <StatusBar hidden={true} animated />
 
-      {/* KÜÇÜK TITLE (Artık bu da Fade-in animasyonuna dahil) */}
       <Animated.View
-        style={[{ height: 30, justifyContent: "center" }, contentFadeStyle]}
+        style={[
+          { height: 30, justifyContent: "center" },
+          contentFadeStyle,
+          mainAnimatedStyle,
+        ]}
       >
         <Text style={[styles.followingText, { color: colors.text }]}>
-          {chapterData
-            ? `0${chapterData.chapterOrder}. ${chapterData.title}`
-            : " "}
+          {littleTitle}
         </Text>
       </Animated.View>
 
@@ -239,10 +284,10 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                 showsVerticalScrollIndicator={false}
               >
                 <Text
-                  style={StyleSheet.flatten([
+                  style={[
                     styles.title,
                     { color: colors.title, fontFamily: `${fontFamily}-Bold` },
-                  ])}
+                  ]}
                 >
                   {chapterData?.title}
                 </Text>
@@ -251,12 +296,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                   contentWidth={width - actualPadding * 2}
                   source={{ html: chapterData?.content || "" }}
                   tagsStyles={tagsStyles}
-                  systemFonts={[
-                    fontFamily,
-                    `${fontFamily}-Medium`,
-                    `${fontFamily}-Bold`,
-                    "Merriweather",
-                  ]}
+                  systemFonts={systemFonts}
                 />
                 {!chapterData?.isLocked && (
                   <SlideForNextChapter
@@ -269,6 +309,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
           )}
         </Animated.View>
       </GestureDetector>
+
       {chapterData?.isLocked && (
         <LockedContentOverlay
           onUnlock={handleUnlockChapter}
@@ -286,7 +327,13 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
         isMenuVisible={isMenuVisible}
         handleOpenSheet={handleOpenSheet}
       />
-      <ChapterBottomSheet activeSheet={activeSheet} ref={bottomSheetRef} />
+      <ChapterBottomSheet
+        chapterId={chapterData?.id!}
+        novelId={chapterData?.novelId!}
+        activeSheet={activeSheet}
+        ref={bottomSheetRef}
+        selectChapter={selectChapter}
+      />
     </Screen>
   );
 };

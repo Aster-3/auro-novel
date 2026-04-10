@@ -1,10 +1,18 @@
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
-import { Text, View, StyleSheet, Image, Pressable } from "react-native";
+import {
+  Text,
+  View,
+  StyleSheet,
+  Image,
+  Pressable,
+  Platform,
+} from "react-native";
 import logo from "@assets/lost-ghost.jpg";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { NightShardIcon } from "@/components/icons/NightShardIcon";
 import { useWalletQuery } from "@/hooks/useWalletQuery";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const ProfileHeader = ({
   openLoginSheet,
@@ -12,10 +20,20 @@ export const ProfileHeader = ({
   openLoginSheet: () => void;
 }) => {
   const user = useAuthStore((state) => state.user);
-  const { data: wallet, isLoading } = useWalletQuery();
+  const { data: wallet } = useWalletQuery();
+  const { theme, isDarkMode } = useAppTheme();
 
   return (
-    <View style={styles.card}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: isDarkMode ? theme.backgroundSecondary : "#FFF",
+          shadowColor: isDarkMode ? "#000" : "#000",
+          shadowOpacity: isDarkMode ? 0.3 : 0.1,
+        },
+      ]}
+    >
       <View style={styles.mainRow}>
         <View style={styles.userInfo}>
           <View style={styles.avatarContainer}>
@@ -23,14 +41,23 @@ export const ProfileHeader = ({
               source={
                 user?.profileImageUrl ? { uri: user.profileImageUrl } : logo
               }
-              style={styles.avatar}
+              style={[
+                styles.avatar,
+                {
+                  backgroundColor: isDarkMode ? theme.background : "#F2F2F7",
+                  borderColor: isDarkMode ? theme.surface : "#FFF",
+                },
+              ]}
             />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.username} numberOfLines={1}>
+            <Text
+              style={[styles.username, { color: theme.textPrimary }]}
+              numberOfLines={1}
+            >
               {user?.nickname || "Misafir"}
             </Text>
-            <Text style={styles.userSubtitle}>
+            <Text style={[styles.userSubtitle, { color: theme.textSecondary }]}>
               {user
                 ? user.username
                   ? `@${user.username}`
@@ -46,11 +73,21 @@ export const ProfileHeader = ({
               onPress={openLoginSheet}
               style={({ pressed }) => [
                 styles.loginButton,
-                { opacity: pressed ? 0.7 : 1 },
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F2F2F7",
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
             >
-              <Text style={styles.loginText}>Giriş Yap</Text>
-              <RightChevronIcon size={14} color="#007AFF" />
+              <Text style={[styles.loginText, { color: theme.textPrimary }]}>
+                Giriş Yap
+              </Text>
+              <RightChevronIcon
+                size={14}
+                color={isDarkMode ? theme.textPrimary : "#007AFF"}
+              />
             </Pressable>
           ) : (
             <View style={styles.currencyStack}>
@@ -65,9 +102,21 @@ export const ProfileHeader = ({
               >
                 <NightShardIcon size={26} />
                 <View style={styles.currencyContent}>
-                  <Text style={styles.currencyText}>{wallet?.moonCoins}</Text>
-                  <View style={styles.plusIconWrapper}>
-                    <PlusIcon size={10} color="#FFF" />
+                  <Text
+                    style={[styles.currencyText, { color: theme.textPrimary }]}
+                  >
+                    {wallet?.moonCoins}
+                  </Text>
+                  <View
+                    style={[
+                      styles.plusIconWrapper,
+                      {
+                        backgroundColor: theme.accent,
+                        shadowColor: theme.accent,
+                      },
+                    ]}
+                  >
+                    <PlusIcon size={10} color={isDarkMode ? "#000" : "#FFF"} />
                   </View>
                 </View>
               </Pressable>
@@ -81,13 +130,10 @@ export const ProfileHeader = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
     paddingHorizontal: 20,
     paddingVertical: 20,
     borderRadius: 24,
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 2,
   },
@@ -112,9 +158,7 @@ const styles = StyleSheet.create({
     width: 45,
     height: 45,
     borderRadius: 26,
-    backgroundColor: "#F2F2F7",
     borderWidth: 2,
-    borderColor: "#FFF",
   },
   textContainer: {
     marginLeft: 8,
@@ -122,13 +166,11 @@ const styles = StyleSheet.create({
   username: {
     fontFamily: "Mont-700",
     fontSize: 15,
-    color: "#1C1C1E",
     letterSpacing: -0.4,
   },
   userSubtitle: {
     fontFamily: "Mont-500",
     fontSize: 12,
-    color: "#8E8E93",
   },
   currencyStack: {
     alignItems: "flex-end",
@@ -142,40 +184,31 @@ const styles = StyleSheet.create({
   currencyContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8, // Sayı ile coin ikonu arasındaki boşluk
+    gap: 8,
   },
   currencyText: {
     fontFamily: "Mont-700",
     fontSize: 13,
-    color: "#1C274C",
     letterSpacing: -0.5,
   },
-  coinImage: {
-    width: 24,
-    height: 24,
-  },
   plusIconWrapper: {
-    backgroundColor: "#1C274C",
-    width: 12,
-    height: 12,
+    width: 14,
+    height: 14,
     marginBottom: 2,
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#1C274C",
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
   loginText: {
     fontFamily: "Mont-600",
     fontSize: 14,
-    color: "#1C274C",
   },
   loginButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
     paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 100,

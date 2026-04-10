@@ -16,6 +16,8 @@ import AppThemeScreen from "../screens/AppThemeScreen";
 import NotificationSettingsScreen from "../screens/NotificationSettingsScreen";
 import SupportFeedbackScreen from "../screens/SupportFeedbackScreen";
 import AuthorPanelScreen from "../screens/AuthorPanelScreen";
+import AuthorWalletScreen from "@/screens/AuthorWalletScreen";
+import AuthorTransactionScreen from "@/screens/AuthorTransactionScreen";
 import CreateNovelScreen from "@/screens/CreateNovelScreen";
 import NovelPanelScreen from "@/screens/NovelPanelScreen";
 import UpdateTagCategoryScreen from "@/screens/UpdateTagCategoryScreen";
@@ -25,15 +27,14 @@ import ChapterReadScreen from "@/screens/ChapterReadScreen";
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useReaderStore } from "@/store/useReaderStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator = () => {
   const { data: meData, isLoading } = useMeQuery([]);
 
-  const navBackgroundColor = useReaderStore((state) => state.isDarkMode)
-    ? "#090910"
-    : "rgb(255, 255, 255)";
+  const { theme } = useAppTheme();
 
   if (isLoading) {
     return null;
@@ -52,13 +53,17 @@ export const RootNavigator = () => {
         animation: "slide_from_right",
         orientation: "portrait",
         freezeOnBlur: true,
-        contentStyle: { backgroundColor: navBackgroundColor },
+        contentStyle: { backgroundColor: theme.background },
       }}
     >
       <Stack.Screen name="Main" component={TabNavigator} />
 
       <Stack.Group screenOptions={{ animation: "slide_from_right" }}>
-        <Stack.Screen name="Novel" component={NovelScreen} />
+        <Stack.Screen
+          name="Novel"
+          getId={({ params }) => params?.id}
+          component={NovelScreen}
+        />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
@@ -80,6 +85,11 @@ export const RootNavigator = () => {
           component={NotificationSettingsScreen}
         />
         <Stack.Screen name="AuthorPanelScreen" component={AuthorPanelScreen} />
+        <Stack.Screen name="AuthorWallet" component={AuthorWalletScreen} />
+        <Stack.Screen
+          name="AuthorTransaction"
+          component={AuthorTransactionScreen}
+        />
         <Stack.Screen
           name="SupportFeedback"
           component={SupportFeedbackScreen}
@@ -95,7 +105,6 @@ export const RootNavigator = () => {
           name="ChapterRead"
           options={{
             animation: "fade",
-            contentStyle: { backgroundColor: navBackgroundColor },
           }}
           component={ChapterReadScreen}
         />

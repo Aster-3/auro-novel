@@ -35,6 +35,8 @@ export type RootStackParamList = {
   AppTheme: undefined;
   NotificationSettings: undefined;
   AuthorPanelScreen: undefined;
+  AuthorWallet: undefined;
+  AuthorTransaction: undefined;
   SupportFeedback: undefined;
   CreateNovel: undefined;
   NovelPanel: {

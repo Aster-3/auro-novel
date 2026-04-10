@@ -1,20 +1,19 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-  useEffect,
-} from "react";
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
+import React, { useState, useCallback, useMemo } from "react";
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  StyleSheet,
+  Pressable,
+} from "react-native";
 import { Image } from "expo-image";
-
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { RecommendIcon } from "@/components/icons/RecommendIcon";
+import { NotRecommendIcon } from "@/components/icons/NotRecommendIcon";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import { Reply } from "@/types/reply";
-
-const PAGE_BG = "#F8FAFC";
+import { useReaderStore } from "@/store/useReaderStore";
 
 interface ReplyParentProps {
   comment: Comment;
@@ -22,320 +21,243 @@ interface ReplyParentProps {
   openReplySheet: (replyData: Reply | null) => void;
 }
 
-const RecommendBadge = ({ isRecommend }: { isRecommend: boolean }) => {
-  const config = useMemo(
-    () => ({
-      color: isRecommend ? "#059358" : "#EF4444",
-      bgColor: isRecommend ? "#DCFCE7" : "#FEE2E2",
-      rotate: isRecommend ? "0deg" : "180deg",
-    }),
-    [isRecommend],
-  );
-
-  return (
-    <View
-      style={[
-        styles.badge,
-        {
-          backgroundColor: config.bgColor,
-          transform: [{ rotate: config.rotate }],
-        },
-      ]}
-    >
-      <LikeIcon color={config.color} size={13} />
-    </View>
-  );
-};
-
 export const ReplyParent = React.memo(
   ({ comment, openReplySheet }: ReplyParentProps) => {
     const [expanded, setExpanded] = useState(false);
     const [isTruncated, setIsTruncated] = useState(false);
     const [measured, setMeasured] = useState(false);
+    const isDarkMode = useReaderStore((state) => state.isDarkMode);
 
-    const toggleExpanded = useCallback(() => {
-      setExpanded((prev) => !prev);
-    }, []);
+    const theme = useMemo(
+      () => ({
+        surface: isDarkMode ? "#1B2838" : "#FFFFFF",
+        pageBg: isDarkMode ? "#0F1724" : "#F8FAFC", // Deliklerin iç rengi
+        border: isDarkMode ? "rgba(255, 255, 255, 0.08)" : "#E9EEF4",
+        title: isDarkMode ? "#F0F5FF" : "#1B2838",
+        text: isDarkMode ? "#CBD5E1" : "#475569",
+        subText: isDarkMode
+          ? "rgba(148, 163, 184, 0.5)"
+          : "rgba(100, 116, 139, 0.5)",
+        badge: {
+          pos: {
+            bg: isDarkMode ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7",
+            text: "#10B981",
+          },
+          neg: {
+            bg: isDarkMode ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
+            text: "#EF4444",
+          },
+        },
+      }),
+      [isDarkMode],
+    );
 
-    const ticketCode = `#${String(comment.id).padStart(6, "0")}`;
-
-    console.log("Rendering ReplyParent:", comment.id, {
-      expanded,
-      isTruncated,
-    });
+    const ticketCode = `#${String(comment.id).slice(-6).toUpperCase()}`;
 
     return (
-      // Dış wrapper: overflow visible — notch'lar dışa taşabilsin
-      <View style={styles.wrapper}>
-        <View style={styles.container}>
-          {/* ── ÜST GÖVDE ── */}
-          <View style={styles.body}>
-            <View style={styles.header}>
+      <View style={s.wrapper}>
+        <View style={[s.container, { backgroundColor: theme.surface }]}>
+          {/* HEADER & BODY */}
+          <View style={s.mainSection}>
+            <View style={s.header}>
               <Image
-                cachePolicy={"disk"}
                 source={{ uri: comment.user.profileImageUrl }}
-                style={styles.avatar}
-                contentFit="cover"
-                transition={200}
+                style={s.avatar}
               />
-              <View style={styles.meta}>
-                <Text style={styles.userName} numberOfLines={1}>
+              <View style={s.meta}>
+                <Text style={[s.userName, { color: theme.title }]}>
                   {comment.user.nickname}
                 </Text>
-                <Text style={styles.dateText}>
+                <Text style={[s.date, { color: theme.subText }]}>
                   {formatSmartDate(comment.createdAt)}
                 </Text>
               </View>
-              <RecommendBadge isRecommend={comment.isRecommend} />
+              <View
+                style={[
+                  s.badge,
+                  {
+                    backgroundColor: comment.isRecommend
+                      ? theme.badge.pos.bg
+                      : theme.badge.neg.bg,
+                  },
+                ]}
+              >
+                {comment.isRecommend ? (
+                  <RecommendIcon color={theme.badge.pos.text} size={13} />
+                ) : (
+                  <NotRecommendIcon color={theme.badge.neg.text} size={13} />
+                )}
+              </View>
             </View>
 
-            <View style={styles.divider} />
+            <View style={[s.divider, { backgroundColor: theme.border }]} />
 
-            <Text
-              style={styles.commentText}
-              onPress={toggleExpanded}
-              numberOfLines={measured && !expanded ? 4 : undefined}
-              onTextLayout={(e) => {
-                if (!measured) {
-                  if (e.nativeEvent.lines.length > 4) setIsTruncated(true);
-                  setMeasured(true);
+            <Pressable onPress={() => isTruncated && setExpanded(!expanded)}>
+              <Text
+                style={[s.contentText, { color: theme.text }]}
+                numberOfLines={!expanded ? 4 : undefined}
+                onTextLayout={(e) =>
+                  !measured &&
+                  e.nativeEvent.lines.length > 4 &&
+                  setIsTruncated(true)
                 }
-              }}
-            >
-              {comment.content}
-            </Text>
+              >
+                {comment.content}
+              </Text>
+            </Pressable>
 
             {isTruncated && (
-              <TouchableOpacity
-                onPress={toggleExpanded}
-                activeOpacity={0.7}
-                style={styles.moreButton}
-              >
-                <Text style={styles.toggleText}>
-                  {expanded ? "Daha az göster" : "Devamını oku..."}
-                </Text>
-              </TouchableOpacity>
+              <Text style={[s.moreText, { color: theme.badge.pos.text }]}>
+                {expanded ? "DAHA AZ GÖSTER" : "OKUMAYA DEVAM ET"}
+              </Text>
             )}
           </View>
 
-          {/* ── PERFORASYON ──
-              Notch'lar container dışına (wrapper içine) taşıyor,
-              böylece border ve shadow kesilmiyor. */}
-          <View style={styles.perforation}>
-            <View style={styles.notchLeft} />
-            <View style={styles.dashedRow}>
-              {Array.from({ length: 24 }).map((_, i) => (
-                <View key={i} style={styles.dash} />
+          {/* PERFORATION (BILET DELIKLERI) */}
+          <View style={s.perforation}>
+            <View
+              style={[
+                s.notch,
+                s.leftNotch,
+                { backgroundColor: theme.pageBg, borderColor: theme.border },
+              ]}
+            />
+            <View style={s.dashRow}>
+              {Array.from({ length: 20 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={[s.dash, { backgroundColor: theme.border }]}
+                />
               ))}
             </View>
-            <View style={styles.notchRight} />
+            <View
+              style={[
+                s.notch,
+                s.rightNotch,
+                { backgroundColor: theme.pageBg, borderColor: theme.border },
+              ]}
+            />
           </View>
 
-          {/* ── ALT STUB ── */}
-          <View style={styles.stub}>
-            <View style={styles.stubStat}>
-              <Text style={styles.stubNum}>{comment.likeCount}</Text>
-              <Text style={styles.stubLabel}>beğeni</Text>
+          {/* FOOTER (STUB) */}
+          <View style={s.stub}>
+            <View style={s.stat}>
+              <Text style={[s.statNum, { color: theme.title }]}>
+                {comment.likeCount}
+              </Text>
+              <Text style={[s.statLabel, { color: theme.subText }]}>
+                BEĞENİ
+              </Text>
+            </View>
+            <View style={[s.dot, { backgroundColor: theme.subText }]} />
+            <View style={s.stat}>
+              <Text style={[s.statNum, { color: theme.title }]}>
+                {comment.replyCount}
+              </Text>
+              <Text style={[s.statLabel, { color: theme.subText }]}>YANIT</Text>
             </View>
 
-            <View style={styles.stubDot} />
+            <View style={{ flex: 1 }} />
 
-            <View style={styles.stubStat}>
-              <Text style={styles.stubNum}>{comment.replyCount}</Text>
-              <Text style={styles.stubLabel}>yanıt</Text>
-            </View>
-
-            <View style={styles.stubSpacer} />
-
-            {/* Yanıtla butonu */}
             <TouchableOpacity
-              style={styles.replyBtn}
-              activeOpacity={0.6}
-              onPress={() => {
-                openReplySheet(null);
-              }}
+              style={[
+                s.replyBtn,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                },
+              ]}
+              onPress={() => openReplySheet(null)}
             >
-              <ReplyIcon color="#64748B" size={11} />
-              <Text style={styles.replyBtnText}>Yanıtla</Text>
+              <ReplyIcon color={theme.subText} size={10} />
+              <Text style={[s.replyBtnText, { color: theme.subText }]}>
+                YANITLA
+              </Text>
             </TouchableOpacity>
 
-            <View style={styles.stubDivider} />
-
-            <Text style={styles.ticketCode}>{ticketCode}</Text>
+            <View style={[s.stubDivider, { backgroundColor: theme.border }]} />
+            <Text style={[s.ticketCode, { color: theme.subText }]}>
+              {ticketCode}
+            </Text>
           </View>
         </View>
       </View>
     );
   },
-  (prevProps, nextProps) => {
-    return prevProps.comment.replyCount === nextProps.comment.replyCount;
-  },
 );
 
-const NOTCH_SIZE = 16;
-
-const styles = StyleSheet.create({
-  wrapper: {
-    marginHorizontal: 8,
-  },
-
-  container: {
-    backgroundColor: "#ffffff",
-    borderWidth: 1,
-    borderColor: "#E9EEF4",
-    borderRadius: 16,
-    overflow: "hidden", // Sadece köşe kesmek için — notch'lar wrapper'da
-  },
-
-  // ── Üst gövde ──────────────────────────────────────
-  body: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
-    gap: 8,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 99,
-    backgroundColor: "#F1F5F9",
-  },
+const NOTCH_SIZE = 14;
+const s = StyleSheet.create({
+  wrapper: { marginHorizontal: 4, marginVertical: 8 },
+  container: { borderRadius: 16, overflow: "hidden" },
+  mainSection: { padding: 14, gap: 10 },
+  header: { flexDirection: "row", alignItems: "center" },
+  avatar: { width: 34, height: 34, borderRadius: 10, marginRight: 10 },
   meta: { flex: 1 },
-  userName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#1E293B",
-    lineHeight: 17,
-  },
-  dateText: {
-    fontSize: 10,
-    color: "#94A3B8",
+  userName: { fontSize: 13, fontFamily: "Mont-700" },
+  date: {
+    fontSize: 9,
+    fontFamily: "Mont-600",
+    textTransform: "uppercase",
     marginTop: 1,
   },
   badge: {
-    width: 26,
-    height: 26,
+    width: 28,
+    height: 28,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  divider: {
-    height: 1,
-    backgroundColor: "#F1F5F9",
+  divider: { height: 1, opacity: 0.6 },
+  contentText: { fontSize: 12, lineHeight: 19, fontFamily: "Mont-500" },
+  moreText: {
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    marginTop: 4,
+    letterSpacing: 0.5,
   },
-  commentText: {
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#475569",
-  },
-  moreButton: {
-    marginTop: 0,
-  },
-  toggleText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#a8a8a8",
-  },
-
-  // ── Perforasyon ────────────────────────────────────
   perforation: {
     flexDirection: "row",
     alignItems: "center",
     height: NOTCH_SIZE,
   },
-  notchLeft: {
+  notch: {
     width: NOTCH_SIZE,
     height: NOTCH_SIZE,
     borderRadius: NOTCH_SIZE / 2,
-    backgroundColor: PAGE_BG,
-    // Wrapper'a taşmak için negatif margin
-    marginLeft: -(NOTCH_SIZE / 2),
-    // Border'ı taklit et
     borderWidth: 1,
-    borderColor: "#E9EEF4",
+    position: "absolute",
   },
-  notchRight: {
-    width: NOTCH_SIZE,
-    height: NOTCH_SIZE,
-    borderRadius: NOTCH_SIZE / 2,
-    backgroundColor: PAGE_BG,
-    marginRight: -(NOTCH_SIZE / 2),
-    borderWidth: 1,
-    borderColor: "#E9EEF4",
-  },
-  dashedRow: {
+  leftNotch: { left: -(NOTCH_SIZE / 2) },
+  rightNotch: { right: -(NOTCH_SIZE / 2) },
+  dashRow: {
     flex: 1,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 4,
+    paddingHorizontal: 12,
   },
-  dash: {
-    width: 3,
-    height: 1.5,
-    borderRadius: 1,
-    backgroundColor: "#DDE3EB",
-  },
-
-  // ── Alt stub ───────────────────────────────────────
+  dash: { width: 3, height: 1, borderRadius: 1 },
   stub: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     gap: 8,
   },
-  stubStat: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: 3,
-  },
-  stubNum: {
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#1E293B",
-    letterSpacing: -0.2,
-  },
-  stubLabel: {
-    fontSize: 10,
-    color: "#94A3B8",
-  },
-  stubDot: {
-    width: 2.5,
-    height: 2.5,
-    borderRadius: 1.5,
-    backgroundColor: "#CBD5E1",
-  },
-  stubSpacer: { flex: 1 },
-  ticketCode: {
-    fontSize: 9,
-    fontWeight: "600",
-    color: "#C8D2DC",
-    letterSpacing: 1.2,
-    fontVariant: ["tabular-nums"],
-  },
+  stat: { flexDirection: "row", alignItems: "baseline", gap: 3 },
+  statNum: { fontSize: 11, fontFamily: "Mont-700" },
+  statLabel: { fontSize: 8, fontFamily: "Mont-600" },
+  dot: { width: 2, height: 2, borderRadius: 1, opacity: 0.4 },
   replyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
+    paddingVertical: 5,
+    borderRadius: 6,
   },
-  replyBtnText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#94A3B8",
-  },
-  stubDivider: {
-    width: 1,
-    height: 10,
-    backgroundColor: "#E2E8F0",
-  },
+  replyBtnText: { fontSize: 9, fontFamily: "Mont-700" },
+  stubDivider: { width: 1, height: 10, marginHorizontal: 4 },
+  ticketCode: { fontSize: 8, fontFamily: "Mont-800", letterSpacing: 0.5 },
 });

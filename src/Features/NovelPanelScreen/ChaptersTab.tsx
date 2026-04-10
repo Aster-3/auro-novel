@@ -11,12 +11,13 @@ import { PanelChapterItem } from "./PanelChapterItem";
 import { Chapter, DraftChapter } from "@/types/chapter";
 import { SortType } from "@/types/constants";
 import { useInfiniteDraftChapters } from "@/hooks/useInfiniteDraftChapters";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const ChaptersTab = ({ route }: { route: any }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const { novelId, isPublished } = route.params;
   const [sortType, setSortType] = useState<SortType>(SortType.ASC);
 
-  // 1. HOOK TANIMLAMALARI (Mutlaka en üstte ve her zaman aynı sırada olmalı)
   const publishedQuery = useInfiniteChapters(
     { id: novelId, sort: sortType },
     isPublished === true,
@@ -27,7 +28,6 @@ export const ChaptersTab = ({ route }: { route: any }) => {
     isPublished === false,
   );
 
-  // Aktif query'yi seçiyoruz (Hook değil, sadece referans)
   const activeQuery = isPublished ? publishedQuery : draftQuery;
 
   const chapters = useMemo(() => {
@@ -72,32 +72,34 @@ export const ChaptersTab = ({ route }: { route: any }) => {
     if (!activeQuery.isFetchingNextPage)
       return <View style={styles.footerSpacer} />;
     return (
-      <ActivityIndicator style={styles.loader} color="#03061E" size="small" />
+      <ActivityIndicator
+        style={styles.loader}
+        color={theme.accent}
+        size="small"
+      />
     );
-  }, [activeQuery.isFetchingNextPage]);
+  }, [activeQuery.isFetchingNextPage, theme.accent]);
 
-  // 2. KONTROL VE ERKEN RETURN (Tüm Hook'lardan SONRA yapılmalı)
-
-  // Hata Durumu
   if (activeQuery.error) {
     return (
-      <View style={styles.centered}>
-        <Text style={styles.errorText}>{activeQuery.error.message}</Text>
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <Text style={[styles.errorText, { color: "#ef4444" } as any]}>
+          {activeQuery.error.message}
+        </Text>
       </View>
     );
   }
 
-  // İlk Yükleme Durumu
   if (activeQuery.isLoading) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator color="#03061E" />
+      <View style={[styles.centered, { backgroundColor: theme.background }]}>
+        <ActivityIndicator color={theme.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <FlatList
         data={chapters}
         keyExtractor={(item) => item.id.toString()}
@@ -108,7 +110,13 @@ export const ChaptersTab = ({ route }: { route: any }) => {
         ListFooterComponent={ListFooter}
         ListEmptyComponent={
           <View style={styles.centered}>
-            <Text>
+            <Text
+              style={{
+                color: theme.textSecondary,
+                fontFamily: "Mont-500",
+                textAlign: "center",
+              }}
+            >
               {isPublished
                 ? "Henüz yayınlanmış bölüm bulunmuyor."
                 : "Henüz taslak bölüm bulunmuyor."}
@@ -138,7 +146,7 @@ const styles = StyleSheet.create({
     height: 40,
   },
   errorText: {
-    color: "red",
     textAlign: "center",
+    fontFamily: "Mont-600",
   },
 });

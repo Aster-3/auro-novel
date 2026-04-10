@@ -1,5 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { View, TextInput, StyleSheet, ActivityIndicator } from "react-native";
+import {
+  View,
+  TextInput,
+  StyleSheet,
+  ActivityIndicator,
+  StatusBar,
+} from "react-native";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ChapterEditHeader } from "@/Features/ChapterEditScreen/ChapterEditHeader";
@@ -10,7 +16,7 @@ import {
   CoreBridge,
 } from "@10play/tentap-editor";
 import {
-  customCodeBlockCSS,
+  getCustomCSS,
   CustomToolbar,
 } from "@/Features/ChapterEditScreen/CustomToolbar";
 import { RootStackParamList } from "@/constants/navigation";
@@ -23,9 +29,10 @@ import { useCreateChapter } from "@/hooks/useCreateChapter";
 import { updateCreateChapterSchema } from "@/schemas/chapter";
 import { useGetOneDraftChapter } from "@/hooks/useGetOneDraftChapter";
 import { wordCounter } from "@/utils/wordCounter";
-import { is } from "zod/v4/locales";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı çektik
 
 const ChapterEditScreen = () => {
+  const { theme, isDarkMode } = useAppTheme();
   const route = useRoute<RouteProp<RootStackParamList, "ChapterEdit">>();
   const { chapterId, novelId, isDraft } = route.params;
   const navigation = useAppNavigation();
@@ -51,7 +58,6 @@ const ChapterEditScreen = () => {
   const { mutate: createChapter } = useCreateChapter(novelId);
 
   const [title, setTitle] = useState("");
-  const [selectedVolumeId, setSelectedVolumeId] = useState<string | null>(null);
 
   const editor = useEditorBridge({
     autofocus: true,
@@ -59,7 +65,7 @@ const ChapterEditScreen = () => {
     initialContent: data?.content || "",
     bridgeExtensions: [
       ...TenTapStartKit,
-      CoreBridge.configureCSS(customCodeBlockCSS),
+      CoreBridge.configureCSS(getCustomCSS(isDarkMode, theme)),
     ],
     onChange() {
       const updateWordCount = async () => {
@@ -74,7 +80,6 @@ const ChapterEditScreen = () => {
   useEffect(() => {
     if (data) {
       if (data.title) setTitle(data.title);
-
       if (data.content) {
         editor.setContent(data.content);
       }
@@ -83,9 +88,6 @@ const ChapterEditScreen = () => {
 
   const handleSubmit = async () => {
     const currentContent = await editor.getHTML();
-    const volumeIdToSubmit =
-      selectedVolumeId === "auto" ? null : selectedVolumeId;
-
     const validate = updateCreateChapterSchema.safeParse({
       title: title.trim(),
       content: currentContent,
@@ -103,7 +105,6 @@ const ChapterEditScreen = () => {
     const payload = {
       title: title.trim(),
       content: currentContent,
-      ...(volumeIdToSubmit && { volumeId: volumeIdToSubmit }),
     };
 
     if (chapterId) {
@@ -133,18 +134,22 @@ const ChapterEditScreen = () => {
     }
   };
 
-  // Yükleme ekranı
   if ((isDraft && isDraftLoading) || (!isDraft && isPublishLoading)) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="small" color="#0f3f92" />
+      <View
+        style={[styles.loadingContainer, { backgroundColor: theme.background }]}
+      >
+        <ActivityIndicator size="small" color={theme.accent} />
       </View>
     );
   }
 
   return (
-    <View style={styles.screen}>
-      <SafeAreaView edges={["top"]} style={styles.headerSafe}>
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
+      <SafeAreaView
+        edges={["top"]}
+        style={{ backgroundColor: theme.background }}
+      >
         <ChapterEditHeader
           isCreating={!chapterId}
           handleSubmit={handleSubmit}
@@ -153,20 +158,29 @@ const ChapterEditScreen = () => {
       </SafeAreaView>
 
       <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-        <View style={styles.editorCard}>
+        <View style={[styles.editorCard, { backgroundColor: theme.surface }]}>
           <TextInput
             value={title}
             onChangeText={setTitle}
-            style={styles.titleInput}
+            style={[styles.titleInput, { color: theme.textPrimary }]}
             placeholder={chapterId ? "Bölüm Başlığı" : "Yeni Bölüm Başlığı"}
-            placeholderTextColor="#94a3b8"
+            placeholderTextColor={theme.textSecondary}
             multiline
           />
-          <View style={styles.divider} />
+          <View
+            style={[
+              styles.divider,
+              {
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.05)"
+                  : "#F1F5F9",
+              },
+            ]}
+          />
 
           <RichText
             editor={editor}
-            style={styles.richText}
+            style={[styles.richText, { backgroundColor: theme.surface }]}
             showsVerticalScrollIndicator={false}
           />
         </View>
@@ -180,33 +194,32 @@ const ChapterEditScreen = () => {
 export default ChapterEditScreen;
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#F2F2F7", gap: 16 },
-  headerSafe: { backgroundColor: "#F2F2F7" },
+  screen: { flex: 1, gap: 16 },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
   },
   flex: { flex: 1 },
   editorCard: {
     flex: 1,
-    backgroundColor: "#ffffff",
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     paddingHorizontal: 24,
     paddingTop: 24,
-    elevation: 1,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
   },
   titleInput: {
     fontSize: 18,
     fontFamily: "Mont-700",
-    color: "#1e293b",
     paddingBottom: 10,
   },
   divider: {
     height: 1,
-    backgroundColor: "#F1F5F9",
     width: "100%",
     marginBottom: 16,
   },

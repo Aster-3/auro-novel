@@ -6,12 +6,12 @@ import {
   FlatList,
 } from "react-native";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
-// Ortak özellikleri içeren bir tip tanımlayalım
 interface BaseItem {
   id: number;
-  name?: string; // Tag'ler için
-  trName?: string; // Kategoriler için
+  name?: string;
+  trName?: string;
 }
 
 interface UTCItemsProps {
@@ -20,13 +20,24 @@ interface UTCItemsProps {
 }
 
 export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
+  const { theme, isDarkMode } = useAppTheme();
+
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
-      <Text style={styles.emptyText}>Herhangi bir öğe bulunamadı.</Text>
+      <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+        Herhangi bir öğe bulunamadı.
+      </Text>
     </View>
   );
 
-  const renderSeparator = () => <View style={styles.separator} />;
+  const renderSeparator = () => (
+    <View
+      style={[
+        styles.separator,
+        { backgroundColor: isDarkMode ? "rgba(255,255,255,0.03)" : "#F1F5F9" },
+      ]}
+    />
+  );
 
   const renderItem = ({ item }: { item: BaseItem }) => {
     const displayName = item.trName || item.name || "İsimsiz";
@@ -35,10 +46,12 @@ export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
       <TouchableOpacity
         style={styles.item}
         onPress={() => onSelect(item)}
-        activeOpacity={0.6}
+        activeOpacity={0.5}
       >
-        <Text style={styles.itemText}>{displayName}</Text>
-        <RightChevronIcon size={14} color="#D1D1D6" />
+        <Text style={[styles.itemText, { color: theme.textPrimary }]}>
+          {displayName}
+        </Text>
+        <RightChevronIcon size={12} color={theme.textSecondary} />
       </TouchableOpacity>
     );
   };
@@ -51,9 +64,10 @@ export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
         keyExtractor={(item) => item.id.toString()}
         ItemSeparatorComponent={renderSeparator}
         ListEmptyComponent={renderEmptyList}
-        contentContainerStyle={
-          items.length === 0 ? styles.emptyListContent : styles.listWrapper
-        }
+        contentContainerStyle={[
+          items.length === 0 ? styles.emptyListContent : styles.listWrapper,
+          { backgroundColor: theme.surface },
+        ]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
       />
@@ -68,16 +82,17 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   listWrapper: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    paddingHorizontal: 8,
+    borderRadius: 16,
+    paddingHorizontal: 4,
     paddingVertical: 4,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E5E5E7",
+    // Kenarlığı tamamen kaldırdık veya çok silik yaptık
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.02)",
   },
   emptyListContent: {
     flexGrow: 1,
     justifyContent: "center",
+    borderRadius: 16,
   },
   item: {
     flexDirection: "row",
@@ -87,13 +102,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   itemText: {
-    fontSize: 15,
+    fontSize: 13, // 15'ten 13'e çekerek minimalizmi sağladık
     fontFamily: "Mont-500",
-    color: "#1C1C1E",
+    letterSpacing: -0.2,
   },
   separator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "#E5E5E7",
+    height: 1,
+    marginHorizontal: 16, // Ayraçlar Apple stilindeki gibi içeriden başlar
   },
   emptyContainer: {
     alignItems: "center",
@@ -101,8 +116,7 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
   },
   emptyText: {
-    fontSize: 14,
-    fontFamily: "Mont-400",
-    color: "#8E8E93",
+    fontSize: 11,
+    fontFamily: "Mont-500",
   },
 });

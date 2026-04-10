@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   Platform,
   Keyboard,
+  View,
 } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import BottomSheet, {
@@ -20,12 +21,14 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
   BottomSheetTextInput,
+  useBottomSheetSpringConfigs,
 } from "@gorhom/bottom-sheet";
 import { Portal } from "@gorhom/portal";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { LoadingDots } from "@/components/LoadingDots";
 import { useToastStore } from "@/store/useToastStore";
 import { synopsisValidationSchema } from "@/schemas/novel";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export interface SynopsisEditSheetRef {
   present: () => void;
@@ -42,6 +45,7 @@ export const SynopsisEditSheet = forwardRef<
   SynopsisEditSheetRef,
   SynopsisEditSheetProps
 >(({ id, initialSynopsis, onClose }, ref) => {
+  const { theme, isDarkMode } = useAppTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,8 +55,15 @@ export const SynopsisEditSheet = forwardRef<
   const synopsisValue = useRef(initialSynopsis);
   const { mutate: updateNovel, isPending } = useNovelMutation(id);
 
-  const animationConfigs = useMemo(() => ({ duration: 280 }), []);
-  const snapPoints = useMemo(() => ["52%", "90%"], []);
+  // İstediğin o akıcı yaylanma animasyonu
+  const animationConfigs = useBottomSheetSpringConfigs({
+    damping: 80,
+    stiffness: 300,
+    mass: 1,
+    overshootClamping: true,
+  });
+
+  const snapPoints = useMemo(() => ["55%", "94%"], []);
 
   useEffect(() => {
     if (currentIndex.current === -1) {
@@ -101,8 +112,7 @@ export const SynopsisEditSheet = forwardRef<
       setIsDirty(false);
       setError(null);
       setIsVisible(true);
-      // Portal render olduktan sonra sheet'i aç
-      setTimeout(() => bottomSheetRef.current?.snapToIndex(0), 10);
+      setTimeout(() => bottomSheetRef.current?.expand(), 10);
     },
     close: () => bottomSheetRef.current?.close(),
   }));
@@ -113,7 +123,7 @@ export const SynopsisEditSheet = forwardRef<
         {...p}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.4}
+        opacity={0.3}
       />
     ),
     [],
@@ -134,12 +144,12 @@ export const SynopsisEditSheet = forwardRef<
         onSuccess: () => {
           useToastStore.getState().showToast({
             type: "Başarılı",
-            message: "Özet başarıyla güncellendi!",
+            message: "Özet güncellendi.",
           });
           bottomSheetRef.current?.close();
         },
         onError: (err: any) => {
-          setError(err?.message || "Bir hata oluştu.");
+          setError(err?.message || "Hata oluştu.");
         },
       },
     );
@@ -156,10 +166,16 @@ export const SynopsisEditSheet = forwardRef<
         backdropComponent={renderBackdrop}
         enableContentPanningGesture={false}
         enablePanDownToClose={true}
-        backgroundStyle={styles.sheetBackground}
+        animateOnMount={true}
         animationConfigs={animationConfigs}
-        handleIndicatorStyle={styles.indicator}
-        enableDynamicSizing={false}
+        backgroundStyle={[
+          styles.sheetBackground,
+          { backgroundColor: theme.surface },
+        ]}
+        handleIndicatorStyle={[
+          styles.indicator,
+          { backgroundColor: isDarkMode ? "rgba(255,255,255,0.08)" : "#EEE" },
+        ]}
         onClose={handleClose}
         onChange={(index) => {
           currentIndex.current = index;
@@ -167,38 +183,54 @@ export const SynopsisEditSheet = forwardRef<
         }}
       >
         <BottomSheetView style={styles.container}>
-          <Text style={styles.title}>Özet</Text>
+          <Text style={[styles.title, { color: theme.textSecondary }]}>
+            ÖZET
+          </Text>
 
-          <BottomSheetTextInput
-            style={[styles.input, error ? styles.inputError : null]}
-            defaultValue={initialSynopsis}
-            onChangeText={(text) => {
-              synopsisValue.current = text;
-              const dirty = text !== initialSynopsis;
-              setIsDirty(dirty);
-              if (error) setError(null);
-            }}
-            multiline
-            placeholder="Roman özetini girin..."
-            textAlignVertical="top"
-            placeholderTextColor="#94A3B8"
-            editable={!isPending}
-          />
+          <View style={styles.inputContainer}>
+            <BottomSheetTextInput
+              style={[
+                styles.input,
+                {
+                  color: theme.textPrimary,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.03)"
+                    : "rgba(0,0,0,0.01)",
+                  borderColor: isDarkMode
+                    ? "rgba(255,255,255,0.08)"
+                    : "#F1F5F9",
+                },
+                error ? styles.inputError : null,
+              ]}
+              defaultValue={initialSynopsis}
+              onChangeText={(text) => {
+                synopsisValue.current = text;
+                setIsDirty(text !== initialSynopsis);
+                if (error) setError(null);
+              }}
+              multiline
+              placeholder="Roman özetini buraya yazın..."
+              textAlignVertical="top"
+              placeholderTextColor={theme.textSecondary}
+              editable={!isPending}
+            />
 
-          {error && (
-            <Animated.Text
-              entering={FadeInUp}
-              exiting={FadeOutUp}
-              style={styles.errorText}
-            >
-              {error}
-            </Animated.Text>
-          )}
+            {error && (
+              <Animated.Text
+                entering={FadeInUp}
+                exiting={FadeOutUp}
+                style={styles.errorText}
+              >
+                {error}
+              </Animated.Text>
+            )}
+          </View>
 
           <TouchableOpacity
             style={[
               styles.saveButton,
-              (isPending || !isDirty) && { opacity: 0.6 },
+              { backgroundColor: theme.textPrimary },
+              (isPending || !isDirty) && { opacity: 0.3 },
             ]}
             activeOpacity={0.8}
             onPress={handleSave}
@@ -207,7 +239,11 @@ export const SynopsisEditSheet = forwardRef<
             {isPending ? (
               <LoadingDots />
             ) : (
-              <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+              <Text
+                style={[styles.saveButtonText, { color: theme.background }]}
+              >
+                KAYDET
+              </Text>
             )}
           </TouchableOpacity>
 
@@ -216,7 +252,11 @@ export const SynopsisEditSheet = forwardRef<
             style={styles.cancelButton}
             disabled={isPending}
           >
-            <Text style={styles.cancelButtonText}>İptal</Text>
+            <Text
+              style={[styles.cancelButtonText, { color: theme.textSecondary }]}
+            >
+              Vazgeç
+            </Text>
           </TouchableOpacity>
         </BottomSheetView>
       </BottomSheet>
@@ -226,65 +266,64 @@ export const SynopsisEditSheet = forwardRef<
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
+    borderRadius: 40,
   },
   indicator: {
-    backgroundColor: "#E0E0E0",
-    width: 40,
+    width: 30,
+    height: 3,
   },
   container: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: 32,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 16,
+    fontSize: 9,
+    fontFamily: "Mont-700",
+    letterSpacing: 2,
+    marginBottom: 24,
+    textAlign: "center",
+  },
+  inputContainer: {
+    gap: 8,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 12,
-    padding: 14,
-    paddingTop: 16,
-    height: 200,
-    fontSize: 16,
-    color: "#1E293B",
-    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    height: 220,
+    fontSize: 13,
+    fontFamily: "Mont-500",
+    lineHeight: 18,
   },
   inputError: {
     borderColor: "#EF4444",
   },
   saveButton: {
-    backgroundColor: "#121c33",
-    height: 52,
+    height: 48,
     justifyContent: "center",
-    borderRadius: 12,
-    marginTop: 20,
+    borderRadius: 16,
+    marginTop: 28,
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 15,
+    fontFamily: "Mont-700",
+    fontSize: 11,
+    letterSpacing: 1,
   },
   cancelButton: {
-    marginTop: 12,
+    marginTop: 16,
     padding: 8,
   },
   cancelButtonText: {
-    color: "#64748B",
     textAlign: "center",
-    fontSize: 14,
+    fontSize: 12,
+    fontFamily: "Mont-500",
   },
   errorText: {
     color: "#EF4444",
-    fontSize: 12,
-    marginTop: 6,
-    marginLeft: 4,
-    fontWeight: "500",
+    fontSize: 10,
+    textAlign: "center",
+    fontFamily: "Mont-500",
   },
 });

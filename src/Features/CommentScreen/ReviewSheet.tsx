@@ -1,5 +1,5 @@
 import { CloseIcon } from "@/components/icons/CloseIcon";
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { RecommendIcon } from "@/components/icons/RecommendIcon";
 import { SendIcon } from "@/components/icons/SendIcon";
 import { LoadingDots } from "@/components/LoadingDots";
 import { useCommentMutation } from "@/hooks/useCommentMutation";
@@ -20,31 +20,76 @@ import {
   useRef,
   useState,
 } from "react";
-import {
-  Text,
-  Pressable,
-  View,
-  StyleSheet,
-  Keyboard,
-  Platform,
-  BackHandler,
-} from "react-native";
+import { Text, Pressable, View, StyleSheet, Keyboard } from "react-native";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAppTheme } from "@/hooks/useTheme";
+import { Portal } from "@gorhom/portal";
+import Animated, {
+  FadeInDown,
+  FadeOutUp,
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { useIsFocused } from "@react-navigation/native";
+
+// Animasyonlu renk geçişi yapabilmek için BottomSheetTextInput'u sarmalıyoruz
+const AnimatedTextInput =
+  Animated.createAnimatedComponent(BottomSheetTextInput);
 
 export const ReviewSheet = forwardRef((props: { novelId: string }, ref) => {
   const { novelId } = props;
+  const { theme, isDarkMode } = useAppTheme();
   const queryClient = useQueryClient();
   const [recommend, setRecommend] = useState<boolean>(true);
   const MAX_LENGTH = 750;
   const [commentText, setCommentText] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const { mutate, isPending } = useCommentMutation();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const currentIndex = useRef<number>(-1);
+  const isFocused = useIsFocused();
 
-  const snapPoints = useMemo(() => ["60%", "99%"], []);
+  const isOpen = useRef(false);
+
+  // --- ANİMASYON STATE'İ ---
+  const errorProgress = useSharedValue(0);
+
+  // Hata mesajı değiştiğinde animasyon değerini tetikliyoruz (0 -> 1 veya 1 -> 0)
+  useEffect(() => {
+    errorProgress.value = withTiming(errorMsg ? 1 : 0, { duration: 300 });
+  }, [errorMsg, errorProgress]);
+
+  // Input'un border rengini errorProgress değerine göre pürüzsüzce hesaplıyoruz
+  const animatedInputStyle = useAnimatedStyle(() => {
+    const defaultBorderColor = isDarkMode
+      ? "rgba(255,255,255,0.05)"
+      : "#E2E8F0";
+    const errorBorderColor = "#E11D48";
+
+    return {
+      borderColor: interpolateColor(
+        errorProgress.value,
+        [0, 1],
+        [defaultBorderColor, errorBorderColor],
+      ),
+    };
+  });
+
+  useEffect(() => {
+    const hide = Keyboard.addListener("keyboardDidHide", () => {
+      if (isFocused && isOpen.current) {
+        bottomSheetRef.current?.snapToIndex(0);
+      }
+    });
+
+    return () => hide.remove();
+  }, [isFocused]);
+
+  const snapPoints = useMemo(() => ["60%", "70%"], []);
 
   const springConfigs = useBottomSheetSpringConfigs({
-    damping: 50,
+    damping: 60,
     overshootClamping: true,
     stiffness: 500,
   });
@@ -52,12 +97,16 @@ export const ReviewSheet = forwardRef((props: { novelId: string }, ref) => {
   const resetState = useCallback(() => {
     setRecommend(true);
     setCommentText("");
+    setErrorMsg(null);
+    isOpen.current = false;
   }, []);
 
   useImperativeHandle(ref, () => ({
-    expand: () => bottomSheetRef.current?.snapToIndex(0),
+    expand: () => {
+      isOpen.current = true;
+      bottomSheetRef.current?.snapToIndex(0);
+    },
     close: () => {
-      currentIndex.current = -1;
       Keyboard.dismiss();
       bottomSheetRef.current?.close();
     },
@@ -66,97 +115,46 @@ export const ReviewSheet = forwardRef((props: { novelId: string }, ref) => {
   const handleClose = useCallback(() => {
     if (commentText.length > 0) {
       useModalStore.getState().showConfirm({
-        title: "Yorumunuz kaybolacak",
-        message: "Yorumunuzu kaydetmeden çıkmak istediğinize emin misiniz?",
-        confirmText: "Evet, çık",
-        cancelText: "Hayır, kal",
+        title: "Yorumunuz Kaybolacak",
+        message: "Yazınızı tamamlamadan çıkmak istediğinize emin misiniz?",
         onConfirm: () => {
-          currentIndex.current = -1;
           Keyboard.dismiss();
           bottomSheetRef.current?.close();
         },
       });
     } else {
-      currentIndex.current = -1;
       Keyboard.dismiss();
       bottomSheetRef.current?.close();
     }
   }, [commentText]);
 
   const renderBackdrop = useCallback(
-    (props: any) => (
+    (p: any) => (
       <BottomSheetBackdrop
-        {...props}
+        {...p}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
         opacity={0.5}
         pressBehavior="none"
-        zIndex={500000} // Backdrop'ın zIndex'i sheet'in altında kalmalı
       />
     ),
     [],
   );
 
-  useEffect(() => {
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    const showSubscription = Keyboard.addListener(showEvent, () => {
-      if (currentIndex.current === -1) return;
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (currentIndex.current === 1) return;
-        currentIndex.current = 1;
-        bottomSheetRef.current?.snapToIndex(1);
-      }, 0);
-    });
-
-    const hideSubscription = Keyboard.addListener(hideEvent, () => {
-      if (currentIndex.current === -1) return;
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (currentIndex.current === 1) {
-          currentIndex.current = 0;
-          bottomSheetRef.current?.snapToIndex(0);
-        }
-      }, 0);
-    });
-
-    return () => {
-      clearTimeout(timeoutId);
-      showSubscription.remove();
-      hideSubscription.remove();
-    };
-  }, []);
-
-  useEffect(() => {
-    const backAction = () => {
-      if (currentIndex.current === -1) return false;
-      handleClose();
-      return true;
-    };
-
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction,
-    );
-
-    return () => backHandler.remove();
-  }, [handleClose]);
-
   const handleSubmit = () => {
     if (!commentText.trim()) return;
 
+    if (commentText.length > MAX_LENGTH) {
+      setErrorMsg(`Yorumunuz ${MAX_LENGTH} karakteri aşamaz.`);
+      return;
+    }
+    if (commentText.length < 20) {
+      setErrorMsg(`Yorumunuz en az 20 karakter olmalıdır.`);
+      return;
+    }
+
     mutate(
-      {
-        novelId,
-        content: commentText.trim(),
-        isRecommend: recommend,
-      },
+      { novelId, content: commentText.trim(), isRecommend: recommend },
       {
         onSuccess: () => {
           resetState();
@@ -168,295 +166,271 @@ export const ReviewSheet = forwardRef((props: { novelId: string }, ref) => {
           queryClient.invalidateQueries({
             queryKey: ["commentPreviews", novelId],
           });
-          queryClient.invalidateQueries({
-            queryKey: ["myComment", novelId],
-          });
-        },
-        onError: (error: any) => {
-          if (error.statusCode === 422) {
-            if (error.errors?.content) {
-              useToastStore.getState().showToast({
-                message:
-                  error.errors.content[0] || "Yorumunuzun içeriği geçersiz.",
-                type: "Hata",
-              });
-              return;
-            }
-          } else if (error.statusCode === 409) {
-            useToastStore.getState().showToast({
-              message: error.message || "Bu seriye zaten yorum yapmışsınız.",
-              type: "Uyarı",
-            });
-            return;
-          } else {
-            useToastStore.getState().showToast({
-              message: "Yorum gönderilirken bir hata oluştu.",
-              type: "Hata",
-            });
-          }
+          queryClient.invalidateQueries({ queryKey: ["myComment", novelId] });
         },
       },
     );
   };
 
   return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={-1}
-      snapPoints={snapPoints}
-      enableDynamicSizing={false}
-      enablePanDownToClose={false}
-      backgroundStyle={styles.sheetBackground}
-      handleIndicatorStyle={styles.handle}
-      backdropComponent={renderBackdrop}
-      enableContentPanningGesture={false}
-      enableHandlePanningGesture={false}
-      animationConfigs={springConfigs}
-      onAnimate={(fromIndex, toIndex) => {
-        currentIndex.current = toIndex;
-      }}
-      onClose={resetState}
-    >
-      <BottomSheetView style={styles.container}>
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.heading}>Yorumunuzu bırakın</Text>
-            <Text style={styles.subheading}>
-              Bu seriyi tavsiye ediyor musunuz?{" "}
-            </Text>
+    <Portal>
+      <BottomSheet
+        ref={bottomSheetRef}
+        index={-1}
+        snapPoints={snapPoints}
+        backdropComponent={renderBackdrop}
+        animationConfigs={springConfigs}
+        enableOverDrag={false}
+        keyboardBehavior="interactive"
+        backgroundStyle={[
+          styles.sheetBackground,
+          { backgroundColor: theme.surface },
+        ]}
+        handleIndicatorStyle={[
+          styles.handle,
+          { backgroundColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#E2E8F0" },
+        ]}
+        onClose={resetState}
+      >
+        <BottomSheetView style={styles.container}>
+          <View style={styles.header}>
+            <View>
+              <Text style={[styles.heading, { color: theme.textPrimary }]}>
+                İNCELEME YAZ
+              </Text>
+              <Text style={[styles.subheading, { color: theme.textSecondary }]}>
+                Bu seri hakkındaki görüşlerinizi paylaşın
+              </Text>
+            </View>
+            <Pressable
+              onPress={handleClose}
+              style={[
+                styles.closeBtn,
+                { backgroundColor: isDarkMode ? "#E11D48" : "#f75376" },
+              ]}
+            >
+              <CloseIcon color="#FFFFFF" size={18} />
+            </Pressable>
           </View>
 
-          <Pressable
-            onPress={handleClose}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            style={({ pressed }) => [
-              styles.closeBtn,
-              pressed && { opacity: 0.5 },
-            ]}
-          >
-            <CloseIcon color="#ffffff" size={20} />
-          </Pressable>
-        </View>
-
-        <View style={styles.recommendRow}>
-          <Pressable
-            onPress={() => setRecommend(true)}
-            style={[
-              styles.recommendBtn,
-              recommend === true && styles.recommendBtnActiveGreen,
-            ]}
-          >
-            <LikeIcon
-              color={recommend === true ? "#ffffff" : "#94A3B8"}
-              size={18}
-            />
-            <Text
+          <View style={styles.recommendRow}>
+            <Pressable
+              onPress={() => setRecommend(true)}
               style={[
-                styles.recommendLabel,
-                recommend === true && styles.recommendLabelActive,
+                styles.recommendBtn,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.03)"
+                    : "#FAFBFC",
+                  borderColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#E2E8F0",
+                },
+                recommend === true && {
+                  backgroundColor: "#16A34A",
+                  borderColor: "#15803D",
+                },
               ]}
             >
-              Tavsiye Ederim
-            </Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setRecommend(false)}
-            style={[
-              styles.recommendBtn,
-              recommend === false && styles.recommendBtnActiveRed,
-            ]}
-          >
-            <View style={{ transform: [{ rotate: "180deg" }] }}>
-              <LikeIcon
-                color={recommend === false ? "#ffffff" : "#94A3B8"}
-                size={18}
+              <RecommendIcon
+                color={recommend === true ? "#FFFFFF" : "#94A3B8"}
+                size={16}
               />
-            </View>
-            <Text
+              <Text
+                style={[
+                  styles.recommendLabel,
+                  { color: recommend === true ? "#FFFFFF" : "#94A3B8" },
+                ]}
+              >
+                ÖNERİYORUM
+              </Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => setRecommend(false)}
               style={[
-                styles.recommendLabel,
-                recommend === false && styles.recommendLabelActive,
+                styles.recommendBtn,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.03)"
+                    : "#FAFBFC",
+                  borderColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#E2E8F0",
+                },
+                recommend === false && {
+                  backgroundColor: "#E11D48",
+                  borderColor: "#BE123C",
+                },
               ]}
             >
-              Tavsiye Etmem
-            </Text>
-          </Pressable>
-        </View>
+              <View style={{ transform: [{ rotate: "180deg" }] }}>
+                <RecommendIcon
+                  color={recommend === false ? "#FFFFFF" : "#94A3B8"}
+                  size={16}
+                />
+              </View>
+              <Text
+                style={[
+                  styles.recommendLabel,
+                  { color: recommend === false ? "#FFFFFF" : "#94A3B8" },
+                ]}
+              >
+                ÖNERMİYORUM
+              </Text>
+            </Pressable>
+          </View>
 
-        <BottomSheetTextInput
-          placeholder="Objektif (veya değil) görüşleriniz..."
-          placeholderTextColor="#919ba7"
-          multiline
-          value={commentText}
-          onChangeText={(text) => {
-            if (text.length <= MAX_LENGTH) setCommentText(text);
-          }}
-          maxLength={MAX_LENGTH}
-          style={styles.textInput}
-        />
-
-        <View style={styles.submitSection}>
-          <Text
+          <AnimatedTextInput
+            placeholder="Objektif veya değil, düşünceleriniz..."
+            placeholderTextColor={theme.textSecondary}
+            multiline
+            value={commentText}
+            onChangeText={(text) => {
+              if (errorMsg) setErrorMsg(null);
+              if (text.length <= MAX_LENGTH) setCommentText(text);
+            }}
             style={[
-              styles.counterText,
-              commentText.length >= MAX_LENGTH && styles.maxLengthWarning,
+              styles.textInput,
+              {
+                color: theme.textPrimary,
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.02)"
+                  : "#FAFBFC",
+              },
+              animatedInputStyle, // Animasyonlu border rengini buraya ekledik
             ]}
-          >
-            {commentText.length} / {MAX_LENGTH}
-          </Text>
+          />
 
-          <Pressable
-            style={({ pressed }) => [
-              styles.submitBtn,
-              pressed && { opacity: 0.8 },
-            ]}
-            onPress={handleSubmit}
-            disabled={commentText.length === 0 || isPending}
-          >
-            {isPending ? (
-              <LoadingDots />
-            ) : (
-              <>
-                <Text style={styles.submitLabel}>İncelememi Gönder</Text>
-                <SendIcon color="#FFFFFF" size={20} />
-              </>
-            )}
-          </Pressable>
-        </View>
-      </BottomSheetView>
-    </BottomSheet>
+          <View style={styles.submitSection}>
+            <View style={styles.infoRow}>
+              <View style={{ flex: 1 }}>
+                {errorMsg && (
+                  <Animated.Text
+                    entering={FadeInDown.duration(300)} // Hata mesajı yumuşakça aşağıdan gelir
+                    exiting={FadeOutUp.duration(200)} // Giderken de yukarı doğru yumuşakça kaybolur
+                    style={styles.errorText}
+                  >
+                    {errorMsg}
+                  </Animated.Text>
+                )}
+              </View>
+
+              <Text
+                style={[
+                  styles.counterText,
+                  {
+                    color:
+                      commentText.length >= MAX_LENGTH
+                        ? "#E11D48"
+                        : theme.textSecondary,
+                  },
+                ]}
+              >
+                {commentText.length} / {MAX_LENGTH}
+              </Text>
+            </View>
+
+            <Pressable
+              style={[
+                styles.submitBtn,
+                { backgroundColor: theme.textPrimary },
+                (commentText.length < 20 || isPending) && { opacity: 0.3 },
+              ]}
+              onPress={handleSubmit}
+              disabled={commentText.length < 20 || isPending}
+            >
+              {isPending ? (
+                <LoadingDots />
+              ) : (
+                <>
+                  <Text
+                    style={[styles.submitLabel, { color: theme.background }]}
+                  >
+                    İNCELEMEYİ YAYINLA
+                  </Text>
+                  <SendIcon color={theme.background} size={18} />
+                </>
+              )}
+            </Pressable>
+          </View>
+        </BottomSheetView>
+      </BottomSheet>
+    </Portal>
   );
 });
 
 const styles = StyleSheet.create({
-  sheetBackground: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
-  },
-  handle: {
-    backgroundColor: "#E2E8F0",
-    width: 36,
-  },
-  submitSection: {
-    marginTop: 4,
-  },
-  counterText: {
-    fontFamily: "Mont-500",
-    fontSize: 10,
-    color: "#94A3B8",
-    textAlign: "right",
-    marginBottom: 8,
-    letterSpacing: 0.3,
-  },
-
-  container: {
-    paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 36,
-    zIndex: 999,
-  },
+  sheetBackground: { borderRadius: 32 },
+  handle: { width: 32, height: 4 },
+  container: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 40 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 20,
   },
-  heading: {
-    fontFamily: "Mont-700",
-    fontSize: 18,
-    color: "#0F172A",
-    letterSpacing: -0.4,
-    marginBottom: 4,
-  },
+  heading: { fontFamily: "Mont-800", fontSize: 11, letterSpacing: 1.5 },
   subheading: {
     fontFamily: "Mont-500",
     fontSize: 13,
-    color: "#B0BCCA",
-    letterSpacing: -0.2,
-  },
-  maxLengthWarning: {
-    color: "#E11D48",
-    fontFamily: "Mont-700",
+    marginTop: 4,
+    opacity: 0.6,
   },
   closeBtn: {
-    width: 35,
-    height: 35,
-    borderRadius: 14,
-    backgroundColor: "#f75376",
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 2,
   },
-  closeBtnText: {
-    fontSize: 12,
-    color: "#64748B",
-    fontWeight: "600",
-  },
-  recommendRow: {
-    flexDirection: "row",
-    gap: 10,
-    marginBottom: 16,
-  },
+  recommendRow: { flexDirection: "row", gap: 12, marginBottom: 16 },
   recommendBtn: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 7,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FAFBFC",
+    gap: 8,
+    height: 40,
+    borderRadius: 14,
+    borderWidth: 1,
   },
-  recommendBtnActiveGreen: {
-    backgroundColor: "#16a34ad4",
-    borderColor: "#16A34A",
-  },
-  recommendBtnActiveRed: {
-    backgroundColor: "#e11d47d4",
-    borderColor: "#e11d47e0",
-  },
-  recommendLabel: {
-    fontFamily: "Mont-600",
-    fontSize: 13,
-    color: "#94A3B8",
-    letterSpacing: -0.2,
-  },
-  recommendLabelActive: {
-    color: "#FFFFFF",
-  },
+  recommendLabel: { fontFamily: "Mont-700", fontSize: 10, letterSpacing: 0.5 },
   textInput: {
     fontFamily: "Mont-500",
     fontSize: 14,
-    color: "#1E293B",
-    letterSpacing: -0.1,
-    lineHeight: 22,
-    borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FAFBFC",
-    padding: 14,
-    marginBottom: 14,
+    lineHeight: 21,
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 18,
+    minHeight: 180,
     textAlignVertical: "top",
-    elevation: 0.2,
-    minHeight: 200,
-    maxHeight: 200,
+  },
+  submitSection: { marginTop: 8 },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    minHeight: 16,
+  },
+  errorText: {
+    fontFamily: "Mont-600",
+    fontSize: 11,
+    color: "#E11D48",
+  },
+  counterText: {
+    fontFamily: "Mont-600",
+    fontSize: 10,
+    textAlign: "right",
   },
   submitBtn: {
     flexDirection: "row",
-    gap: 16,
+    gap: 12,
     justifyContent: "center",
-    backgroundColor: "#121c33",
-    borderRadius: 12,
-    height: 50,
+    borderRadius: 16,
+    height: 54,
     alignItems: "center",
   },
-  submitLabel: {
-    fontFamily: "Mont-600",
-    fontSize: 14,
-    color: "#FFFFFF",
-    letterSpacing: -0.3,
-  },
+  submitLabel: { fontFamily: "Mont-700", fontSize: 12, letterSpacing: 0.5 },
 });

@@ -1,16 +1,29 @@
-import { View, TouchableOpacity, StyleSheet } from "react-native";
+import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { TAB_ICONS, DefaultIcon } from "../constants/navigation";
 import { useDynamicBottom } from "@/utils/useDynamicBottom";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export function TabBar({ state, navigation }: any) {
   const dynamicBottom = useDynamicBottom();
+  const { theme, isDarkMode } = useAppTheme();
 
   return (
     <View style={[styles.wrapper, { bottom: dynamicBottom }]}>
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDarkMode ? "#0d0c0c" : "#FFFFFF",
+            shadowColor: isDarkMode ? "#000" : "#000",
+            shadowOpacity: isDarkMode ? 0.3 : 0.1,
+          },
+        ]}
+      >
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
-          const color = isFocused ? "#111" : "#9AA0A6";
+
+          // Renkleri temadan alıyoruz
+          const color = isFocused ? theme.textPrimary : theme.textSecondary;
           const IconComponent = TAB_ICONS[route.name] || DefaultIcon;
 
           const onPress = () => {
@@ -27,7 +40,9 @@ export function TabBar({ state, navigation }: any) {
               style={styles.tabItem}
             >
               {isFocused && route.name !== "Profile" && (
-                <View style={styles.pill} />
+                <View
+                  style={[styles.pill, { backgroundColor: theme.textPrimary }]}
+                />
               )}
               {route.name === "Profile" ? (
                 <IconComponent isFocused={isFocused} size={18} color={color} />
@@ -51,14 +66,10 @@ const styles = StyleSheet.create({
   },
   container: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
     borderRadius: 24,
     paddingVertical: 4,
     paddingHorizontal: 8,
-    // Gölge ayarları
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -76,6 +87,5 @@ const styles = StyleSheet.create({
     width: 20,
     height: 2.5,
     borderRadius: 2,
-    backgroundColor: "#111",
   },
 });

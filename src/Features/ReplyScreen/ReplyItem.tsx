@@ -1,17 +1,24 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import React, { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  LayoutAnimation,
+  Pressable,
+} from "react-native";
 import { Image } from "expo-image";
 import { Reply } from "@/types/reply";
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
 import { LikeİconFill } from "@/components/icons/LikeİconFill";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
-// import { TrashIcon } from "@/components/icons/TrashIcon"; // Varsa kendi ikonunu kullanabilirsin
-import { formatSmartDate } from "@/utils/formatSmartDate";
 import { TrashIcon } from "@/components/icons/TrashIcon";
+import { formatSmartDate } from "@/utils/formatSmartDate";
 import { useToastStore } from "@/store/useToastStore";
 import { useModalStore } from "@/store/useModalStore";
 import { useReplyLikeMutation } from "@/hooks/useReplyLikeMutation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const ReplyItem = ({
   reply,
@@ -24,16 +31,35 @@ export const ReplyItem = ({
   onDelete?: (replyId: number) => void;
   rootCommentId: number;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const user = useAuthStore((state) => state.user);
   const { mutate } = useReplyLikeMutation(rootCommentId);
 
+  // Yanıt metni için genişleme state'leri
+  const [expanded, setExpanded] = useState(false);
+  const [isTruncated, setIsTruncated] = useState(false);
+  const [measured, setMeasured] = useState(false);
+
+  // Alıntı metni için state
+  const [quoteExpanded, setQuoteExpanded] = useState(false);
+
+  const toggleQuote = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setQuoteExpanded(!quoteExpanded);
+  }, [quoteExpanded]);
+
+  const toggleExpanded = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setExpanded(!expanded);
+  }, [expanded]);
+
   const toggleLike = () => {
-    if (!reply) return;
-    if (!user) {
-      useToastStore.getState().showToast({
-        type: "Bilgi",
-        message: "Beğenmek için giriş yapmalısınız.",
-      });
+    if (!reply || !user) {
+      if (!user)
+        useToastStore.getState().showToast({
+          type: "Bilgi",
+          message: "Beğenmek için giriş yapmalısınız.",
+        });
       return;
     }
     mutate(reply.id);
@@ -41,18 +67,9 @@ export const ReplyItem = ({
 
   const handleDelete = () => {
     useModalStore.getState().showConfirm({
-      title: "Yanıt Silinecek",
-      message: "Bu yanıtı silmek istediğinize emin misiniz?",
-      onConfirm: () => {
-        if (onDelete) {
-          onDelete(reply.id);
-        } else {
-          useToastStore.getState().showToast({
-            type: "Hata",
-            message: "Bu yanıt silinemiyor.",
-          });
-        }
-      },
+      title: "YANITI SİL",
+      message: "Bu işlem geri alınamaz.",
+      onConfirm: () => onDelete?.(reply.id),
     });
   };
 
@@ -73,194 +90,215 @@ export const ReplyItem = ({
 
         <View style={s.content}>
           <View style={s.header}>
-            <Text style={s.nickname} numberOfLines={1}>
+            <Text
+              style={[s.nickname, { color: theme.textPrimary }]}
+              numberOfLines={1}
+            >
               {reply.user.nickname}
             </Text>
-            <View style={s.dot} />
-            <Text style={s.date}>{formatSmartDate(reply.createdAt)}</Text>
+            <View style={[s.dot, { backgroundColor: theme.textSecondary }]} />
+            <Text style={[s.date, { color: theme.textSecondary }]}>
+              {formatSmartDate(reply.createdAt).toUpperCase()}
+            </Text>
           </View>
 
           {reply.parentReply && (
-            <View
-              style={[s.quote, reply.parentReply.isDeleted && s.quoteDeleted]}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={toggleQuote}
+              style={[
+                s.quoteContainer,
+                {
+                  borderLeftColor: isDarkMode
+                    ? "rgba(255,255,255,0.15)"
+                    : "rgba(15, 63, 146, 0.2)",
+                },
+              ]}
             >
-              <Image
-                source={{
-                  uri: reply.parentReply.isDeleted
-                    ? "https://ui-avatars.com/api/?name=Deleted&background=E2E8F0" // Silinenler için sabit gri avatar
-                    : (reply.parentReply.user.profileImageUrl ??
-                      "https://via.placeholder.com/40"),
-                }}
-                style={[
-                  s.quoteAvatar,
-                  reply.parentReply.isDeleted && { opacity: 0.5 },
-                ]}
-                contentFit="cover"
-              />
-
-              <View style={s.quoteBody}>
-                <Text
-                  style={[
-                    s.quoteNick,
-                    reply.parentReply.isDeleted && s.deletedText,
-                  ]}
-                >
+              <View style={s.quoteContent}>
+                <Text style={[s.quoteNick, { color: theme.textSecondary }]}>
                   @
                   {reply.parentReply.isDeleted
                     ? "silinmiş"
-                    : reply.parentReply.user.nickname}
+                    : reply.parentReply.user.nickname.toLowerCase()}
                 </Text>
-
                 <Text
-                  style={[
-                    s.quoteText,
-                    reply.parentReply.isDeleted && s.italicText,
-                  ]}
-                  numberOfLines={2}
+                  style={[s.quoteText, { color: theme.textSecondary }]}
+                  numberOfLines={quoteExpanded ? undefined : 1}
                 >
                   {reply.parentReply.isDeleted
-                    ? "Bu yorum silinmiştir."
+                    ? "Bu içerik kaldırıldı."
                     : reply.parentReply.content}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           )}
 
-          <Text style={s.replyText}>{reply.content}</Text>
+          {/* YANIT METNİ - Sınırlama ve Açılma Mantığı */}
+          <Pressable onPress={() => isTruncated && toggleExpanded()}>
+            <Text
+              style={[s.replyText, { color: theme.textPrimary }]}
+              numberOfLines={measured && !expanded ? 5 : undefined}
+              onTextLayout={(e) => {
+                if (!measured) {
+                  if (e.nativeEvent.lines.length > 5) setIsTruncated(true);
+                  setMeasured(true);
+                }
+              }}
+            >
+              {reply.content}
+            </Text>
+          </Pressable>
+
+          {isTruncated && (
+            <TouchableOpacity onPress={toggleExpanded} style={s.moreBtn}>
+              <Text style={[s.moreBtnText, { color: theme.accent }]}>
+                {expanded ? "DAHA AZ GÖSTER" : "DEVAMINI GÖR"}
+              </Text>
+            </TouchableOpacity>
+          )}
 
           <View style={s.footer}>
-            {/* Beğen Butonu */}
+            {/* BEĞEN BUTONU */}
             <TouchableOpacity
-              style={[s.action, reply.viewerHasLiked && s.actionLiked]}
-              activeOpacity={0.6}
+              style={[
+                s.action,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                },
+                reply.viewerHasLiked && {
+                  backgroundColor: isDarkMode
+                    ? "rgba(16,185,129,0.15)"
+                    : "#ECFDF5",
+                },
+              ]}
+              activeOpacity={0.7}
               onPress={toggleLike}
             >
               {reply.viewerHasLiked ? (
-                <LikeİconFill
-                  color="#2fcd8bbc"
-                  borderColor="#029c5c"
-                  size={13}
-                />
+                <LikeİconFill color="#10B981" size={12} />
               ) : (
-                <LikeIcon color="#94A3B8" size={13} />
+                <CommentLikeIcon color={theme.textSecondary} size={12} />
               )}
               <Text
                 style={[
                   s.actionText,
-                  reply.viewerHasLiked && s.actionTextLiked,
+                  {
+                    color: reply.viewerHasLiked
+                      ? "#10B981"
+                      : theme.textSecondary,
+                  },
                 ]}
               >
-                {reply.likeCount === 0 ? "Beğen" : reply.likeCount}
+                {reply.likeCount === 0 ? "BEĞEN" : reply.likeCount}
               </Text>
             </TouchableOpacity>
 
-            {/* Yanıtla Butonu */}
+            {/* YANITLA BUTONU */}
             <TouchableOpacity
-              style={s.action}
-              activeOpacity={0.6}
+              style={[
+                s.action,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                },
+              ]}
+              activeOpacity={0.7}
               onPress={() => openReplySheet(reply)}
             >
-              <ReplyIcon color="#94A3B8" size={13} />
-              <Text style={s.actionText}>Yanıtla</Text>
+              <ReplyIcon color={theme.textSecondary} size={11} />
+              <Text style={[s.actionText, { color: theme.textSecondary }]}>
+                YANITLA
+              </Text>
             </TouchableOpacity>
 
-            {/* Silme Butonu - Sadece kullanıcı kendi yorumuysa gösterilecek mantığı eklenebilir */}
+            {/* SİL BUTONU (Sadece kendi yanıtıysa) */}
             {onDelete && (
               <TouchableOpacity
-                style={[s.action, s.deleteAction]}
-                activeOpacity={0.6}
+                style={[
+                  s.action,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(239,68,68,0.1)"
+                      : "#FEF2F2",
+                  },
+                ]}
+                activeOpacity={0.7}
                 onPress={handleDelete}
               >
-                {/* TrashIcon yoksa Text de yeterli olur */}
-                <TrashIcon color="#EF4444" size={13} />
-                <Text style={[s.actionText, s.deleteText]}>Sil</Text>
+                <TrashIcon color="#EF4444" size={12} />
+                <Text style={[s.actionText, { color: "#EF4444" }]}>SİL</Text>
               </TouchableOpacity>
             )}
           </View>
         </View>
       </View>
-      <View style={s.separator} />
+      <View
+        style={[
+          s.separator,
+          {
+            backgroundColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+          },
+        ]}
+      />
     </View>
   );
 };
 
 const s = StyleSheet.create({
-  // ... (Mevcut stilleriniz)
-  card: { paddingHorizontal: 14, paddingTop: 14 },
+  card: { paddingHorizontal: 12, paddingTop: 16 },
   row: { flexDirection: "row", gap: 12 },
   leftCol: { alignItems: "center" },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "#F1F5F9",
+  avatar: { width: 32, height: 32, borderRadius: 10 },
+  content: { flex: 1, gap: 8, paddingBottom: 16 },
+  header: { flexDirection: "row", alignItems: "center", gap: 6 },
+  nickname: { fontSize: 13, fontFamily: "Mont-700" },
+  dot: { width: 2, height: 2, borderRadius: 1, opacity: 0.3 },
+  date: { fontSize: 8, fontFamily: "Mont-800", letterSpacing: 0.5 },
+  quoteContainer: {
+    borderLeftWidth: 2.5,
+    paddingLeft: 12,
+    marginVertical: 4,
+    paddingVertical: 2,
   },
-  content: { flex: 1, gap: 6, paddingBottom: 14 },
-  header: { flexDirection: "row", alignItems: "center", gap: 5 },
-  nickname: { fontSize: 13, fontWeight: "700", color: "#1E293B" },
-  dot: {
-    width: 2.5,
-    height: 2.5,
-    borderRadius: 1.5,
-    backgroundColor: "#CBD5E1",
+  quoteContent: { gap: 1 },
+  quoteNick: {
+    fontSize: 10,
+    fontFamily: "Mont-800",
+    opacity: 0.7,
   },
-  date: { fontSize: 10, color: "#94A3B8" },
-  quote: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 10,
-    padding: 8,
+  quoteText: {
+    fontSize: 11,
+    fontFamily: "Mont-500",
+    lineHeight: 15,
+    opacity: 0.5,
   },
-  quoteAvatar: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#E2E8F0",
+  replyText: {
+    fontSize: 13,
+    fontFamily: "Mont-500",
+    lineHeight: 20,
   },
-  quoteBody: { flex: 1, gap: 2 },
-  quoteNick: { fontSize: 11, fontWeight: "700", color: "#64748B" },
-  quoteText: { fontSize: 11, lineHeight: 16, color: "#94A3B8" },
-  replyText: { fontSize: 13, lineHeight: 20, color: "#475569" },
-  footer: { flexDirection: "row", gap: 6, marginTop: 4 },
+  moreBtn: {
+    marginTop: 2,
+  },
+  moreBtnText: {
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  footer: { flexDirection: "row", gap: 8, marginTop: 4 },
   action: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
-  actionLiked: { backgroundColor: "#ECFDF5" },
-  actionText: { fontSize: 11, fontWeight: "500", color: "#94A3B8" },
-  actionTextLiked: { color: "#059669" },
-  separator: {
-    height: 1,
-    marginLeft: 34 + 12 + 14,
-    backgroundColor: "#F1F5F9",
-    opacity: 0.8,
-  },
-
-  // ── Yeni Stiller ─────────────────────────────────────
-  deleteAction: {
-    backgroundColor: "#FEF2F2", // Hafif kırmızı arka plan
-  },
-  deleteText: {
-    color: "#EF4444", // Kırmızı yazı
-  },
-
-  quoteDeleted: {
-    backgroundColor: "#F8FAFC", // Daha soluk bir arka plan
-    borderLeftColor: "#E2E8F0", // Daha soluk bir kenarlık
-  },
-  deletedText: {
-    color: "#94A3B8", // Silinmiş kullanıcı adı rengi
-    fontWeight: "400",
-  },
-  italicText: {
-    fontStyle: "italic",
-    color: "#64748B",
-  },
+  actionText: { fontSize: 9, fontFamily: "Mont-800", letterSpacing: 0.3 },
+  separator: { height: 1, marginLeft: 44, marginTop: 4 },
 });

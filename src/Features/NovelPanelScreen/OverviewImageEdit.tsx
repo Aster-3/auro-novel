@@ -4,7 +4,8 @@ import { Text, View, StyleSheet, Pressable } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { useToastStore } from "@/store/useToastStore";
-import { SelectImageIcon } from "@/components/icons/SelectImageIcon";
+import { useAppTheme } from "@/hooks/useTheme";
+import { Feather } from "@expo/vector-icons";
 
 export const OverviewImageEdit = ({
   novelId,
@@ -13,6 +14,7 @@ export const OverviewImageEdit = ({
   novelId: string;
   coverImage: string;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const { mutate: updateNovel } = useNovelMutation(novelId);
 
   const handleImagePress = async () => {
@@ -80,33 +82,43 @@ export const OverviewImageEdit = ({
         style={({ pressed }) => [
           styles.imageWrapper,
           {
-            opacity: pressed ? 0.7 : 1,
-            transform: [{ scale: pressed ? 0.98 : 1 }],
-          }, // Dokunma animasyonu
+            backgroundColor: isDarkMode ? theme.surface : "#2c2c2c",
+            shadowColor: "#000",
+            shadowOpacity: isDarkMode ? 0.4 : 0.15,
+            opacity: pressed ? 0.9 : 1,
+            transform: [{ scale: pressed ? 0.96 : 1 }],
+          },
         ]}
         onPress={handleImagePress}
       >
         <Image
-          blurRadius={2} // Arka planı biraz daha bulanıklaştırdık ki ikon parlasın
+          blurRadius={0.5}
           source={{ uri: coverImage }}
           style={styles.image}
+          contentFit="cover"
         />
-        {/* Overlay ve İkon Konumlandırması */}
+
         <View style={styles.imageOverlay}>
-          <SelectImageIcon size={32} color="#fff" />
-          <Text style={styles.overlayText}>Değiştir</Text>
+          <View
+            style={[styles.iconCircle, { backgroundColor: "rgba(0,0,0,0.5)" }]}
+          >
+            <Feather name="camera" size={18} color="#fff" />
+          </View>
+          <Text style={styles.overlayText}>Görseli Güncelle</Text>
         </View>
       </Pressable>
 
       <View style={styles.body}>
-        <Text style={styles.text}>
-          * En iyi görünüm için 2:3 oranında ve maksimum 5 MB boyutunda
-          görseller kullanın.
-        </Text>
-        <Text style={styles.text}>
-          * Yetişkin (Mature) içeriklere izin verilse de, aşırı müstehcenlik ve
-          pornografik içerik barındıran kapaklar kaldırılır.
-        </Text>
+        <View style={styles.infoBox}>
+          <Text style={[styles.text, { color: theme.textSecondary }]}>
+            • En iyi görünüm için 2:3 oranında ve maksimum 5 MB boyutunda
+            görseller kullanın.
+          </Text>
+          <Text style={[styles.text, { color: theme.textSecondary }]}>
+            • Müstehcenlik kurallarına uymayan kapaklar moderasyon tarafından
+            kaldırılabilir.
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -116,15 +128,18 @@ const styles = StyleSheet.create({
   headContainer: {
     width: "100%",
     flexDirection: "row",
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
+    alignItems: "flex-start", // En üste hizalamak için flex-start yaptık
   },
   imageWrapper: {
-    width: 120,
+    width: 130,
     aspectRatio: 2 / 3,
     position: "relative",
-    borderRadius: 16,
+    borderRadius: 22,
     overflow: "hidden",
-    backgroundColor: "#2c2c2c",
+    elevation: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 12,
   },
   image: {
     width: "100%",
@@ -132,26 +147,36 @@ const styles = StyleSheet.create({
   },
   imageOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.35)",
     justifyContent: "center",
     alignItems: "center",
-    gap: 4,
+    gap: 8,
+  },
+  iconCircle: {
+    padding: 10,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.2)",
   },
   overlayText: {
     color: "#FFFFFF",
-    fontSize: 9,
-    fontFamily: "Mont-600",
+    fontSize: 8,
+    fontFamily: "Mont-700",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   body: {
     flex: 1,
-    marginLeft: 16,
-    gap: 8,
+    marginLeft: 20,
+    paddingTop: 4, // Yazıların resmin en üst çizgisiyle hizalanması için
+  },
+  infoBox: {
+    gap: 12,
   },
   text: {
-    fontFamily: "Mont-500",
-    fontSize: 12,
-    color: "#828282",
-    letterSpacing: -0.5,
+    fontFamily: "Mont-500", // Daha tok durması için 500 yaptık
+    fontSize: 11,
+    lineHeight: 16,
+    letterSpacing: -0.1,
   },
 });

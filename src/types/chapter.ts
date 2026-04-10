@@ -22,8 +22,10 @@ export interface ChapterDetail {
   id: string;
   title: string;
   content: string;
-  chapterOrder: number;
+  novelId: string;
   isLocked: boolean;
+  volumeOrder: number;
+  volumeTitle: string | null;
   nextChapterId: string | null;
   previousChapterId: string | null;
   novelStatus: SeriesStatus;

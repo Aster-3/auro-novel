@@ -8,16 +8,23 @@ import { useRef } from "react";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { LoginSheet } from "@/Features/ProfileScreen/LoginSheet";
 import { useDynamicBottom } from "@/utils/useDynamicBottom";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { StatusBar } from "react-native";
 
 const ProfileScreen = () => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const dynamicBottom = useDynamicBottom();
+  const { theme } = useAppTheme();
+
   const openLoginSheet = () => {
     bottomSheetRef.current?.expand();
   };
 
   return (
-    <Screen backgroundColor="#f5f5f5" style={{ gap: 16, marginTop: 20 }}>
+    <Screen
+      backgroundColor={theme.background}
+      style={{ gap: 16, paddingTop: 20 }}
+    >
       <ProfileHeader openLoginSheet={openLoginSheet} />
       <ScrollView
         style={{ width: "100%" }}
@@ -32,4 +39,5 @@ const ProfileScreen = () => {
     </Screen>
   );
 };
+
 export default ProfileScreen;

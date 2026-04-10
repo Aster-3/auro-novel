@@ -1,98 +1,109 @@
-import React, { useState } from "react";
+import React from "react";
 import { Text, StyleSheet, ScrollView, View, Pressable } from "react-native";
 import { Screen } from "../components/layout/Screen";
-import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
-import { ThemeIcon } from "@/components/icons/ThemeIcon";
+import { Header } from "@/components/Header";
 import { Ionicons } from "@expo/vector-icons";
-
-const COLORS = {
-  primary: "#1C274C",
-  text: "#2D3142",
-  textMuted: "#6C7285",
-  white: "#FFFFFF",
-  border: "#E6E9F2",
-};
+import { useAppTheme } from "@/hooks/useTheme";
+import { useReaderStore } from "@/store/useReaderStore";
 
 const AppThemeScreen = () => {
-  const [selectedTheme, setSelectedTheme] = useState("dark");
+  const { theme, isDarkMode } = useAppTheme();
+  const toggleDarkMode = useReaderStore((state) => state.toggleDarkMode);
 
   const themeOptions = [
-    { id: "light", label: "Açık Tema", icon: "sunny-outline" },
-    { id: "dark", label: "Koyu Tema", icon: "moon-outline" },
-    { id: "system", label: "Sistem Varsayılanı", icon: "settings-outline" },
+    { id: "light", label: "Açık Tema", icon: "sunny-outline", value: false },
+    { id: "dark", label: "Koyu Tema", icon: "moon-outline", value: true },
   ];
 
   return (
-    <Screen style={styles.screen}>
-      <ProfileSettingsHeader title="Uygulama Teması" />
+    <Screen backgroundColor={theme.background} style={styles.screen}>
+      <Header title="Uygulama Teması" isAdjacent={false} />
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.listContainer}>
+        <View style={[styles.container, { backgroundColor: theme.surface }]}>
           {themeOptions.map((option) => {
-            const isActive = selectedTheme === option.id;
+            const isActive = isDarkMode === option.value;
 
             return (
               <Pressable
                 key={option.id}
-                onPress={() => setSelectedTheme(option.id)}
-                android_ripple={{ color: "rgba(28,39,76,0.05)" }}
+                onPress={() => {
+                  if (isDarkMode !== option.value) {
+                    toggleDarkMode();
+                  }
+                }}
                 style={({ pressed }) => [
-                  styles.card,
-                  !isActive && styles.nonActiveOpacity,
-                  pressed && styles.pressedCard,
+                  styles.subcontainer,
+                  {
+                    backgroundColor: pressed
+                      ? isDarkMode
+                        ? "rgba(255,255,255,0.05)"
+                        : "#f0f0f0"
+                      : "transparent",
+                  },
                 ]}
               >
-                <View style={styles.leftSection}>
+                <View style={styles.leftContent}>
                   <Ionicons
                     name={option.icon as any}
-                    size={22}
-                    color={isActive ? COLORS.primary : COLORS.textMuted}
+                    size={18}
+                    color={isActive ? theme.accent : theme.textPrimary}
                   />
-                  <Text
-                    style={[styles.optionText, isActive && styles.activeText]}
-                  >
+                  <Text style={[styles.text, { color: theme.textPrimary }]}>
                     {option.label}
                   </Text>
                 </View>
 
                 {isActive && (
-                  <Ionicons name="checkmark" size={20} color={COLORS.primary} />
+                  <Ionicons name="checkmark" size={20} color={theme.accent} />
                 )}
               </Pressable>
             );
           })}
         </View>
+
+        <Text style={[styles.footerNote, { color: theme.textSecondary }]}>
+          Kullanım alışkanlıklarınıza göre temanızı değiştirebilirsiniz.
+        </Text>
       </ScrollView>
     </Screen>
   );
 };
 
 const styles = StyleSheet.create({
-  screen: { paddingHorizontal: 16, backgroundColor: "#f5f5f5", gap: 16 },
-  scrollContent: {},
-  listContainer: {
-    backgroundColor: COLORS.white,
+  screen: { paddingHorizontal: 16 },
+  scrollContent: { paddingTop: 20 },
+  container: {
+    paddingVertical: 8,
+    paddingHorizontal: 8,
     borderRadius: 16,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    gap: 4,
   },
-  card: {
+  subcontainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
-  nonActiveOpacity: {
-    opacity: 0.5,
+  leftContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
   },
-  pressedCard: {
-    backgroundColor: "rgba(28,39,76,0.05)",
+  text: {
+    fontFamily: "Mont-500",
+    fontSize: 14,
   },
-  leftSection: { flexDirection: "row", alignItems: "center", gap: 14 },
-  optionText: { fontSize: 16, color: COLORS.text, fontWeight: "500" },
-  activeText: { color: COLORS.primary, fontWeight: "600" },
+  footerNote: {
+    fontFamily: "Mont-400",
+    fontSize: 11,
+    textAlign: "center",
+    marginTop: 12,
+    paddingHorizontal: 30,
+    opacity: 0.7,
+  },
 });
 
 export default AppThemeScreen;

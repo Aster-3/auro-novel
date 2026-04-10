@@ -3,10 +3,13 @@ import { ChapterIcon } from "./icons/ChapterIcon";
 import { AuthorIcon } from "./icons/AuthorIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { StatusIcon } from "./icons/StatusIcon";
-import { LikeIcon } from "./icons/LikeIcon";
+import { RecommendIcon } from "./icons/RecommendIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const SeriesCardHorizontal = ({ props }: { props: any }) => {
   const navigation = useAppNavigation();
+  const { theme } = useAppTheme();
+
   return (
     <TouchableOpacity
       onPress={() => {
@@ -34,7 +37,7 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
           ellipsizeMode="tail"
           style={{
             fontFamily: "Mont-600",
-            color: "#343434",
+            color: theme.textPrimary, // Statik #343434 yerine dinamik renk
             fontSize: 14,
             textAlign: "left",
           }}
@@ -43,13 +46,13 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
         </Text>
 
         <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <AuthorIcon />
+          <AuthorIcon color={theme.textSecondary} />
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
             style={{
               fontFamily: "Mont-500",
-              color: "#7b7a7a",
+              color: theme.textSecondary, // Statik #7b7a7a yerine dinamik renk
               fontSize: 10,
               textAlign: "left",
             }}
@@ -58,13 +61,13 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
           </Text>
         </View>
         <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <ChapterIcon />
+          <ChapterIcon color={theme.textSecondary} />
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
             style={{
               fontFamily: "Mont-500",
-              color: "#7b7a7a",
+              color: theme.textSecondary,
               fontSize: 10,
               textAlign: "left",
             }}
@@ -74,13 +77,13 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
         </View>
 
         <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <LikeIcon color="#03a964" />
+          <RecommendIcon color="#03a964" />
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
             style={{
               fontFamily: "Mont-500",
-              color: "#7b7a7a",
+              color: theme.textSecondary,
               fontSize: 10,
               textAlign: "left",
             }}

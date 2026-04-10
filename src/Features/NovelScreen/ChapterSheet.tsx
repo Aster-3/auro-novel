@@ -20,10 +20,13 @@ import { ChapterReverseIcon } from "@/components/icons/ChapterReverseIcon";
 import { useInfiniteChapters } from "@/hooks/useInfiniteChapters";
 import { Chapter } from "@/types/chapter";
 import { SortType } from "@/types/constants";
+import { globalNavigate } from "@/navigation/globalNavigate";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı çektik
 
 export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
   const [sortType, setSortType] = useState<SortType>(SortType.ASC);
   const { id } = props;
+  const { theme, isDarkMode } = useAppTheme(); // Renkleri aldık
 
   const { data, isFetchingNextPage, fetchNextPage, hasNextPage, isLoading } =
     useInfiniteChapters({ id, sort: sortType });
@@ -43,7 +46,6 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
 
   const renderItem = ({ item, index }: { item: Chapter; index: number }) => {
     const previousItem = chapters[index - 1];
-
     const showVolumeHeader =
       !previousItem || previousItem.volumeOrder !== item.volumeOrder;
 
@@ -53,6 +55,12 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
         index={index}
         chapter={item}
         showVolumeHeader={showVolumeHeader}
+        onNavigate={() => {
+          globalNavigate("ChapterRead", { id: item.id });
+          setTimeout(() => {
+            bottomSheetRef.current?.close();
+          }, 200);
+        }}
       />
     );
   };
@@ -63,6 +71,12 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
       index={-1}
       backgroundStyle={{
         borderRadius: 26,
+        backgroundColor: theme.background, // Dinamik arka plan
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: isDarkMode
+          ? "rgba(255,255,255,0.15)"
+          : "rgba(0,0,0,0.1)", // Sürükleme çubuğu
       }}
       snapPoints={snapPoints}
       enablePanDownToClose={true}
@@ -70,7 +84,9 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
     >
       <View style={styles.header}>
         <View style={{ width: 24 }} />
-        <Text style={styles.title}>{data?.total || 0} Bölüm</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          {data?.total || 0} Bölüm
+        </Text>
         <TouchableOpacity
           onPress={() =>
             setSortType(
@@ -83,7 +99,7 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
             ],
           }}
         >
-          <ChapterReverseIcon />
+          <ChapterReverseIcon color={theme.textPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -91,7 +107,7 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
         <View
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
-          <ActivityIndicator color="#03061E" />
+          <ActivityIndicator color={theme.accent} />
         </View>
       ) : (
         <BottomSheetFlatList
@@ -111,7 +127,7 @@ export const ChapterSheet = forwardRef((props: { id: string }, ref) => {
             isFetchingNextPage ? (
               <ActivityIndicator
                 style={{ marginVertical: 20 }}
-                color="#03061E"
+                color={theme.accent}
               />
             ) : (
               <View style={{ height: 40 }} />
@@ -135,6 +151,5 @@ const styles = {
   title: {
     fontFamily: "Mont-600",
     fontSize: 15,
-    color: "#03061E",
   } as TextStyle,
 };

@@ -4,7 +4,6 @@ export const formatRawDate = (
 ): string => {
   const date = new Date(dateString);
 
-  // Tarih geçersizse boş string veya placeholder dön
   if (isNaN(date.getTime())) return "";
 
   const options: Intl.DateTimeFormatOptions = {

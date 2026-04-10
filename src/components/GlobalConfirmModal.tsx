@@ -9,9 +9,11 @@ import {
   Animated,
 } from "react-native";
 import { useModalStore } from "@/store/useModalStore";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const GlobalConfirmModal = () => {
   const { isVisible, config, hideModal } = useModalStore();
+  const { theme, isDarkMode } = useAppTheme();
 
   const cancelAnim = useRef(new Animated.Value(1)).current;
   const confirmAnim = useRef(new Animated.Value(1)).current;
@@ -62,10 +64,14 @@ export const GlobalConfirmModal = () => {
       <TouchableWithoutFeedback onPress={hideModal}>
         <View style={styles.overlay}>
           <TouchableWithoutFeedback>
-            <View style={styles.content}>
+            <View style={[styles.content, { backgroundColor: theme.surface }]}>
               <View style={styles.header}>
-                <Text style={styles.title}>{config.title}</Text>
-                <Text style={styles.message}>{config.message}</Text>
+                <Text style={[styles.title, { color: theme.textPrimary }]}>
+                  {config.title}
+                </Text>
+                <Text style={[styles.message, { color: theme.textSecondary }]}>
+                  {config.message}
+                </Text>
               </View>
 
               <View style={styles.buttons}>
@@ -87,9 +93,18 @@ export const GlobalConfirmModal = () => {
                     onPressIn={() => handlePressIn(cancelAnim)}
                     onPressOut={() => handlePressOut(cancelAnim)}
                     onPress={onCancelPress}
-                    style={[styles.btn, styles.cancelBtn]}
+                    style={[
+                      styles.btn,
+                      {
+                        backgroundColor: isDarkMode
+                          ? "rgba(255,255,255,0.05)"
+                          : "#f3f4f6",
+                      },
+                    ]}
                   >
-                    <Text style={[styles.btnText, styles.cancelBtnText]}>
+                    <Text
+                      style={[styles.btnText, { color: theme.textPrimary }]}
+                    >
                       {config.cancelText || "Vazgeç"}
                     </Text>
                   </TouchableOpacity>
@@ -113,9 +128,12 @@ export const GlobalConfirmModal = () => {
                     onPressIn={() => handlePressIn(confirmAnim)}
                     onPressOut={() => handlePressOut(confirmAnim)}
                     onPress={onConfirmPress}
-                    style={[styles.btn, styles.confirmBtn]}
+                    style={[
+                      styles.btn,
+                      { backgroundColor: theme.textPrimary }, // Ana metin rengi butonun dolgusu oldu
+                    ]}
                   >
-                    <Text style={[styles.btnText, styles.confirmBtnText]}>
+                    <Text style={[styles.btnText, { color: theme.background }]}>
                       {config.confirmText || "Onayla"}
                     </Text>
                   </TouchableOpacity>
@@ -132,7 +150,7 @@ export const GlobalConfirmModal = () => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.45)",
+    backgroundColor: "rgba(0,0,0,0.6)", // Overlay biraz daha derinleşti
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 32,
@@ -140,10 +158,9 @@ const styles = StyleSheet.create({
   content: {
     width: "100%",
     maxWidth: 300,
-    backgroundColor: "white",
-    borderRadius: 18,
-    paddingTop: 20,
-    paddingHorizontal: 18,
+    borderRadius: 24, // Auro standartlarına göre yumuşatıldı
+    paddingTop: 24,
+    paddingHorizontal: 20,
     paddingBottom: 24,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
@@ -152,58 +169,42 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   header: {
-    marginBottom: 20,
+    marginBottom: 24,
     alignItems: "center",
   },
   title: {
-    fontSize: 17,
-    fontWeight: "700",
-    color: "#000",
-    marginBottom: 6,
-    fontFamily: "Mont-600",
+    fontSize: 18,
+    fontFamily: "Mont-700",
+    marginBottom: 8,
     textAlign: "center",
   },
   message: {
-    fontSize: 12,
-    color: "#6B7280",
+    fontSize: 13,
     textAlign: "center",
     lineHeight: 19,
     fontFamily: "Mont-500",
   },
   buttons: {
     flexDirection: "row",
-    gap: 8,
+    gap: 12,
     alignItems: "stretch",
     width: "100%",
   },
   buttonContainer: {
     flex: 1,
-    minHeight: 40,
+    minHeight: 44,
   },
   btn: {
     paddingVertical: 12,
     paddingHorizontal: 10,
-    borderRadius: 12,
+    borderRadius: 14,
     justifyContent: "center",
     alignItems: "center",
     flexGrow: 1,
   },
   btnText: {
-    fontWeight: "600",
-    fontSize: 12,
+    fontSize: 13,
     fontFamily: "Mont-600",
     textAlign: "center",
-  },
-  cancelBtn: {
-    backgroundColor: "#f3f4f6",
-  },
-  cancelBtnText: {
-    color: "#1F2937",
-  },
-  confirmBtn: {
-    backgroundColor: "#000",
-  },
-  confirmBtnText: {
-    color: "white",
   },
 });

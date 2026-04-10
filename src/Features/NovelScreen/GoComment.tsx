@@ -1,6 +1,6 @@
 import { Pressable, Text, StyleSheet, View } from "react-native";
-import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { SmilingReplyIcon } from "@/components/icons/SmilingReplyIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const GoComment = ({
   onPressWrite,
@@ -9,18 +9,27 @@ export const GoComment = ({
   onPressWrite: () => void;
   isEmptyState?: boolean;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
+
   return (
     <Pressable
       onPress={onPressWrite}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.container,
+        {
+          backgroundColor: isDarkMode ? "rgba(255,255,255,0.03)" : "#f7fbff",
+          borderColor: isDarkMode
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.02)",
+        },
+        pressed && styles.pressed,
+      ]}
     >
-      <Text style={styles.placeholderText}>
-        {isEmptyState
-          ? "İlk yorumu yapmak ister misiniz?"
-          : "Sen ne düşünüyorsun?"}
+      <Text style={[styles.placeholderText, { color: theme.textSecondary }]}>
+        {isEmptyState ? "İlk incelemeyi sen yaz..." : "Sen ne düşünüyorsun?"}
       </Text>
       <View style={styles.iconWrap}>
-        <SmilingReplyIcon color="#94A3B8" size={18} />
+        <SmilingReplyIcon color={theme.textSecondary} size={16} />
       </View>
     </Pressable>
   );
@@ -32,25 +41,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
-    paddingVertical: 13,
-    marginVertical: 10,
+    paddingVertical: 12,
+    marginTop: 8,
     borderRadius: 12,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E2E8F0",
-    backgroundColor: "#FAFBFC",
+    borderWidth: 1,
   },
   placeholderText: {
-    fontFamily: "Poppins-400",
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#B0BCCA",
-    letterSpacing: -0.1,
+    fontFamily: "Mont-500", // Font disiplinine sadık kaldık
+    fontSize: 12.5,
+    letterSpacing: -0.3,
   },
   iconWrap: {
     opacity: 0.6,
+    padding: 2,
   },
   pressed: {
-    backgroundColor: "#F1F5F9",
-    opacity: 0.85,
+    opacity: 0.7,
   },
 });

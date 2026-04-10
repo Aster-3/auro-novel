@@ -1,5 +1,6 @@
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { CategoryIcon } from "./icons/CategoryIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const CategorySelect = ({
   categories,
@@ -10,9 +11,11 @@ export const CategorySelect = ({
   selectedCategory: string;
   setSelectedCategory: (cat: string) => void;
 }) => {
+  const { theme } = useAppTheme();
+
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-      <CategoryIcon />
+      <CategoryIcon color={theme.textPrimary} />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -23,14 +26,20 @@ export const CategorySelect = ({
             onPress={() => {
               setSelectedCategory(i);
             }}
-            style={{ borderBottomWidth: selectedCategory === i ? 1 : 0 }}
+            style={{
+              borderBottomWidth: selectedCategory === i ? 1 : 0,
+              borderBottomColor: theme.textPrimary, // Çizgi rengi metinle uyumlu
+            }}
             key={i}
           >
             <Text
               style={{
                 fontFamily: "Mont-600",
                 fontSize: 12,
-                color: selectedCategory === i ? "#000000" : "#717171",
+                color:
+                  selectedCategory === i
+                    ? theme.textPrimary
+                    : theme.textSecondary,
               }}
             >
               {i}

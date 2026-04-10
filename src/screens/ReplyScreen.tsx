@@ -14,6 +14,7 @@ import { useInfiniteReplies } from "@/hooks/useInfiniteReplies";
 import { useOneCommentQuery } from "@/hooks/useOneCommentQuery";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Reply } from "@/types/reply";
+import { Header } from "@/components/Header";
 
 const ReplyScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Reply">>();
@@ -84,8 +85,8 @@ const ReplyScreen = () => {
   }
 
   return (
-    <Screen style={{ paddingHorizontal: 12, paddingTop: 18, gap: 16 }}>
-      <ReplyHeader replyCount={data?.total || 0} />
+    <Screen style={{ paddingHorizontal: 12, gap: 16 }}>
+      <Header title={`Yanıtlar (${data?.total || 0})`} isAdjacent={false} />
 
       <FlatList
         data={data?.items || []}
@@ -105,7 +106,6 @@ const ReplyScreen = () => {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingBottom: 100, // Klavye ve input payı için artırıldı
-          backgroundColor: "#ffffff",
           borderRadius: 24,
           gap: 8,
         }}

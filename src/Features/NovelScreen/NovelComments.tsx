@@ -2,27 +2,26 @@ import { CommentCardShort } from "@/components/CommentCardShort";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import React from "react";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, Pressable } from "react-native";
 import { EmptyCommentState } from "./EmptyCommentState";
 import { useCommentPreviews } from "@/hooks/getCommentPreview";
 import { GoComment } from "./GoComment";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const NovelComments = ({ novelId }: { novelId: string }) => {
   const navigation = useAppNavigation();
-
   const { data, error } = useCommentPreviews(novelId);
 
-  console.log("NovelComments id:", novelId);
+  const { theme } = useAppTheme();
 
   const onPressWrite = () => {
-    console.log("Write comment pressed");
     navigation.navigate("Comment", { id: novelId, isCommentTextOpen: true });
   };
 
   if (error) {
     return (
       <View style={styles.container}>
-        <Text style={{ textAlign: "center", marginTop: 20 }}>
+        <Text style={[styles.errorText, { color: theme.textPrimary }]}>
           Yorumlar yüklenirken bir hata oluştu.
         </Text>
       </View>
@@ -31,36 +30,33 @@ export const NovelComments = ({ novelId }: { novelId: string }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate("Comment", { id: novelId });
-        }}
-        style={styles.header}
+      <Pressable
+        onPress={() => navigation.navigate("Comment", { id: novelId })}
+        style={({ pressed }) => [styles.header, { opacity: pressed ? 0.6 : 1 }]}
       >
-        <Text style={styles.title}>Yorumlar</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          Yorumlar
+        </Text>
         <View style={styles.rightContent}>
-          <Text style={styles.commentCount}>
-            {data ? `${data.total} Yorum` : "Yorumlar yükleniyor..."}
+          <Text style={[styles.commentCount, { color: theme.textSecondary }]}>
+            {data ? `${data.total} Yorum` : "0 Yorum"}
           </Text>
-          <RightChevronIcon size={24} />
+          <RightChevronIcon color={theme.textSecondary} size={16} />
         </View>
-      </TouchableOpacity>
+      </Pressable>
 
       {data && data.items.length > 0 ? (
         <View style={styles.commentList}>
-          {data.items.map((comment) => (
-            <CommentCardShort
-              novelId={novelId}
-              key={comment.id}
-              comment={comment}
-            />
+          {data.items.slice(0, 3).map((comment) => (
+            <CommentCardShort key={comment.id} comment={comment} />
           ))}
         </View>
       ) : (
         <EmptyCommentState />
       )}
+
       <GoComment
-        isEmptyState={!data || data.items.length === 0 ? true : false}
+        isEmptyState={!data || data.items.length === 0}
         onPressWrite={onPressWrite}
       />
     </View>
@@ -69,32 +65,37 @@ export const NovelComments = ({ novelId }: { novelId: string }) => {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    gap: 12, // Section içi daha derli toplu
+    paddingVertical: 10,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingVertical: 8,
   },
   rightContent: {
     flexDirection: "row",
-    justifyContent: "center",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
   title: {
-    fontFamily: "Mont-700",
-    fontSize: 15,
-    color: "#03061ed3",
-    letterSpacing: -0.2,
+    fontFamily: "Mont-700", // Kallavi başlık kuralı
+    fontSize: 16, // Diğer sectionlarla senkron
+    letterSpacing: -0.5,
   },
   commentCount: {
-    fontFamily: "Mont-600",
-    fontSize: 14,
-    color: "#03061ed3",
+    fontFamily: "Mont-500",
+    fontSize: 13, // Sağ taraf her zaman daha kibar
   },
   commentList: {
-    marginTop: 8,
-    gap: 40,
+    marginTop: 4,
+    gap: 24,
+  },
+  errorText: {
+    textAlign: "center",
+    fontFamily: "Mont-500",
+    fontSize: 12,
+    marginTop: 20,
   },
 });

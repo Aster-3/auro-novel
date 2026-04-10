@@ -8,131 +8,142 @@ import Animated, {
   withTiming,
   Easing,
 } from "react-native-reanimated";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const ToastItem = ({ toast }: { toast: any }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(-10);
-  const scale = useSharedValue(0.95);
+  const translateY = useSharedValue(-20);
+  const scale = useSharedValue(0.9);
 
   useEffect(() => {
-    // Giriş
-    opacity.value = withTiming(1, { duration: 200 });
+    // Giriş Animasyonu (Tok ve hızlı)
+    opacity.value = withTiming(1, { duration: 300 });
     translateY.value = withSpring(0, {
-      damping: 22,
-      stiffness: 200,
-      mass: 0.6,
+      damping: 18,
+      stiffness: 150,
+      mass: 0.8,
     });
-    scale.value = withSpring(1, { damping: 22, stiffness: 200, mass: 0.6 });
+    scale.value = withSpring(1, { damping: 18, stiffness: 150 });
 
     const exitDelay = setTimeout(() => {
-      translateY.value = withTiming(-100, {
-        duration: 800,
-        easing: Easing.out(Easing.cubic),
+      // Çıkış Animasyonu (Yukarı süzülerek)
+      translateY.value = withTiming(-40, {
+        duration: 500,
+        easing: Easing.out(Easing.back(1.5)),
       });
-      opacity.value = withTiming(0, {
-        duration: 3000,
-        easing: Easing.out(Easing.ease),
-      });
-    }, 2600);
+      opacity.value = withTiming(0, { duration: 400 });
+    }, 3000);
 
     return () => clearTimeout(exitDelay);
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => {
-    const isVisible = opacity.value > 0.05;
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+    transform: [{ translateY: translateY.value }, { scale: scale.value }],
+    shadowOpacity: isDarkMode ? 0 : 0.05 * opacity.value,
+  }));
 
-    return {
-      opacity: opacity.value,
-      transform: [{ translateY: translateY.value }, { scale: scale.value }],
-      shadowOpacity: 0.08 * opacity.value,
-      elevation: isVisible ? 1 * opacity.value : 0,
-    };
-  });
+  const themeColor = getThemeColor(toast.type, isDarkMode);
 
   return (
     <Animated.View style={[styles.wrapper, animatedStyle]}>
-      <View style={styles.toastItem}>
+      <View
+        style={[
+          styles.toastItem,
+          {
+            backgroundColor: isDarkMode ? theme.surface : "#FFFFFF",
+            borderColor: isDarkMode
+              ? "rgba(255,255,255,0.05)"
+              : "rgba(0,0,0,0.02)",
+            borderWidth: 1,
+          },
+        ]}
+      >
         <Ionicons
           name={getIconName(toast.type)}
-          size={20}
-          color={getThemeColor(toast.type)}
+          size={16}
+          color={themeColor}
           style={styles.icon}
         />
         <View style={styles.textContainer}>
-          <Text style={styles.title}>{toast.type || "Done"}</Text>
-          {toast.message && <Text style={styles.message}>{toast.message}</Text>}
+          <Text style={[styles.title, { color: theme.textPrimary }]}>
+            {(toast.type || "Bitti").toUpperCase()}
+          </Text>
+          {toast.message && (
+            <Text style={[styles.message, { color: theme.textSecondary }]}>
+              {toast.message}
+            </Text>
+          )}
         </View>
       </View>
     </Animated.View>
   );
 };
 
-const getThemeColor = (type?: string) => {
+const getThemeColor = (type: string, isDarkMode: boolean) => {
   switch (type) {
     case "Başarılı":
-      return "#03045e";
+      return isDarkMode ? "#81c784" : "#2e7d32";
     case "Hata":
-      return "#FF3B30";
+      return "#ff453a";
     case "Uyarı":
-      return "#FFCC00";
+      return "#ffcc00";
     case "Bilgi":
-      return "#5856D6";
+      return "#0a84ff";
     default:
-      return "#8E8E93";
+      return "#8e8e93";
   }
 };
 
 const getIconName = (type?: string) => {
   switch (type) {
     case "Başarılı":
-      return "checkmark-circle";
+      return "checkmark-circle-sharp";
     case "Hata":
-      return "close-circle";
+      return "alert-circle-sharp";
     case "Uyarı":
-      return "warning";
+      return "warning-sharp";
     case "Bilgi":
-      return "information-circle";
+      return "information-circle-sharp";
     default:
-      return "checkmark-circle";
+      return "notifications-sharp";
   }
 };
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 8,
+    marginBottom: 6,
     zIndex: 9999,
   },
   toastItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 16,
-    maxWidth: "90%",
+    maxWidth: "85%",
     alignSelf: "center",
-    borderRadius: 50,
-    backgroundColor: "#FFFFFF",
+    borderRadius: 30, // Tam kapsül form
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.08,
-        shadowRadius: 4,
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 10,
       },
-      android: { elevation: 2 },
+      android: { elevation: 3 },
     }),
   },
   icon: { marginRight: 8 },
   textContainer: { justifyContent: "center", flexShrink: 1 },
   title: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#000000",
+    fontSize: 10, // Mikro-tipografi
+    fontFamily: "Mont-700",
+    letterSpacing: 0.8,
   },
   message: {
-    fontSize: 12,
-    fontWeight: "400",
-    color: "#8E8E93",
-    marginTop: 2,
+    fontSize: 11,
+    fontFamily: "Mont-500",
+    marginTop: 1,
+    letterSpacing: -0.2,
   },
 });

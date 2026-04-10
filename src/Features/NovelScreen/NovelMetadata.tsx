@@ -1,5 +1,5 @@
 import { AuthorIcon } from "@/components/icons/AuthorIcon";
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { RecommendIcon } from "@/components/icons/RecommendIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
 import { ViewIcon } from "@/components/icons/ViewIcon";
 import { Author, SeriesStatus } from "@/types/novel";
@@ -155,7 +155,7 @@ export const NovelMetaData = ({
             <Text style={styles.text}>{formatViewCount(viewCount)}</Text>
           </View>
           <View style={styles.row}>
-            <LikeIcon color="white" />
+            <RecommendIcon color="white" />
             <Text style={styles.text}>
               {recommendRate
                 ? `${recommendRate}% Öneriliyor`

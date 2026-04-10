@@ -2,7 +2,7 @@ import { SkeletonBox } from "@/components/SkeletonBox";
 import { View } from "react-native";
 
 export const NovelSkeleton = () => (
-  <View style={{ flex: 1, backgroundColor: "white", padding: 20 }}>
+  <View style={{ flex: 1, padding: 20 }}>
     {/* Header Skeleton */}
     <View style={{ flexDirection: "row", gap: 20, marginTop: 40 }}>
       <SkeletonBox width={120} height={180} />

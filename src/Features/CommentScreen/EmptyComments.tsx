@@ -1,28 +1,38 @@
-import { Image } from "expo-image";
-import { Text, View, StyleSheet, Dimensions } from "react-native";
-import firstComment from "@assets/state-illustrations/first-comment.png";
-import emptyList from "@assets/state-illustrations/empt-list.png";
+import { Text, View, StyleSheet } from "react-native";
+import { EmptyListGhost } from "@/components/StateIcons/EmptyListGhost";
+import { SmilingGhost } from "@/components/StateIcons/SmilingGhost";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const EmptyComments = ({ hasMyComment }: { hasMyComment: boolean }) => {
+  const { theme, isDarkMode } = useAppTheme();
+
   return (
     <View style={styles.overlay}>
       <View style={styles.card}>
-        <Image
-          source={hasMyComment ? firstComment : emptyList}
-          style={styles.image}
-          contentFit="contain"
-        />
+        {hasMyComment ? (
+          <SmilingGhost
+            size={100}
+            strokeWidth={18} // Biraz daha ince, daha zarif
+            color={isDarkMode ? theme.textPrimary : "#1e293b"}
+          />
+        ) : (
+          <EmptyListGhost
+            size={100}
+            strokeWidth={18}
+            color={isDarkMode ? theme.textPrimary : "#1e293b"}
+          />
+        )}
 
-        <Text style={styles.title}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
           {hasMyComment
-            ? "Şimdilik sadece sen varsın!"
-            : "Burası biraz sessiz..."}
+            ? "ŞİMDİLİK SADECE SEN VARSIN!"
+            : "BURASI BİRAZ SESSİZ..."}
         </Text>
 
-        <Text style={styles.description}>
+        <Text style={[styles.description, { color: theme.textSecondary }]}>
           {hasMyComment
-            ? "Yorumunla bu bölümü başlattın! Diğerleri de katılabilir."
-            : "Henüz kimse yazmamış. İlk sen başlatmak ister misin?"}
+            ? "Yorumunla bu bölümü başlatan ilk kişi oldun.\nDiğerleri de katılabilir."
+            : "Henüz kimse bir şey yazmamış.\nİlk sen başlatmak ister misin?"}
         </Text>
       </View>
     </View>
@@ -34,36 +44,28 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "transparent",
-    paddingHorizontal: 20,
+    paddingHorizontal: 30,
     zIndex: -1,
-    elevation: -1,
   },
   card: {
-    width: "95%",
-    padding: 32,
+    width: "100%",
     alignItems: "center",
-  },
-  image: {
-    width: 120,
-    height: 120,
-    marginBottom: 24,
-    opacity: 0.9,
+    gap: 16,
   },
   title: {
-    fontFamily: "Mont-500",
-    fontSize: 19,
-    color: "#1E293B",
+    fontFamily: "Mont-700",
+    fontSize: 10, // Mikro-tipografi: Küçük ama güçlü başlık
+    letterSpacing: 2, // Geniş harf aralığı ile premium duruş
     textAlign: "center",
-    marginBottom: 8,
+    marginTop: 20,
+    textTransform: "uppercase",
   },
   description: {
     fontFamily: "Mont-500",
-    fontSize: 14,
-    color: "#64748B",
+    fontSize: 12, // 14'ten 12'ye çektik
     textAlign: "center",
-    lineHeight: 22,
-    paddingHorizontal: 10,
-    fontWeight: "400",
+    lineHeight: 18,
+    letterSpacing: -0.2,
+    opacity: 0.8,
   },
 });

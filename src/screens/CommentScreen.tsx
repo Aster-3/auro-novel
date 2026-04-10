@@ -1,6 +1,6 @@
 import { CommentCardFull } from "@/components/CommentCardFull";
+import { Header } from "@/components/Header";
 import { RootStackParamList } from "@/constants/navigation";
-import { CommentHeader } from "@/Features/CommentScreen/CommentHeader";
 import { CommentSort } from "@/Features/CommentScreen/CommentSort";
 import { EmptyComments } from "@/Features/CommentScreen/EmptyComments";
 import { MyComment } from "@/Features/CommentScreen/MyComment";
@@ -8,9 +8,10 @@ import { ReviewSheet } from "@/Features/CommentScreen/ReviewSheet";
 import { WriteCommentButton } from "@/Features/CommentScreen/WriteCommentButton";
 import { useInfiniteComments } from "@/hooks/useInfiniteComments";
 import useMyCommentQuery from "@/hooks/useMyCommentQuery";
+import { useAppTheme } from "@/hooks/useTheme";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { RouteProp, useRoute } from "@react-navigation/native";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { FlatList, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -40,7 +41,13 @@ const CommentScreen = () => {
 
   if (isLoading && isMyCommentLoading) {
     return (
-      <Text style={{ flex: 1, textAlign: "center", marginTop: 20 }}>
+      <Text
+        style={{
+          flex: 1,
+          textAlign: "center",
+          marginTop: 20,
+        }}
+      >
         Yorumlar yükleniyor...
       </Text>
     );
@@ -49,9 +56,12 @@ const CommentScreen = () => {
   return (
     <SafeAreaView
       edges={["top", "bottom"]}
-      style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }}
+      style={{
+        flex: 1,
+        paddingHorizontal: 10,
+      }}
     >
-      <CommentHeader commentCount={data?.total || 0} />
+      <Header title={`Yorumlar (${data?.total || 0})`} isAdjacent={false} />
       <CommentSort />
       {myComment && <MyComment novelId={id} comment={myComment} />}
 

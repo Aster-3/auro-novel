@@ -1,4 +1,4 @@
-import Svg, { ClipPath, Defs, G, Path } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 
 export const SmilingReplyIcon = ({
   color = "#1C274C",
@@ -7,12 +7,12 @@ export const SmilingReplyIcon = ({
   color?: string;
   size?: number;
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+  <Svg width={size} height={size} viewBox="1.5 1.5 21 21" fill="none">
     <Path
       clipRule="evenodd"
       d="M2 13.936c.018 1.447.65 2.828 1.76 3.84 1.11 1.011 2.604 1.57 4.154 1.553h2.866c.78 0 1.524.298 2.063.824l1.527 1.49c.242.229.571.357.915.357.344 0 .673-.128.915-.357l2.371-2.314.779-.81c.143-.146.3-.28.467-.4 1.376-1.01 2.18-2.55 2.183-4.183V7.39c-.038-3.012-2.686-5.425-5.914-5.39H7.914C4.686 1.965 2.038 4.378 2 7.39v6.545z"
       stroke={color}
-      strokeWidth={1.2}
+      strokeWidth={1.9}
       strokeLinecap="round"
       strokeLinejoin="round"
     />

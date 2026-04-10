@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { DayIcon } from "@/components/icons/DayIcon";
 import { NightIcon } from "@/components/icons/NightIcon";
@@ -12,77 +12,70 @@ const THEME_MODE_OPTIONS = ["day", "night"] as const;
 type ScrollMode = (typeof SCROLL_MODE_OPTIONS)[number];
 type ThemeMode = (typeof THEME_MODE_OPTIONS)[number];
 
-interface Props {
-  scrollMode: ScrollMode;
-  setScrollMode: (mode: ScrollMode) => void;
-  themeMode: ThemeMode;
-  setThemeMode: (mode: ThemeMode) => void;
-}
+export const ScrollAndThemeSettings = () => {
+  const { isDarkMode, scrollMode, setScrollMode, toggleDarkMode } =
+    useReaderStore();
 
-export const ScrollAndThemeSettings = ({
-  scrollMode,
-  setScrollMode,
-  themeMode,
-  setThemeMode,
-}: Props) => {
-  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const cardBg = isDarkMode ? "#000000" : "#FFFFFF";
+  const primary = isDarkMode ? "#fcf3e6" : "#09244B";
+  const currentTheme: ThemeMode = isDarkMode ? "night" : "day";
 
-  // Renk Karşılıkları
-  const colors = {
-    cardBg: isDarkMode ? "#000000" : "#FFFFFF",
-    primary: isDarkMode ? "#fcf3e6" : "#09244B",
-  };
+  const handleScrollMode = useCallback(
+    (option: ScrollMode) => setScrollMode(option),
+    [setScrollMode],
+  );
 
-  const scrollIcons = {
-    vertical: <ScrollVerticalIcon size={16} color={colors.primary} />,
-    horizontal: <ScrollHorizontalIcon size={16} color={colors.primary} />,
-  };
-
-  const themeIcons = {
-    day: <DayIcon size={16} color={colors.primary} />,
-    night: <NightIcon size={16} color={colors.primary} />,
-  };
+  const handleTheme = useCallback(
+    (option: ThemeMode) => {
+      if (currentTheme !== option) toggleDarkMode();
+    },
+    [currentTheme, toggleDarkMode],
+  );
 
   return (
     <View style={styles.wrapper}>
-      <View
-        style={[styles.alignmentContainer, { backgroundColor: colors.cardBg }]}
-      >
+      {/* Scroll modu */}
+      <View style={[styles.container, { backgroundColor: cardBg }]}>
         {SCROLL_MODE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             activeOpacity={0.7}
+            onPress={() => handleScrollMode(option)}
             style={[
-              styles.alignmentItem,
-              scrollMode === option && [
-                styles.activeItem,
-                { borderColor: colors.primary },
-              ],
+              styles.item,
+              scrollMode === option
+                ? { borderColor: primary }
+                : styles.itemInactive,
             ]}
-            onPress={() => setScrollMode(option)}
           >
-            {scrollIcons[option]}
+            {option === "vertical" ? (
+              <ScrollVerticalIcon size={16} color={primary} />
+            ) : (
+              <ScrollHorizontalIcon size={16} color={primary} />
+            )}
           </TouchableOpacity>
         ))}
       </View>
 
-      <View
-        style={[styles.alignmentContainer, { backgroundColor: colors.cardBg }]}
-      >
+      {/* Tema */}
+      <View style={[styles.container, { backgroundColor: cardBg }]}>
         {THEME_MODE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
             activeOpacity={0.7}
+            onPress={() => handleTheme(option)}
             style={[
-              styles.alignmentItem,
-              themeMode === option && [
-                styles.activeItem,
-                { borderColor: colors.primary },
-              ],
+              styles.item,
+              currentTheme === option
+                ? { borderColor: primary }
+                : styles.itemInactive,
             ]}
-            onPress={() => setThemeMode(option)}
           >
-            {themeIcons[option]}
+            {option === "day" ? (
+              <DayIcon size={16} color={primary} />
+            ) : (
+              <NightIcon size={16} color={primary} />
+            )}
           </TouchableOpacity>
         ))}
       </View>
@@ -97,7 +90,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
   },
-  alignmentContainer: {
+  container: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
@@ -106,14 +99,16 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     paddingHorizontal: 12,
   },
-  alignmentItem: {
+  item: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 22,
     paddingVertical: 8,
-  },
-  activeItem: {
+    // borderWidth her zaman sabit — sadece borderColor değişir
     borderWidth: 1,
+  },
+  itemInactive: {
+    borderColor: "transparent",
   },
 });

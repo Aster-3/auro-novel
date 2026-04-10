@@ -8,23 +8,31 @@ import { OverviewTab } from "@/Features/NovelPanelScreen/OverviewTab";
 import { ChaptersTab } from "@/Features/NovelPanelScreen/ChaptersTab";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { Header } from "@/components/Header";
 
 const Tab = createMaterialTopTabNavigator();
 
 const NovelPanelScreen = () => {
+  const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
   const { id } = useRoute<RouteProp<RootStackParamList, "NovelPanel">>().params;
+
   return (
     <Screen
-      style={{ flex: 1, paddingHorizontal: 16, backgroundColor: "#f5f5f5" }}
+      backgroundColor={theme.background}
+      style={{ flex: 1, paddingHorizontal: 16 }}
     >
-      <View style={styles.header}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+      <View style={[styles.header, { backgroundColor: theme.background }]}>
+        {/* <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
-            <BackArrowIcon size={24} color="#000" />
+            <BackArrowIcon size={22} color={theme.textPrimary} />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>86: Eighty Six</Text>
-        </View>
+          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>
+            Roman Paneli
+          </Text>
+        </View> */}
+        <Header title="Roman Paneli" isAdjacent={true} />
 
         <TouchableOpacity
           onPress={() =>
@@ -33,10 +41,19 @@ const NovelPanelScreen = () => {
               isChapterAvailable: false,
             })
           }
-          style={styles.saveButton}
+          style={[
+            styles.saveButton,
+            {
+              backgroundColor: theme.surface,
+              shadowColor: "#000",
+              shadowOpacity: isDarkMode ? 0.3 : 0.1,
+            },
+          ]}
         >
-          <PlusIcon size={16} color="#1C274C" />
-          <Text style={styles.saveButtonText}>Yeni Bölüm</Text>
+          <PlusIcon size={16} color={theme.textPrimary} />
+          <Text style={[styles.saveButtonText, { color: theme.textPrimary }]}>
+            Yeni Bölüm
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -53,15 +70,19 @@ const NovelPanelScreen = () => {
             textTransform: "none",
           },
           tabBarItemStyle: { width: "auto", paddingHorizontal: 20 },
-          sceneStyle: { backgroundColor: "#f5f5f5" },
-          tabBarIndicatorStyle: { backgroundColor: "#000", height: 1 },
+          sceneStyle: { backgroundColor: theme.background }, // Sahne rengi dinamik
+          tabBarIndicatorStyle: { backgroundColor: theme.accent, height: 2 }, // İndikatör rengi aksan rengin oldu
           tabBarStyle: {
             elevation: 0,
-            backgroundColor: "#f5f5f5",
+            backgroundColor: theme.background, // Tab bar arka planı
             shadowOpacity: 0,
             borderBottomWidth: 1,
-            borderBottomColor: "#efecec",
+            borderBottomColor: isDarkMode
+              ? "rgba(255,255,255,0.05)"
+              : "#efecec",
           },
+          tabBarActiveTintColor: theme.textPrimary,
+          tabBarInactiveTintColor: theme.textSecondary,
         }}
       >
         <Tab.Screen
@@ -89,26 +110,21 @@ const NovelPanelScreen = () => {
 
 const styles = StyleSheet.create({
   header: {
-    backgroundColor: "#f5f5f5",
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginTop: 12,
     paddingBottom: 2,
     gap: 12,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  tabContent: {
-    flex: 1,
-    padding: 20,
+    fontSize: 16,
+    fontFamily: "Mont-600",
+    letterSpacing: -0.3,
+    includeFontPadding: false,
   },
   saveButton: {
     paddingHorizontal: 12,
     paddingVertical: 8,
-    backgroundColor: "#ffffff",
     elevation: 2,
     flexDirection: "row",
     alignItems: "center",
@@ -116,7 +132,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   saveButtonText: {
-    color: "#1C274C",
     fontFamily: "Mont-600",
     fontSize: 12,
   },

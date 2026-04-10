@@ -6,9 +6,9 @@ import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { VolumesModal } from "../ChapterEditScreen/VolumesModal";
 import { useState } from "react";
 import { PublishDownIcon } from "@/components/icons/PublishDownIcon";
-import { useChapterMutation } from "@/hooks/useChapterMutation";
 import { PublicationStatus } from "@/types/chapter";
 import { useChapterPublication } from "@/hooks/useChapterPublication";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const ChapterItemMoreOptions = ({
   isPublished,
@@ -17,13 +17,18 @@ export const ChapterItemMoreOptions = ({
   novelId,
 }: {
   isPublished: boolean;
-  isArchived: boolean;
+  isArchived?: boolean;
   chapterId: string;
   novelId: string;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const { mutate: deleteChapter } = useDeleteChapter(isPublished, novelId);
   const { mutate: publishChapter } = usePublishChapter();
   const { mutate: changePublicationStatus } = useChapterPublication(novelId);
+
+  // Renk Sabitleri - Custom ve Dinamik
+  const ACTION_BLUE = isDarkMode ? "#60a5fa" : "#0f3f92"; // Karanlıkta daha açık bir mavi
+  const ACTION_RED = isDarkMode ? "#fb7185" : "#be123c"; // Karanlıkta daha yumuşak bir kırmızı
 
   const handleDelete = () => {
     useModalStore.getState().showConfirm({
@@ -57,9 +62,7 @@ export const ChapterItemMoreOptions = ({
       title: "Yayından Kaldır",
       message: `Bu bölümü yeni okurlar için gizlemek istediğinize emin misiniz?
 
-Mevcut okurlarınızın deneyimi bozulmaz; bölümü daha önce satın almış olanlar içeriğe her zamanki gibi erişebilir. Ancak yeni satışlar durdurulacak ve bölüm hikaye akışında gizlenecektir.
-
-Sıralamanız ve düzeniniz olduğu gibi korunur. Dilediğiniz an tek bir dokunuşla bölümü tekrar herkes için görünür kılabilirsiniz.`,
+Mevcut okurlarınızın deneyimi bozulmaz; bölümü daha önce satın almış olanlar içeriğe her zamanki gibi erişebilir.`,
       confirmText: "Evet, Kaldır",
       cancelText: "Hayır, İptal",
       onConfirm: () =>
@@ -95,9 +98,15 @@ Sıralamanız ve düzeniniz olduğu gibi korunur. Dilediğiniz an tek bir dokunu
   };
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+
   return (
     <View style={styles.container}>
-      <View style={styles.leftIndicator} />
+      <View
+        style={[
+          styles.leftIndicator,
+          { backgroundColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#e2e8f0" },
+        ]}
+      />
 
       <View style={styles.optionsWrapper}>
         <TouchableOpacity
@@ -114,9 +123,9 @@ Sıralamanız ve düzeniniz olduğu gibi korunur. Dilediğiniz an tek bir dokunu
               ],
             }}
           >
-            <PublishDownIcon size={14} color="#0f3f92" />
+            <PublishDownIcon size={14} color={ACTION_BLUE} />
           </View>
-          <Text style={[styles.optionText, { color: "#0f3f92" }]}>
+          <Text style={[styles.optionText, { color: ACTION_BLUE }]}>
             {!isPublished
               ? "• Yayına Al"
               : isArchived
@@ -125,17 +134,15 @@ Sıralamanız ve düzeniniz olduğu gibi korunur. Dilediğiniz an tek bir dokunu
           </Text>
         </TouchableOpacity>
 
-        <View style={styles.miniDivider} />
-
         <TouchableOpacity
           style={styles.option}
           activeOpacity={0.6}
           onPress={handleDelete}
         >
           <View style={{ marginBottom: 3 }}>
-            <TrashIcon size={14} color="#be123c" />
+            <TrashIcon size={14} color={ACTION_RED} />
           </View>
-          <Text style={[styles.optionText, styles.deleteText]}>
+          <Text style={[styles.optionText, { color: ACTION_RED }]}>
             • Bölümü Sil
           </Text>
         </TouchableOpacity>
@@ -162,7 +169,6 @@ const styles = StyleSheet.create({
   },
   leftIndicator: {
     width: 2,
-    backgroundColor: "#e2e8f0",
     borderRadius: 1,
     marginVertical: 4,
   },
@@ -181,13 +187,5 @@ const styles = StyleSheet.create({
     fontSize: 11.5,
     fontFamily: "Mont-500",
     letterSpacing: 0.3,
-  },
-  deleteText: {
-    color: "#be123c",
-  },
-  miniDivider: {
-    height: 1,
-    backgroundColor: "#f1f5f9", // Seçenekler arası çok silik ayraç
-    width: "40%", // Tamamını kaplamasın, daha şık durur
   },
 });

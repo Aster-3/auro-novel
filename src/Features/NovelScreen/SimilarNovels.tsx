@@ -1,27 +1,25 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View, StyleSheet } from "react-native";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
 import { useNovels } from "@/hooks/useNovels";
+import { useAppTheme } from "@/hooks/useTheme";
+
 export const SimilarNovels = () => {
   const { data, isLoading } = useNovels();
+  const { theme } = useAppTheme();
 
   return (
-    <View style={{ gap: 16, marginTop: 16 }}>
-      <Text
-        style={{
-          fontFamily: "Mont-700",
-          fontSize: 15,
-          color: "#03061ed3",
-          letterSpacing: -0.2,
-        }}
-      >
+    <View style={styles.container}>
+      {/* Section Başlığı: Kallavi Standart */}
+      <Text style={[styles.title, { color: theme.textPrimary }]}>
         Sevebileceğiniz Benzer Seriler
       </Text>
 
       <ScrollView
-        contentContainerStyle={{ gap: 12 }}
+        contentContainerStyle={styles.scrollContent}
         showsHorizontalScrollIndicator={false}
         horizontal
-        style={{ width: "100%" }}
+        // Daha akıcı bir kaydırma hissi için
+        decelerationRate="fast"
       >
         {data?.items.map((item) => (
           <SeriesCardVertical
@@ -35,3 +33,19 @@ export const SimilarNovels = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+    marginTop: 20,
+    paddingBottom: 40, // Sayfanın en altında ferah bir bitiş
+  },
+  title: {
+    fontFamily: "Mont-700", // Kallavi başlık kuralı
+    fontSize: 16, // Diğer sectionlarla senkron
+    letterSpacing: -0.5,
+  },
+  scrollContent: {
+    gap: 16,
+  },
+});

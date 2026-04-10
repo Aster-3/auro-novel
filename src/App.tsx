@@ -28,7 +28,7 @@ import { TokenStorage } from "./utils/tokenStorage";
 import { useAuthStore } from "./store/useAuthStore";
 import { ToastContainer } from "./components/Toasts/ToastContainer";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { ActivityIndicator } from "react-native";
+import { ActivityIndicator, StatusBar } from "react-native";
 import { useReaderStore } from "./store/useReaderStore";
 
 enableFreeze(false);
@@ -120,6 +120,10 @@ export default function App() {
     <GestureHandlerRootView
       style={{ flex: 1, backgroundColor: appBackgroundColor }}
     >
+      <StatusBar
+        barStyle={isDarkMode ? "light-content" : "dark-content"}
+        backgroundColor={appBackgroundColor}
+      />
       <KeyboardProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>

@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   StyleSheet,
   Text,
-  FlatList,
+  TouchableOpacity,
+  ScrollView,
   NativeScrollEvent,
   NativeSyntheticEvent,
+  LayoutChangeEvent,
 } from "react-native";
-import { FontTypeIcon } from "@/components/icons/FontTypeIcon";
 import { SlidingHorizontalIcon } from "@/components/icons/SlidingHorizontalIcon";
 import { PaddingHorizontalIcon } from "@/components/icons/PaddingHorizontalIcon";
 import { LineHeightIcon } from "@/components/icons/LineHeightIcon";
@@ -18,117 +19,136 @@ const PADDING_LABELS = ["Küçük Genişlik", "Orta Genişlik", "Büyük Genişl
 
 const ITEM_WIDTH = 100;
 
-interface LayoutSettingsProps {
-  lineHeight: number;
-  setLineHeight: (val: number) => void;
-  paddingHorizontal: number;
-  setPaddingHorizontal: (val: number) => void;
-}
+// Tekrar eden scroll kartını bağımsız bileşene aldık —
+// her kart kendi genişliğini ölçer, kendi offset'ini hesaplar
+const SnapScrollCard = ({
+  data,
+  selectedIndex,
+  onSelect,
+  colors,
+  leftIcon,
+}: {
+  data: string[];
+  selectedIndex: number;
+  onSelect: (index: number) => void;
+  colors: { cardBg: string; primary: string; secondaryText: string };
+  leftIcon: React.ReactNode;
+}) => {
+  const [containerWidth, setContainerWidth] = useState<number | null>(null);
 
-export const LayoutSettings = ({
-  lineHeight,
-  setLineHeight,
-  paddingHorizontal,
-  setPaddingHorizontal,
-}: LayoutSettingsProps) => {
-  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const sidePadding =
+    containerWidth != null ? (containerWidth - ITEM_WIDTH) / 2 : 0;
 
-  // Renk Karşılıkları
+  const initialOffset =
+    containerWidth != null
+      ? { x: selectedIndex * ITEM_WIDTH, y: 0 }
+      : { x: 0, y: 0 };
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    const width = e.nativeEvent.layout.width;
+    setContainerWidth((prev) => (prev == null ? width : prev));
+  };
+
+  const onScrollEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const x = e.nativeEvent.contentOffset.x;
+    const index = Math.round(x / ITEM_WIDTH);
+    if (index >= 0 && index < data.length && index !== selectedIndex) {
+      onSelect(index);
+    }
+  };
+
+  return (
+    <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
+      {leftIcon}
+
+      <View style={styles.scrollWrapper} onLayout={onLayout}>
+        {containerWidth != null && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={ITEM_WIDTH}
+            decelerationRate={0.985}
+            disableIntervalMomentum
+            scrollEventThrottle={16}
+            onMomentumScrollEnd={onScrollEnd}
+            contentOffset={initialOffset}
+            contentContainerStyle={{ paddingHorizontal: sidePadding }}
+            style={StyleSheet.absoluteFill}
+          >
+            {data.map((item, index) => (
+              <View
+                key={item}
+                style={[styles.swipeItem, { width: ITEM_WIDTH }]}
+              >
+                <Text
+                  style={[
+                    styles.swipeText,
+                    {
+                      color:
+                        index === selectedIndex
+                          ? colors.primary
+                          : colors.secondaryText,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {item}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        )}
+      </View>
+
+      <SlidingHorizontalIcon
+        size={16}
+        strokeWidth={0.5}
+        color={colors.primary}
+      />
+    </View>
+  );
+};
+
+export const LayoutSettings = () => {
+  const {
+    isDarkMode,
+    lineHeight,
+    paddingHorizontal,
+    setLineHeight,
+    setPaddingHorizontal,
+  } = useReaderStore();
+
   const colors = {
     cardBg: isDarkMode ? "#000000" : "#FFFFFF",
     primary: isDarkMode ? "#fcf3e6" : "#09244B",
     secondaryText: isDarkMode ? "#fcf3e6" : "#606060",
   };
 
-  const onLineHeightScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const index = Math.round(x / ITEM_WIDTH);
-    if (index >= 0 && index < LINE_HEIGHT_LABELS.length) {
-      setLineHeight(index + 1);
-    }
-  };
-
-  const onPaddingScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const x = e.nativeEvent.contentOffset.x;
-    const actualIndex = Math.round(x / ITEM_WIDTH);
-    if (actualIndex >= 0 && actualIndex < PADDING_LABELS.length) {
-      setPaddingHorizontal(actualIndex + 1);
-    }
-  };
-
   return (
     <View style={styles.row}>
-      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
-        <LineHeightIcon size={16} strokeWidth={0.1} color={colors.primary} />
+      <SnapScrollCard
+        data={LINE_HEIGHT_LABELS}
+        selectedIndex={lineHeight - 1}
+        onSelect={(index) => setLineHeight(index + 1)}
+        colors={colors}
+        leftIcon={
+          <LineHeightIcon size={16} strokeWidth={0.1} color={colors.primary} />
+        }
+      />
 
-        <View style={{ width: ITEM_WIDTH }}>
-          <FlatList
-            data={LINE_HEIGHT_LABELS}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={ITEM_WIDTH}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            disableIntervalMomentum={true}
-            scrollEventThrottle={16}
-            onMomentumScrollEnd={onLineHeightScroll}
-            renderItem={({ item }) => (
-              <View style={[styles.swipeItem, { width: ITEM_WIDTH }]}>
-                <Text
-                  style={[styles.swipeText, { color: colors.secondaryText }]}
-                  numberOfLines={1}
-                >
-                  {item}
-                </Text>
-              </View>
-            )}
-            keyExtractor={(item) => `lh-${item}`}
+      <SnapScrollCard
+        data={PADDING_LABELS}
+        selectedIndex={paddingHorizontal - 1}
+        onSelect={(index) => setPaddingHorizontal(index + 1)}
+        colors={colors}
+        leftIcon={
+          <PaddingHorizontalIcon
+            size={16}
+            strokeWidth={1.5}
+            color={colors.primary}
           />
-        </View>
-        <SlidingHorizontalIcon
-          size={16}
-          strokeWidth={0.5}
-          color={colors.primary}
-        />
-      </View>
-
-      <View style={[styles.card, { backgroundColor: colors.cardBg }]}>
-        <PaddingHorizontalIcon
-          size={16}
-          strokeWidth={1.5}
-          color={colors.primary}
-        />
-
-        <View style={{ width: ITEM_WIDTH }}>
-          <FlatList
-            data={PADDING_LABELS}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            snapToInterval={ITEM_WIDTH}
-            snapToAlignment="center"
-            decelerationRate="fast"
-            disableIntervalMomentum={true}
-            scrollEventThrottle={16}
-            onMomentumScrollEnd={onPaddingScroll}
-            renderItem={({ item }) => (
-              <View style={[styles.swipeItem, { width: ITEM_WIDTH }]}>
-                <Text
-                  style={[styles.swipeText, { color: colors.secondaryText }]}
-                  numberOfLines={1}
-                >
-                  {item}
-                </Text>
-              </View>
-            )}
-            keyExtractor={(item) => `ph-${item}`}
-          />
-        </View>
-        <SlidingHorizontalIcon
-          size={16}
-          strokeWidth={0.5}
-          color={colors.primary}
-        />
-      </View>
+        }
+      />
     </View>
   );
 };
@@ -148,6 +168,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 10,
+  },
+  scrollWrapper: {
+    flex: 1,
+    height: 45,
   },
   swipeItem: {
     height: 45,

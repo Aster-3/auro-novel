@@ -1,9 +1,12 @@
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SearchIcon } from "./icons/SearchIcon";
 import { useAppNavigation } from "../hooks/useAppNavigation";
+import { useAppTheme } from "../hooks/useTheme";
 
 export const FakeSearchBar = () => {
   const navigation = useAppNavigation();
+  const { theme, isDarkMode } = useAppTheme();
+
   return (
     <TouchableOpacity
       onPress={() => {
@@ -11,7 +14,8 @@ export const FakeSearchBar = () => {
       }}
       style={{
         width: "100%",
-        backgroundColor: "#F0F4FF",
+        // Karanlık modda yüzey rengini (surface), aydınlık modda ise o ferah açık maviyi kullanıyoruz
+        backgroundColor: isDarkMode ? theme.surface : "#F0F4FF",
         borderRadius: 99,
         height: 40,
         position: "relative",
@@ -29,8 +33,11 @@ export const FakeSearchBar = () => {
           gap: 8,
         }}
       >
-        <SearchIcon />
-        <Text style={{ fontSize: 14, color: "gray" }}>Search by Title</Text>
+        {/* İkon rengi de metin rengiyle uyumlu hale geldi */}
+        <SearchIcon color={theme.textSecondary} />
+        <Text style={{ fontSize: 14, color: theme.textSecondary }}>
+          Search by Title
+        </Text>
       </View>
     </TouchableOpacity>
   );

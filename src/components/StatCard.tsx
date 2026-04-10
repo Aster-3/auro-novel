@@ -7,6 +7,7 @@ import { useRef } from "react";
 import { DashboardStats, TrendState } from "@/types/dashboard";
 import { StatCardSkeletonBox } from "@/components/StatCardSkeletonBox";
 import { formatCurrent } from "@/utils/formatCurrent";
+import { useAppTheme } from "@/hooks/useTheme";
 
 interface StatCardProps {
   label: string;
@@ -23,6 +24,7 @@ export const StatCard = ({
   onPress,
   isLoading,
 }: StatCardProps) => {
+  const { isDarkMode } = useAppTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -53,17 +55,21 @@ export const StatCard = ({
 
   const { Icon, text } = getTrendData();
 
-  const gradientColors = (
-    isDark ? ["#050b13", "#323237ea"] : ["#3b82f6", "#8db4f3"]
-  ) as [string, string];
+  const gradientColors = (() => {
+    if (isDarkMode) {
+      // Karanlık Mod Varyantları:
+      return isDark
+        ? ["#061028", "#1E293B"] // Derin Siyah/Lacivert (Mat varyant)
+        : ["#244fac", "#6283dd"]; // Canlı Gece Mavisi (Belirgin varyant)
+    } else {
+      // Aydınlık Mod Varyantları (Senin orijinaller):
+      return isDark ? ["#050b13", "#323237ea"] : ["#3b82f6", "#8db4f3"];
+    }
+  })() as [string, string];
 
   const mainTextColor = "#ffffff";
-  const labelColor = isDark
-    ? "rgba(255, 255, 255, 0.6)"
-    : "rgba(255, 255, 255, 0.9)";
-  const iconWrapperColor = isDark
-    ? "rgba(255, 255, 255, 0.08)"
-    : "rgba(255, 255, 255, 0.2)";
+  const labelColor = "rgba(255, 255, 255, 0.8)";
+  const iconWrapperColor = "rgba(255, 255, 255, 0.15)";
 
   return (
     <Animated.View

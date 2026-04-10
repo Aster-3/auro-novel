@@ -1,13 +1,15 @@
 import { memo } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { Tag } from "@/types/tag";
-import { TagIcon } from "./TagIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
+  const { theme } = useAppTheme();
+
   if (!tags?.length) return null;
 
   return (
-    <View>
+    <View style={s.container}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -19,9 +21,10 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
             key={tag.id}
             style={({ pressed }) => [s.chip, pressed && s.chipPressed]}
           >
-            <Text style={s.hash}>#</Text>
-            {/* <TagIcon size={12} color="#374151" /> */}
-            <Text style={s.text}>{tag.name}</Text>
+            <Text style={[s.hash, { color: theme.textSecondary }]}>#</Text>
+            <Text style={[s.text, { color: theme.textPrimary }]}>
+              {tag.name}
+            </Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -30,30 +33,31 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
 });
 
 const s = StyleSheet.create({
+  container: {
+    paddingVertical: 4,
+  },
   scroll: {
-    gap: 14,
-    paddingLeft: 6,
+    gap: 16,
+    paddingLeft: 2,
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 2,
-    paddingVertical: 6,
-
-    paddingHorizontal: 2,
+    gap: 3,
+    paddingVertical: 4,
   },
-  chipPressed: { opacity: 0.5 },
+  chipPressed: {
+    opacity: 0.5,
+  },
   hash: {
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: "Mont-600",
-    color: "#282b2e",
   },
   text: {
     fontFamily: "Mont-500-Italic",
     fontSize: 13,
-    color: "#374151",
-    letterSpacing: -0.5,
+    letterSpacing: -0.3,
     textAlignVertical: "center",
   },
 });

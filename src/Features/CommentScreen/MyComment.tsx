@@ -9,7 +9,7 @@ import {
   UIManager,
   Image,
 } from "react-native";
-import { LikeIcon } from "@/components/icons/LikeIcon";
+import { RecommendIcon } from "@/components/icons/RecommendIcon";
 import { LikeİconFill } from "@/components/icons/LikeİconFill";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { Comment } from "@/types/comment";
@@ -21,6 +21,8 @@ import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { TrashIcon } from "@/components/icons/TrashIcon";
 import { useDeleteCommentMutation } from "@/hooks/useDeleteCommentMutation";
 import { useModalStore } from "@/store/useModalStore";
+import { useAppTheme } from "@/hooks/useTheme";
+import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
 
 if (
   Platform.OS === "android" &&
@@ -36,16 +38,19 @@ export const MyComment = ({
   comment: Comment;
   novelId: string;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
   const { mutate: deleteComment } = useDeleteCommentMutation(
     comment.id,
     novelId,
   );
+
   const [isOpen, setIsOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [measured, setMeasured] = useState(false);
-  const { mutate } = useCommentLikeMutation(novelId);
+
+  const { mutate: toggleLikeMutate } = useCommentLikeMutation(novelId);
   const user = useAuthStore((state) => state.user);
 
   const toggleOpen = () => {
@@ -58,18 +63,11 @@ export const MyComment = ({
     setExpanded(!expanded);
   };
 
-  const toggleLike = () => {
-    if (!user) return;
-    mutate(comment.id);
-  };
-
   const handleDeleteComment = () => {
     useModalStore.getState().showConfirm({
-      title: "Yorum Silinecek",
-      message: "Bu yorumu silmek istediğinize emin misiniz?",
-      onConfirm: () => {
-        deleteComment(comment.id);
-      },
+      title: "Yorumu Sil",
+      message: "Bu işlem geri alamazsınız.",
+      onConfirm: () => deleteComment(comment.id),
     });
   };
 
@@ -77,18 +75,16 @@ export const MyComment = ({
     <View
       style={[
         styles.container,
-        isOpen && {
-          borderBottomLeftRadius: 0,
-          borderBottomRightRadius: 0,
-          zIndex: 10,
-          elevation: 5, // Container elevation'ı content ile dengeli olmalı
+        {
+          backgroundColor: theme.commentCard.background,
+          borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#E2E8F0",
         },
       ]}
     >
       <TouchableOpacity
         style={styles.header}
         onPress={toggleOpen}
-        activeOpacity={0.7}
+        activeOpacity={0.8}
       >
         <Image
           source={{ uri: comment.user.profileImageUrl }}
@@ -97,43 +93,80 @@ export const MyComment = ({
 
         <View style={styles.meta}>
           <View style={styles.nameRow}>
-            <Text style={styles.userName} numberOfLines={1}>
+            <Text
+              style={[
+                styles.userName,
+                { color: theme.commentCard.textPrimary },
+              ]}
+              numberOfLines={1}
+            >
               {comment.user.nickname}
             </Text>
-            <View style={styles.myBadge}>
-              <Text style={styles.myBadgeText}>Yorumum</Text>
+            <View
+              style={[
+                styles.myBadge,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.1)"
+                    : "#F1F5F9",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.myBadgeText,
+                  { color: theme.commentCard.textSecondary },
+                ]}
+              >
+                SİZ
+              </Text>
             </View>
           </View>
-          <Text style={styles.dateText}>
+          <Text
+            style={[
+              styles.dateText,
+              { color: theme.commentCard.textSecondary },
+            ]}
+          >
             {formatSmartDate(comment.createdAt)}
           </Text>
         </View>
 
-        {comment.isRecommend ? (
-          <View style={[styles.recommendBadge, styles.recommendGreen]}>
-            <LikeIcon color="#059358df" size={13} />
-          </View>
-        ) : (
-          <View
-            style={[
-              styles.recommendBadge,
-              styles.recommendRed,
-              { transform: [{ rotate: "180deg" }] },
-            ]}
-          >
-            <LikeIcon color="#ff0000df" size={13} />
-          </View>
-        )}
+        <View
+          style={[
+            styles.recommendBadge,
+            comment.isRecommend ? styles.recommendGreen : styles.recommendRed,
+            !comment.isRecommend && { transform: [{ rotate: "180deg" }] },
+          ]}
+        >
+          <RecommendIcon
+            color={comment.isRecommend ? "#10b981" : "#ef4444"}
+            size={11}
+          />
+        </View>
 
-        <View style={[styles.chevron, isOpen && styles.chevronOpen]}>
-          <DownChevronIcon color="#64748B" size={12} />
+        <View
+          style={[
+            styles.chevron,
+            isOpen && styles.chevronOpen,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.05)"
+                : "#F1F5F9",
+            },
+          ]}
+        >
+          <DownChevronIcon color={theme.commentCard.textSecondary} size={10} />
         </View>
       </TouchableOpacity>
 
       {isOpen && (
         <View style={styles.content}>
           <Text
-            style={styles.commentText}
+            style={[
+              styles.commentText,
+              { color: theme.commentCard.textPrimary },
+            ]}
             numberOfLines={measured && !expanded ? 5 : undefined}
             onTextLayout={(e) => {
               if (!measured) {
@@ -141,7 +174,6 @@ export const MyComment = ({
                 setMeasured(true);
               }
             }}
-            onPress={() => isTruncated && toggleExpanded()}
           >
             {comment.content}
           </Text>
@@ -149,10 +181,10 @@ export const MyComment = ({
           {isTruncated && (
             <TouchableOpacity
               onPress={toggleExpanded}
-              hitSlop={{ top: 8, bottom: 8 }}
+              style={styles.moreButton}
             >
-              <Text style={styles.toggleText}>
-                {expanded ? "Daha az" : "Devamını oku"}
+              <Text style={[styles.toggleText, { color: theme.accent }]}>
+                {expanded ? "DAHA AZ" : "DEVAMINI OKU"}
               </Text>
             </TouchableOpacity>
           )}
@@ -161,46 +193,78 @@ export const MyComment = ({
             <TouchableOpacity
               style={[
                 styles.action,
-                comment.viewerHasLiked && styles.actionLiked,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                },
+                comment.viewerHasLiked && {
+                  backgroundColor: isDarkMode
+                    ? "rgba(16,185,129,0.15)"
+                    : "#ECFDF5",
+                },
               ]}
-              activeOpacity={0.6}
-              onPress={toggleLike}
+              onPress={() => user && toggleLikeMutate(comment.id)}
             >
               {comment.viewerHasLiked ? (
-                <LikeİconFill color="#4aeeaa" borderColor="#00b067" size={13} />
+                <LikeİconFill color="#10b981" size={12} />
               ) : (
-                <LikeIcon color="#94A3B8" size={13} />
+                <CommentLikeIcon
+                  color={theme.commentCard.textSecondary}
+                  size={12}
+                />
               )}
               <Text
                 style={[
                   styles.actionText,
-                  comment.viewerHasLiked && styles.actionTextLiked,
+                  {
+                    color: comment.viewerHasLiked
+                      ? "#10b981"
+                      : theme.commentCard.textSecondary,
+                  },
                 ]}
               >
-                {comment.likeCount === 0 ? "Beğen" : comment.likeCount}
+                {comment.likeCount || "BEĞEN"}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.action}
-              activeOpacity={0.6}
+              style={[
+                styles.action,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                },
+              ]}
               onPress={() =>
                 navigation.navigate("Reply", { commentId: comment.id, novelId })
               }
             >
-              <ReplyIcon color="#94A3B8" size={11} />
-              <Text style={styles.actionText}>
-                {comment.replyCount === 0 ? "Yanıtla" : comment.replyCount}
+              <ReplyIcon color={theme.commentCard.textSecondary} size={11} />
+              <Text
+                style={[
+                  styles.actionText,
+                  { color: theme.commentCard.textSecondary },
+                ]}
+              >
+                {comment.replyCount || "YANITLA"}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.action, styles.deleteAction]}
-              activeOpacity={0.6}
+              style={[
+                styles.action,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(239,68,68,0.1)"
+                    : "#FEF2F2",
+                },
+              ]}
               onPress={handleDeleteComment}
             >
-              <TrashIcon color="#EF4444" size={13} />
-              <Text style={[styles.actionText, styles.deleteText]}>Sil</Text>
+              <TrashIcon color="#ef4444" size={12} />
+              <Text style={[styles.actionText, { color: "#ef4444" }]}>SİL</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -211,57 +275,24 @@ export const MyComment = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: "#E2E8F0",
-    shadowColor: "#94A3B8",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 2,
-    zIndex: 1,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginBottom: 10,
+    overflow: "hidden",
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
-    height: 64,
-    paddingHorizontal: 12,
-    gap: 10,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    zIndex: 1000,
-  },
-  content: {
-    position: "absolute",
-    top: 60,
-    left: -StyleSheet.hairlineWidth,
-    right: -StyleSheet.hairlineWidth,
-    zIndex: 999,
-    backgroundColor: "#FFFFFF",
-    borderWidth: StyleSheet.hairlineWidth,
-    borderTopWidth: 0,
-    borderColor: "#E2E8F0",
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    paddingHorizontal: 12,
-    paddingTop: 16, // Top 60 olduğu için padding'i biraz artırarak metni aşağı çektik
-    paddingBottom: 14,
-    shadowColor: "#94A3B8",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 5, // Container ile aynı veya hafif yüksek olabilir
+    padding: 12,
+    gap: 12,
   },
   avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: "#F1F5F9",
+    width: 34,
+    height: 34,
+    borderRadius: 12,
   },
   meta: {
     flex: 1,
-    gap: 2,
   },
   nameRow: {
     flexDirection: "row",
@@ -270,96 +301,72 @@ const styles = StyleSheet.create({
   },
   userName: {
     fontSize: 13,
-    fontWeight: "700",
-    color: "#1E293B",
-    letterSpacing: -0.2,
-    flexShrink: 1,
+    fontFamily: "Mont-700",
   },
   myBadge: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 5,
     paddingHorizontal: 6,
-    paddingVertical: 2,
+    paddingVertical: 1,
+    borderRadius: 6,
   },
   myBadgeText: {
-    fontSize: 10,
-    fontWeight: "600",
-    color: "#94A3B8",
-    letterSpacing: -0.1,
+    fontSize: 8,
+    fontFamily: "Mont-800",
   },
   dateText: {
     fontSize: 10,
-    color: "#94A3B8",
-    fontWeight: "400",
+    fontFamily: "Mont-500",
+    marginTop: 1,
   },
   recommendBadge: {
-    width: 26,
-    height: 26,
+    width: 24,
+    height: 24,
     borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
-  recommendGreen: {
-    backgroundColor: "#00ce7831",
-  },
-  recommendRed: {
-    backgroundColor: "#ff000018",
-  },
+  recommendGreen: { backgroundColor: "rgba(16,185,129,0.15)" },
+  recommendRed: { backgroundColor: "rgba(239,68,68,0.15)" },
   chevron: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: "#F1F5F9",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  chevronOpen: {
-    transform: [{ rotate: "180deg" }],
+  chevronOpen: { transform: [{ rotate: "180deg" }] },
+  content: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    paddingTop: 4,
   },
   commentText: {
-    fontFamily: "Poppins-400",
-    fontSize: 13,
-    lineHeight: 20,
-    color: "#475569",
+    fontSize: 12,
+    fontFamily: "Mont-500",
+    lineHeight: 18,
     letterSpacing: -0.1,
-    marginBottom: 12,
   },
+  moreButton: { marginTop: 4 },
   toggleText: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#4F46E5",
-    marginTop: -6,
-    marginBottom: 12,
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    letterSpacing: 0.5,
   },
   footer: {
     flexDirection: "row",
-    gap: 6,
-    marginTop: 4,
+    gap: 8,
+    marginTop: 16,
   },
   action: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    backgroundColor: "#F1F5F9",
-  },
-  actionLiked: {
-    backgroundColor: "#ECFDF5",
+    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
   },
   actionText: {
-    fontSize: 11,
-    fontWeight: "500",
-    color: "#94A3B8",
-  },
-  actionTextLiked: {
-    color: "#059669",
-  },
-  deleteAction: {
-    backgroundColor: "#FEF2F2",
-  },
-  deleteText: {
-    color: "#EF4444",
+    fontSize: 9,
+    fontFamily: "Mont-700",
+    letterSpacing: 0.3,
   },
 });

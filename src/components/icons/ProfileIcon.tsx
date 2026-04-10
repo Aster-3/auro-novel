@@ -2,17 +2,31 @@ import { Image } from "expo-image";
 import { View, ImageSourcePropType, StyleSheet } from "react-native";
 import logo from "@assets/lost-ghost.jpg";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+
 interface ProfileIconProps {
   imgUrl?: ImageSourcePropType;
   isFocused?: boolean;
 }
 
 export const ProfileIcon = ({ isFocused }: ProfileIconProps) => {
+  const { theme, isDarkMode } = useAppTheme();
   const avatar = useAuthStore((state) => state.user?.profileImageUrl);
   const imageSource = avatar ? { uri: avatar } : logo;
+
   return (
-    <View style={[styles.outerContainer, isFocused && styles.activeOuter]}>
-      <View style={styles.innerWrapper}>
+    <View
+      style={[
+        styles.outerContainer,
+        isFocused && { borderColor: theme.textPrimary }, // Statik #000 yerine dinamik çerçeve
+      ]}
+    >
+      <View
+        style={[
+          styles.innerWrapper,
+          { backgroundColor: isDarkMode ? theme.surface : "#f0f0f0" },
+        ]}
+      >
         <Image
           source={imageSource}
           style={[styles.img, isFocused && styles.activeImg]}
@@ -32,14 +46,10 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: "transparent",
   },
-  activeOuter: {
-    borderColor: "#000",
-  },
   innerWrapper: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: "#f0f0f0",
     overflow: "hidden",
   },
   img: {
@@ -47,7 +57,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   activeImg: {
-    // Seçili olduğunda belki biraz daha parlak durabilir
-    opacity: 5,
+    opacity: 0.9, // Önceki 5 değeri hatalıydı (maks 1), 0.9 olarak revize ettim
   },
 });

@@ -7,7 +7,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetTextInput,
   BottomSheetView,
-  useBottomSheetTimingConfigs,
+  useBottomSheetSpringConfigs,
 } from "@gorhom/bottom-sheet";
 import {
   forwardRef,
@@ -25,60 +25,24 @@ import {
   StyleSheet,
   Keyboard,
   Platform,
-  BackHandler,
-  useWindowDimensions,
 } from "react-native";
 import Animated, {
-  useSharedValue,
+  FadeInDown,
+  FadeOutUp,
+  interpolateColor,
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
-  Easing,
 } from "react-native-reanimated";
-import { Image } from "expo-image";
 import { useCreateReplyMutation } from "@/hooks/useCreateReplyMutation";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useAppTheme } from "@/hooks/useTheme";
+import { Portal } from "@gorhom/portal";
+import { useIsFocused } from "@react-navigation/native";
 
-const HEADER_H = 56;
-const QUOTE_H = 62;
-const INPUT_COLLAPSED = 80;
-const INPUT_EXPANDED = 180;
-const SUBMIT_ROW_H = 48;
-const SAFE_BOTTOM = Platform.OS === "ios" ? 40 : 24;
-const SHEET_HANDLE = 28;
-const GAP = 12;
-
-const KBD_DURATION = Platform.OS === "ios" ? 250 : 200;
-
-function calcSnapPoints(
-  screenHeight: number,
-  hasQuote: boolean,
-  keyboardHeight: number,
-): [string, string] {
-  const quoteH = hasQuote ? QUOTE_H + GAP : 0;
-  const collapsed =
-    SHEET_HANDLE +
-    HEADER_H +
-    GAP +
-    quoteH +
-    INPUT_COLLAPSED +
-    GAP +
-    SUBMIT_ROW_H +
-    SAFE_BOTTOM;
-  const expanded =
-    SHEET_HANDLE +
-    HEADER_H +
-    GAP +
-    quoteH +
-    INPUT_EXPANDED +
-    GAP +
-    SUBMIT_ROW_H +
-    SAFE_BOTTOM +
-    keyboardHeight;
-  return [
-    `${Math.round((collapsed / screenHeight) * 100)}%`,
-    `${Math.min(Math.round((expanded / screenHeight) * 100), 92)}%`,
-  ];
-}
+// Animasyonlu input için sarmalıyoruz
+const AnimatedTextInput =
+  Animated.createAnimatedComponent(BottomSheetTextInput);
 
 export const WriteReply = forwardRef(
   (
@@ -86,46 +50,68 @@ export const WriteReply = forwardRef(
     ref,
   ) => {
     const { commentId, selectedReply, novelId } = props;
+    const { theme, isDarkMode } = useAppTheme();
     const user = useAuthStore((state) => state.user);
     const { mutate, isPending } = useCreateReplyMutation(commentId, novelId);
+    const isFocused = useIsFocused();
+
     const MAX_LENGTH = 750;
     const [replyText, setReplyText] = useState("");
-    const [keyboardHeight, setKeyboardHeight] = useState(0);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const bottomSheetRef = useRef<BottomSheet>(null);
     const isOpen = useRef(false);
-    const currentIndex = useRef(0);
-    const { height: screenHeight } = useWindowDimensions();
-    const [isLoading, setIsLoading] = useState(false);
 
-    const inputHeight = useSharedValue(INPUT_COLLAPSED);
+    // --- ANİMASYON STATE'İ ---
+    const errorProgress = useSharedValue(0);
 
-    const animatedInputStyle = useAnimatedStyle(() => ({
-      height: inputHeight.value,
-    }));
+    useEffect(() => {
+      errorProgress.value = withTiming(errorMsg ? 1 : 0, { duration: 300 });
+    }, [errorMsg]);
 
-    const snapPoints = useMemo(
-      () => calcSnapPoints(screenHeight, !!selectedReply, keyboardHeight),
-      [screenHeight, selectedReply, keyboardHeight],
-    );
+    const animatedInputStyle = useAnimatedStyle(() => {
+      const defaultBorderColor = isDarkMode
+        ? "rgba(255,255,255,0.05)"
+        : "#E2E8F0";
+      const errorBorderColor = "#E11D48";
+      return {
+        borderColor: interpolateColor(
+          errorProgress.value,
+          [0, 1],
+          [defaultBorderColor, errorBorderColor],
+        ),
+      };
+    });
 
-    const springConfigs = useBottomSheetTimingConfigs({
-      duration: KBD_DURATION,
-      easing: Easing.out(Easing.cubic),
+    // --- KLAVYE EVENTLERİ (ReviewSheet ile Aynı) ---
+    useEffect(() => {
+      const hide = Keyboard.addListener("keyboardDidHide", () => {
+        if (isFocused && isOpen.current) {
+          bottomSheetRef.current?.snapToIndex(0);
+        }
+      });
+      return () => hide.remove();
+    }, [isFocused]);
+
+    const snapPoints = useMemo(() => ["65%", "75%"], []);
+
+    const springConfigs = useBottomSheetSpringConfigs({
+      damping: 60,
+      overshootClamping: true,
+      stiffness: 500,
     });
 
     const resetState = useCallback(() => {
       setReplyText("");
-      inputHeight.value = INPUT_COLLAPSED;
+      setErrorMsg(null);
+      isOpen.current = false;
     }, []);
 
     useImperativeHandle(ref, () => ({
       expand: () => {
         isOpen.current = true;
-        currentIndex.current = 0;
         bottomSheetRef.current?.snapToIndex(0);
       },
       close: () => {
-        isOpen.current = false;
         Keyboard.dismiss();
         bottomSheetRef.current?.close();
       },
@@ -134,357 +120,250 @@ export const WriteReply = forwardRef(
     const handleClose = useCallback(() => {
       if (replyText.length > 0) {
         useModalStore.getState().showConfirm({
-          title: "Yorumunuz kaybolacak",
-          message: "Yorumunuzu kaydetmeden çıkmak istediğinize emin misiniz?",
-          confirmText: "Evet, çık",
-          cancelText: "Hayır, kal",
+          title: "Yanıtınız Kaybolacak",
+          message: "Yazınızı tamamlamadan çıkmak istediğinize emin misiniz?",
           onConfirm: () => {
-            isOpen.current = false;
             Keyboard.dismiss();
             bottomSheetRef.current?.close();
           },
         });
       } else {
-        isOpen.current = false;
         Keyboard.dismiss();
         bottomSheetRef.current?.close();
       }
     }, [replyText]);
 
     const renderBackdrop = useCallback(
-      (props: any) => (
+      (p: any) => (
         <BottomSheetBackdrop
-          {...props}
+          {...p}
           disappearsOnIndex={-1}
           appearsOnIndex={0}
           opacity={0.4}
-          pressBehavior="collapse"
+          pressBehavior="none"
         />
       ),
       [],
     );
 
-    useEffect(() => {
-      const showEvent =
-        Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-      const hideEvent =
-        Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
-
-      const easing = Easing.out(Easing.cubic);
-
-      const show = Keyboard.addListener(showEvent, (e) => {
-        if (!isOpen.current) return;
-        setKeyboardHeight(e.endCoordinates.height);
-        inputHeight.value = withTiming(INPUT_EXPANDED, {
-          duration: KBD_DURATION,
-          easing,
-        });
-        currentIndex.current = 1;
-        bottomSheetRef.current?.snapToIndex(1);
-      });
-
-      const hide = Keyboard.addListener(hideEvent, () => {
-        if (!isOpen.current) return;
-        inputHeight.value = withTiming(INPUT_COLLAPSED, {
-          duration: KBD_DURATION,
-          easing,
-        });
-        currentIndex.current = 0;
-        bottomSheetRef.current?.snapToIndex(0);
-      });
-
-      return () => {
-        show.remove();
-        hide.remove();
-      };
-    }, []);
-
-    useEffect(() => {
-      const backAction = () => {
-        if (!isOpen.current) return false;
-        handleClose();
-        return true;
-      };
-      const backHandler = BackHandler.addEventListener(
-        "hardwareBackPress",
-        backAction,
-      );
-      return () => backHandler.remove();
-    }, [handleClose]);
-
-    const canSubmit = replyText.length > 0 && !isPending;
-    const isNearLimit = replyText.length >= MAX_LENGTH * 0.9;
-    const isAtLimit = replyText.length >= MAX_LENGTH;
-
     const handleSubmit = () => {
-      setIsLoading(true);
-      setTimeout(() => {
-        if (replyText.length > 0) {
-          if (!canSubmit) return;
-          if (!user) {
-            useModalStore.getState().showConfirm({
-              title: "Giriş yapmalısınız",
-              message: "Yorum yapmak için giriş yapmalısınız.",
-              confirmText: "Giriş Yap",
-              onConfirm: () => {
-                useModalStore.getState().hideModal();
-              },
-            });
-            return;
-          }
-          mutate(
-            {
-              content: replyText,
-              rootCommentId: commentId,
-              parentReplyId: selectedReply?.id ? selectedReply.id : null,
-            },
-            {
-              onSuccess: () => {
-                resetState();
-                isOpen.current = false;
-                Keyboard.dismiss();
-                bottomSheetRef.current?.close();
-              },
-              onSettled: () => {
-                setIsLoading(false);
-              },
-            },
-          );
-        }
-      }, 1000);
+      if (!replyText.trim()) return;
+      if (replyText.length < 5) {
+        setErrorMsg("Yanıtınız çok kısa.");
+        return;
+      }
+
+      mutate(
+        {
+          content: replyText.trim(),
+          rootCommentId: commentId,
+          parentReplyId: selectedReply?.id ?? null,
+        },
+        {
+          onSuccess: () => {
+            resetState();
+            bottomSheetRef.current?.close();
+          },
+        },
+      );
     };
 
     return (
-      <BottomSheet
-        ref={bottomSheetRef}
-        index={-1}
-        snapPoints={snapPoints}
-        enableDynamicSizing={false}
-        enablePanDownToClose={false}
-        backgroundStyle={s.sheetBg}
-        handleIndicatorStyle={s.handle}
-        backdropComponent={renderBackdrop}
-        enableContentPanningGesture={false}
-        enableHandlePanningGesture={false}
-        animationConfigs={springConfigs}
-        onAnimate={(_, toIndex) => {
-          currentIndex.current = toIndex;
-        }}
-        onClose={resetState}
-      >
-        <BottomSheetView style={s.container}>
-          {/* ── Header ── */}
-          <View style={s.header}>
-            <View>
-              <Text style={s.heading}>Yanıt yaz</Text>
-              <Text style={s.subheading}>
-                Objektif (veya değil) görüşleriniz
-              </Text>
-            </View>
-            <Pressable
-              style={({ pressed }) => [s.closeBtn, pressed && { opacity: 0.7 }]}
-              onPress={handleClose}
-            >
-              <CloseIcon color="#64748B" size={13} />
-            </Pressable>
-          </View>
-
-          {/* ── Alıntı kartı ── */}
-          {selectedReply && (
-            <View style={s.quote}>
-              <Image
-                source={{
-                  uri: selectedReply.user.profileImageUrl || undefined,
-                }}
-                style={s.quoteAvatar}
-                contentFit="cover"
-              />
-              <View style={s.quoteBody}>
-                <Text style={s.quoteNick}>@{selectedReply.user.nickname}</Text>
-                <Text style={s.quoteText} numberOfLines={2}>
-                  {selectedReply.content}
+      <Portal>
+        <BottomSheet
+          ref={bottomSheetRef}
+          index={-1}
+          snapPoints={snapPoints}
+          backdropComponent={renderBackdrop}
+          animationConfigs={springConfigs}
+          enableOverDrag={false}
+          keyboardBehavior="interactive"
+          backgroundStyle={{ backgroundColor: theme.surface, borderRadius: 32 }}
+          handleIndicatorStyle={{
+            backgroundColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#E2E8F0",
+            width: 32,
+          }}
+          onClose={resetState}
+        >
+          <BottomSheetView style={s.container}>
+            <View style={s.header}>
+              <View>
+                <Text style={[s.heading, { color: theme.textPrimary }]}>
+                  YANIT YAZ
+                </Text>
+                <Text style={[s.subheading, { color: theme.textSecondary }]}>
+                  @{selectedReply?.user.nickname.toLowerCase() ?? "yazar"}{" "}
+                  kullanıcısına yanıt ver
                 </Text>
               </View>
+              <Pressable
+                onPress={handleClose}
+                style={[
+                  s.closeBtn,
+                  { backgroundColor: isDarkMode ? "#E11D48" : "#f75376" },
+                ]}
+              >
+                <CloseIcon color="#FFFFFF" size={16} />
+              </Pressable>
             </View>
-          )}
 
-          {/* ── Input — Reanimated.View ile sarılı ── */}
-          <Animated.View style={animatedInputStyle}>
-            <BottomSheetTextInput
-              placeholder="Düşüncelerinizi yazın..."
-              placeholderTextColor="#C4CDD9"
+            {/* Alıntı (Daha Minimal) */}
+            {selectedReply && !errorMsg && (
+              <Animated.View
+                entering={FadeInDown}
+                exiting={FadeOutUp}
+                style={[
+                  s.quote,
+                  {
+                    borderLeftColor: isDarkMode
+                      ? "rgba(255,255,255,0.15)"
+                      : "rgba(15, 63, 146, 0.2)",
+                  },
+                ]}
+              >
+                <Text
+                  style={[s.quoteText, { color: theme.textSecondary }]}
+                  numberOfLines={1}
+                >
+                  "{selectedReply.content}"
+                </Text>
+              </Animated.View>
+            )}
+
+            <AnimatedTextInput
+              placeholder="Yanıtınızı buraya bırakın..."
+              placeholderTextColor={theme.textSecondary}
               multiline
+              scrollEnabled={true} // <-- EKLENDİ: İçerik taştığında kaydırmayı açar
               value={replyText}
               onChangeText={(text) => {
+                if (errorMsg) setErrorMsg(null);
                 if (text.length <= MAX_LENGTH) setReplyText(text);
               }}
-              maxLength={MAX_LENGTH}
-              style={s.textInput}
-            />
-          </Animated.View>
-
-          {/* ── Alt satır ── */}
-          <View style={s.submitRow}>
-            <Text
               style={[
-                s.counter,
-                isNearLimit && s.counterWarn,
-                isAtLimit && s.counterLimit,
+                s.textInput,
+                {
+                  color: theme.textPrimary,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.02)"
+                    : "#FAFBFC",
+                },
+                animatedInputStyle,
               ]}
-            >
-              {replyText.length} / {MAX_LENGTH}
-            </Text>
-            <Pressable
-              style={({ pressed }) => [
-                s.submitBtn,
-                !canSubmit && s.submitBtnDisabled,
-                pressed && canSubmit && { opacity: 0.85 },
-              ]}
-              onPress={handleSubmit}
-              disabled={!canSubmit}
-            >
-              {isLoading ? (
-                <LoadingDots />
-              ) : (
-                <>
-                  <Text
-                    style={[s.submitLabel, !canSubmit && s.submitLabelDisabled]}
-                  >
-                    Gönder
-                  </Text>
-                  <SendIcon
-                    color={canSubmit ? "#FFFFFF" : "#94A3B8"}
-                    size={14}
-                  />
-                </>
-              )}
-            </Pressable>
-          </View>
+            />
 
-          <View style={{ height: SAFE_BOTTOM }} />
-        </BottomSheetView>
-      </BottomSheet>
+            <View style={s.submitSection}>
+              <View style={s.infoRow}>
+                <View style={{ flex: 1 }}>
+                  {errorMsg && (
+                    <Animated.Text
+                      entering={FadeInDown}
+                      exiting={FadeOutUp}
+                      style={s.errorText}
+                    >
+                      {errorMsg}
+                    </Animated.Text>
+                  )}
+                </View>
+                <Text
+                  style={[
+                    s.counter,
+                    {
+                      color:
+                        replyText.length >= MAX_LENGTH
+                          ? "#E11D48"
+                          : theme.textSecondary,
+                    },
+                  ]}
+                >
+                  {replyText.length} / {MAX_LENGTH}
+                </Text>
+              </View>
+
+              <Pressable
+                style={[
+                  s.submitBtn,
+                  { backgroundColor: theme.textPrimary },
+                  (replyText.length < 2 || isPending) && { opacity: 0.3 },
+                ]}
+                onPress={handleSubmit}
+                disabled={replyText.length < 2 || isPending}
+              >
+                {isPending ? (
+                  <LoadingDots />
+                ) : (
+                  <>
+                    <Text style={[s.submitLabel, { color: theme.background }]}>
+                      YANITI GÖNDER
+                    </Text>
+                    <SendIcon color={theme.background} size={16} />
+                  </>
+                )}
+              </Pressable>
+            </View>
+          </BottomSheetView>
+        </BottomSheet>
+      </Portal>
     );
   },
 );
 
 const s = StyleSheet.create({
-  sheetBg: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-  },
-  handle: {
-    backgroundColor: "#DDE3EB",
-    width: 32,
-    height: 3,
-  },
-  container: {
-    paddingHorizontal: 18,
-    paddingTop: 6,
-    gap: 12,
-  },
+  container: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 40 },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
+    marginBottom: 20,
   },
-  heading: {
-    fontSize: 15,
-    fontWeight: "700",
-    color: "#1E293B",
-    letterSpacing: -0.3,
-    marginBottom: 2,
-  },
+  heading: { fontFamily: "Mont-800", fontSize: 11, letterSpacing: 1.5 },
   subheading: {
-    fontSize: 11,
-    color: "#94A3B8",
-    fontWeight: "400",
+    fontFamily: "Mont-500",
+    fontSize: 12,
+    marginTop: 4,
+    opacity: 0.6,
   },
   closeBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: "#F1F5F9",
+    width: 32,
+    height: 32,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   quote: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
-    padding: 10,
+    borderLeftWidth: 2.5,
+    paddingLeft: 12,
+    marginBottom: 16,
+    opacity: 0.7,
   },
-  quoteAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: "#E2E8F0",
-    marginTop: 1,
-  },
-  quoteBody: {
-    flex: 1,
-    gap: 2,
-  },
-  quoteNick: {
-    fontSize: 11,
-    fontWeight: "700",
-    color: "#4F46E5",
-  },
-  quoteText: {
-    fontSize: 11,
-    lineHeight: 16,
-    color: "#94A3B8",
-  },
+  quoteText: { fontSize: 11, fontFamily: "Mont-500", fontStyle: "italic" },
   textInput: {
-    flex: 1,
-    fontFamily: "Poppins-400",
-    fontSize: 13,
-    color: "#1E293B",
-    letterSpacing: -0.1,
+    fontFamily: "Mont-500",
+    fontSize: 14,
     lineHeight: 21,
-    backgroundColor: "#F8FAFC",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
-    borderRadius: 14,
-    padding: 14,
+    padding: 18,
+    height: 220,
     textAlignVertical: "top",
   },
-  submitRow: {
+  submitSection: { marginTop: 8 },
+  infoRow: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+    minHeight: 16,
   },
-  counter: {
-    fontSize: 10,
-    fontWeight: "500",
-    color: "#C4CDD9",
-    letterSpacing: 0.3,
-  },
-  counterWarn: { color: "#F59E0B" },
-  counterLimit: { color: "#EF4444", fontWeight: "700" },
+  errorText: { fontFamily: "Mont-600", fontSize: 11, color: "#E11D48" },
+  counter: { fontFamily: "Mont-600", fontSize: 10 },
   submitBtn: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    backgroundColor: "#1E293B",
+    gap: 10,
     justifyContent: "center",
-    width: 100,
-    height: 38,
-    borderRadius: 12,
+    borderRadius: 16,
+    height: 52,
+    alignItems: "center",
   },
-  submitBtnDisabled: { backgroundColor: "#F1F5F9" },
-  submitLabel: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    letterSpacing: -0.2,
-  },
-  submitLabelDisabled: { color: "#94A3B8" },
+  submitLabel: { fontFamily: "Mont-700", fontSize: 11, letterSpacing: 1 },
 });

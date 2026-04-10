@@ -1,6 +1,8 @@
 import { Text, View, StyleSheet, Pressable } from "react-native";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
 import { formatRelativeTime } from "@/utils/formatRelativeTime";
+import { useReaderStore } from "@/store/useReaderStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 interface NovelChaptersProps {
   id: string;
@@ -14,23 +16,42 @@ export const NovelChapters = ({
   chapterCount,
   lastChapterDate,
 }: NovelChaptersProps) => {
+  const isDarkMode = useReaderStore((state) => state.isDarkMode);
+
+  const { theme } = useAppTheme();
+
+  // 0 Bölüm olsa bile tarih yoksa standart metin döner
   const updateStatusText = lastChapterDate
-    ? `En Son Güncelleme: ${formatRelativeTime(lastChapterDate)}`
-    : "Henüz Bölüm yayınlanmadı";
+    ? `Son güncelleme: ${formatRelativeTime(lastChapterDate)}`
+    : "Henüz bölüm yayınlanmadı";
 
   return (
     <Pressable
       onPress={openChapterSheet}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      // Arka plan rengini (backgroundColor) tamamen kaldırdık.
+      // Dokunma hissini sadece hafif bir opacity düşüşüyle (0.6) veriyoruz.
+      style={({ pressed }) => [
+        styles.container,
+        { opacity: pressed ? 0.6 : 1 },
+      ]}
     >
       <View style={styles.leftContent}>
-        <Text style={styles.chapterText}>Bölümler</Text>
-        <Text style={styles.updateText}>{updateStatusText}</Text>
+        <Text style={[styles.chapterText, { color: theme.textPrimary }]}>
+          Bölümler
+        </Text>
+        <Text style={[styles.updateText, { color: theme.textSecondary }]}>
+          {updateStatusText}
+        </Text>
       </View>
 
       <View style={styles.rightContent}>
-        <Text style={styles.chapterCount}>{chapterCount} Bölüm</Text>
-        <RightChevronIcon color="#2A2929" size={24} />
+        {/* chapterCount 0 olsa bile aynı stil ile render edilir */}
+        <Text style={[styles.chapterCount, { color: theme.textSecondary }]}>
+          {chapterCount || 0} Bölüm
+        </Text>
+        <View style={styles.chevronWrapper}>
+          <RightChevronIcon color={theme.textSecondary} size={16} />
+        </View>
       </View>
     </Pressable>
   );
@@ -41,49 +62,33 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
-  },
-  pressed: {
-    opacity: 0.7,
+    marginTop: 16,
   },
   leftContent: {
-    flexDirection: "column",
-    alignItems: "flex-start",
-    gap: 6,
-  },
-  dotSeparator: {
-    padding: 1.5,
-    backgroundColor: "#3b3e42",
-    borderRadius: 99,
+    gap: 4,
   },
   chapterText: {
     fontFamily: "Mont-700",
-    fontSize: 15,
-    color: "#03061ed3",
-    letterSpacing: -0.2,
-  },
-  rightContent: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    gap: 4,
-  },
-  chapterCount: {
-    fontFamily: "Mont-600",
-    fontSize: 14,
-    color: "#03061ed3",
+    fontSize: 16,
+    letterSpacing: -0.5, // Kalın fontta harf arasını daraltmak şık durur
   },
   updateText: {
     fontFamily: "Mont-500",
-    fontSize: 12,
-    color: "#5C5C5C",
-    letterSpacing: -0.5,
+    fontSize: 11,
+    letterSpacing: -0.1,
   },
-  statusText: {
+  rightContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  chapterCount: {
     fontFamily: "Mont-500",
-    fontSize: 14,
-    color: "#5C5C5C",
-    paddingVertical: 12,
-    textAlign: "center",
+    fontSize: 13,
+    letterSpacing: -0.2,
+  },
+  chevronWrapper: {
+    opacity: 0.7,
+    marginTop: 1,
   },
 });

@@ -5,6 +5,7 @@ import { Pressable, Text, View, StyleSheet, Animated } from "react-native";
 import { useState, useRef, useEffect } from "react";
 import { ChapterItemMoreOptions } from "./ChapterItemMoreOptions";
 import { DownChevronIcon } from "@/components/icons/DownChevronIcon";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 type PanelChapterItemProps = {
   chapter: Chapter | DraftChapter;
@@ -19,13 +20,12 @@ export const PanelChapterItem = ({
   novelId,
   isPublished,
 }: PanelChapterItemProps) => {
+  const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
   const [showMoreOptions, setShowMoreOptions] = useState(false);
 
-  // Animasyon için başlangıç değeri (0)
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
-  // showMoreOptions değiştiğinde animasyonu tetikle
   useEffect(() => {
     Animated.timing(rotateAnim, {
       toValue: showMoreOptions ? 1 : 0,
@@ -57,8 +57,19 @@ export const PanelChapterItem = ({
 
       return (
         <View style={styles.minimalVolumeContainer}>
-          <Text style={styles.volumeText}>{volumeLabel}</Text>
-          <View style={styles.line} />
+          <Text style={[styles.volumeText, { color: theme.textSecondary }]}>
+            {volumeLabel}
+          </Text>
+          <View
+            style={[
+              styles.line,
+              {
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.05)"
+                  : "#E5E7EB",
+              },
+            ]}
+          />
         </View>
       );
     }
@@ -70,8 +81,6 @@ export const PanelChapterItem = ({
       ? `${String((chapter as Chapter).chapterOrder).padStart(2, "0")} - `
       : "";
 
-  // TypeScript tip kontrolü: isUnpublished sadece Chapter tipinde olabilir.
-  // DraftChapter geldiğinde hata vermemesi için "in" operatörüyle güvenli kontrol yapıyoruz.
   const isUnpublishedChapter =
     "isUnpublished" in chapter ? chapter.isUnpublished : false;
 
@@ -83,8 +92,14 @@ export const PanelChapterItem = ({
         onPress={handlePress}
         style={({ pressed }) => [
           styles.chapterPressable,
-          isUnpublishedChapter && styles.unpublishedBackground, // Yayından kaldırıldıysa arkaplanı değiştir
-          pressed && styles.pressedState,
+          isUnpublishedChapter && styles.unpublishedBackground,
+          {
+            backgroundColor: pressed
+              ? isDarkMode
+                ? "rgba(255,255,255,0.05)"
+                : "#eeeef0"
+              : "transparent",
+          },
         ]}
       >
         <View style={styles.leftContent}>
@@ -92,6 +107,7 @@ export const PanelChapterItem = ({
             <Text
               style={[
                 styles.indexText,
+                { color: theme.textSecondary },
                 isUnpublishedChapter && styles.fadedText,
               ]}
             >
@@ -104,6 +120,7 @@ export const PanelChapterItem = ({
               numberOfLines={1}
               style={[
                 styles.chapterTitle,
+                { color: theme.textPrimary },
                 isUnpublishedChapter && styles.fadedText,
               ]}
             >
@@ -111,7 +128,7 @@ export const PanelChapterItem = ({
             </Text>
 
             <View style={styles.dateAndBadgeRow}>
-              <Text style={styles.dateText}>
+              <Text style={[styles.dateText, { color: theme.textSecondary }]}>
                 {isPublished && "publishedAt" in chapter
                   ? formatRawDate(chapter.publishedAt, true)
                   : "createdAt" in chapter
@@ -119,10 +136,20 @@ export const PanelChapterItem = ({
                     : ""}
               </Text>
 
-              {/* Yayından Kaldırıldı Rozeti */}
               {isUnpublishedChapter && (
-                <View style={styles.unpublishedBadge}>
-                  <Text style={styles.unpublishedBadgeText}>
+                <View
+                  style={[
+                    styles.unpublishedBadge,
+                    {
+                      backgroundColor: isDarkMode
+                        ? "rgba(239, 68, 68, 0.15)"
+                        : "#FEE2E2",
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.unpublishedBadgeText, { color: "#EF4444" }]}
+                  >
                     Yayından Kaldırıldı
                   </Text>
                 </View>
@@ -138,14 +165,20 @@ export const PanelChapterItem = ({
           <View
             style={[
               styles.morebutton,
+              {
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.08)"
+                  : "#ededed",
+              },
               isUnpublishedChapter && styles.unpublishedMoreButton,
             ]}
           >
-            <Animated.View style={{ transform: [{ rotate: spin }] }}>
-              <DownChevronIcon
-                size={18}
-                color={isUnpublishedChapter ? "#9CA3AF" : "#262a30"}
-              />
+            <Animated.View
+              style={{
+                transform: [{ rotate: spin }],
+              }}
+            >
+              <DownChevronIcon size={18} color={theme.textPrimary} />
             </Animated.View>
           </View>
         </Pressable>
@@ -176,14 +209,12 @@ const styles = StyleSheet.create({
   volumeText: {
     fontFamily: "Mont-700",
     fontSize: 8,
-    color: "#4B5563",
     textTransform: "uppercase",
     letterSpacing: 1.2,
   },
   line: {
     flex: 1,
     height: 1,
-    backgroundColor: "#E5E7EB",
   },
   chapterPressable: {
     paddingHorizontal: 12,
@@ -192,9 +223,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     borderRadius: 16,
-  },
-  pressedState: {
-    backgroundColor: "#eeeef0",
   },
   leftContent: {
     flexDirection: "row",
@@ -205,7 +233,6 @@ const styles = StyleSheet.create({
   indexText: {
     fontFamily: "Mont-400",
     fontSize: 12,
-    color: "#9CA3AF",
   },
   infoSection: {
     flex: 1,
@@ -213,7 +240,6 @@ const styles = StyleSheet.create({
   chapterTitle: {
     fontFamily: "Mont-600",
     fontSize: 13,
-    color: "#1F2937",
   },
   dateAndBadgeRow: {
     flexDirection: "row",
@@ -224,10 +250,6 @@ const styles = StyleSheet.create({
   dateText: {
     fontFamily: "Mont-400",
     fontSize: 10,
-    color: "#8b96a5",
-  },
-  rightContent: {
-    paddingLeft: 10,
   },
   morebutton: {
     width: 30,
@@ -235,19 +257,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#ededed",
   },
-
-  // --- EKLENEN YENİ STİLLER ---
   unpublishedBackground: {
-    opacity: 0.85, // Tüm elementi hafif soluk yapar
+    opacity: 0.6,
   },
   fadedText: {
-    color: "#9CA3AF", // Metinleri grileştirir
-    textDecorationLine: "line-through", // İstersen üstünü çizebilirsin, istemezsen bu satırı silebilirsin
+    textDecorationLine: "line-through",
   },
   unpublishedBadge: {
-    backgroundColor: "#FEE2E2", // Açık kırmızımsı arka plan
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -255,10 +272,9 @@ const styles = StyleSheet.create({
   unpublishedBadgeText: {
     fontFamily: "Mont-600",
     fontSize: 8,
-    color: "#EF4444", // Belirgin kırmızı uyarı metni
     textTransform: "uppercase",
   },
   unpublishedMoreButton: {
-    backgroundColor: "#F3F4F6", // Butonu da hafif soldurmak için
+    opacity: 0.5,
   },
 });

@@ -1,14 +1,25 @@
 import { WriteReviewIcon } from "@/components/icons/WriteReviewIcon";
 import { Pressable, StyleSheet, View } from "react-native";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const WriteCommentButton = ({ onPress }: { onPress: () => void }) => {
+  const { theme, isDarkMode } = useAppTheme();
+
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.container, pressed && styles.pressed]}
+      style={({ pressed }) => [
+        styles.container,
+        {
+          backgroundColor: isDarkMode ? theme.surface : "#ffffff",
+          borderColor: isDarkMode ? "#333333" : "#E5E7EB",
+          shadowColor: isDarkMode ? "#000000" : "#000000",
+        },
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.inner}>
-        <WriteReviewIcon size={20} color="#0F172A" />
+        <WriteReviewIcon size={20} color={isDarkMode ? "#ffffff" : "#0F121B"} />
       </View>
     </Pressable>
   );
@@ -22,23 +33,14 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 16,
-
-    backgroundColor: "#FFFFFF",
-
     justifyContent: "center",
     alignItems: "center",
-
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-
-    shadowColor: "#000",
+    borderWidth: 0.5,
+    elevation: 2,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.15,
     shadowRadius: 10,
-
-    elevation: 5,
   },
-
   inner: {
     width: "100%",
     height: "100%",
@@ -46,7 +48,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   pressed: {
     transform: [{ scale: 0.94 }],
     opacity: 0.85,

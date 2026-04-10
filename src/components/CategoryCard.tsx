@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/hooks/useTheme";
 import {
   Image,
   TouchableOpacity,
@@ -12,32 +13,31 @@ interface CategoryCardProps {
 }
 
 export const CategoryCard = ({ cover, name }: CategoryCardProps) => {
+  const { theme } = useAppTheme();
   return (
     <TouchableOpacity style={styles.card}>
       <Image source={cover} style={styles.image} resizeMode="cover" />
-      <Text style={styles.text}>{name}</Text>
+      <Text style={[styles.text, { color: theme.textPrimary }]}>{name}</Text>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    width: 200, // Sabit genişlik burada zaten var
+    width: 200,
     overflow: "hidden",
-    // display: "flex" // RN'de zaten varsayılan budur, silebilirsin
-    gap: 4,
+    gap: 8,
   },
   image: {
     width: "100%",
     aspectRatio: 16 / 9,
-    height: undefined, // Oranın (aspectRatio) çalışması için yüksekliği boşa çıkarıyoruz
     borderRadius: 24,
-    backgroundColor: "#f0f0f0", // Görsel yüklenirken veya hata varken alanı görmek için
+    height: undefined,
+    backgroundColor: "#f0f0f0",
   },
   text: {
     textAlign: "center",
     fontFamily: "Mont-600",
     fontSize: 12,
-    color: "#353535",
   },
 });

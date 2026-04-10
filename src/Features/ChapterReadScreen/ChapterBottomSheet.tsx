@@ -1,19 +1,23 @@
 import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
-  useBottomSheetSpringConfigs,
 } from "@gorhom/bottom-sheet";
-import { forwardRef, useCallback } from "react";
-import { StyleSheet } from "react-native";
+import { forwardRef, useCallback, useMemo } from "react";
+import { StyleSheet, View } from "react-native";
+import { Portal } from "@gorhom/portal";
+
+// Kendi bileşenlerin ve hookların
 import { MoreOptions } from "./MoreOptions";
 import { TableOfContentsView } from "./TableOfContentsView";
 import { SettingsView } from "./SettingsView";
 import { SheetType } from "@/screens/ChapterReadScreen";
-import { Portal } from "@gorhom/portal";
-import { useReaderStore } from "@/store/useReaderStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 interface ChapterBottomSheetProps {
+  novelId: string;
+  chapterId: string;
   activeSheet: SheetType;
+  selectChapter: (id: string) => void;
   onClose?: () => void;
 }
 
@@ -21,28 +25,39 @@ export const ChapterBottomSheet = forwardRef<
   BottomSheet,
   ChapterBottomSheetProps
 >((props, ref) => {
-  const { activeSheet } = props;
+  const { activeSheet, novelId, chapterId, selectChapter } = props;
 
-  const animationConfigs = useBottomSheetSpringConfigs({
-    damping: 80,
-    stiffness: 350,
-    mass: 1,
-    overshootClamping: true,
-  });
+  // İşte o meşhur hook: Artık isDarkMode boolean'ı ile uğraşmıyoruz, colors setini alıyoruz.
+  const { theme, isDarkMode } = useAppTheme();
 
-  const renderBackdrop = useCallback(
-    (props: any) => (
+  const animationConfigs = useMemo(
+    () => ({
+      damping: 80,
+      stiffness: 350,
+      mass: 1,
+      overshootClamping: true,
+    }),
+    [],
+  );
+
+  const closeSheet = useCallback(() => {
+    if (ref && "current" in ref && ref.current) {
+      ref.current.close();
+    }
+  }, [ref]);
+
+  const renderBackdrop = useMemo(
+    () => (backdropProps: any) => (
       <BottomSheetBackdrop
-        {...props}
-        disappearsOnIndex={-1}
-        appearsOnIndex={0}
-        opacity={0.3}
+        {...backdropProps}
+        disappearsOnIndex={-0.5}
+        // Karanlık modda backdrop daha koyu (0.8) olsun ki reader odaklı kalsın
+        opacity={isDarkMode ? 0.8 : 0.6}
         pressBehavior="close"
       />
     ),
-    [],
+    [isDarkMode],
   );
-  const isDarkMode = useReaderStore((state) => state.isDarkMode);
 
   return (
     <Portal>
@@ -50,26 +65,45 @@ export const ChapterBottomSheet = forwardRef<
         ref={ref}
         index={-1}
         enableDynamicSizing={true}
-        enablePanDownToClose={false}
+        enablePanDownToClose={activeSheet === "TOC"}
         backdropComponent={renderBackdrop}
-        enableContentPanningGesture={false}
+        enableContentPanningGesture={activeSheet === "TOC"}
+        animateOnMount={true}
+        detached={true}
         animationConfigs={animationConfigs}
         backgroundStyle={{
-          backgroundColor: isDarkMode ? "#0e0e0e" : "#F8F9FA",
+          backgroundColor: theme.reader.background,
           borderTopLeftRadius: 26,
           borderTopRightRadius: 26,
         }}
-        handleIndicatorStyle={styles.indicator}
+        handleIndicatorStyle={[
+          styles.indicator,
+          {
+            backgroundColor: theme.textSecondary,
+          },
+        ]}
       >
         <BottomSheetView
           style={[
             styles.contentContainer,
-            { backgroundColor: isDarkMode ? "#0e0e0e" : "#F8F9FA" },
+            { backgroundColor: theme.reader.background },
           ]}
         >
+          {activeSheet === "TOC" && (
+            <TableOfContentsView
+              id={novelId}
+              selectChapter={selectChapter}
+              closeSheet={closeSheet}
+            />
+          )}
           {activeSheet === "SETTINGS" && <SettingsView />}
-          {activeSheet === "TOC" && <TableOfContentsView />}
-          {activeSheet === "MORE" && <MoreOptions />}
+          {activeSheet === "MORE" && (
+            <MoreOptions
+              novelId={novelId}
+              chapterId={chapterId}
+              closeSheet={closeSheet}
+            />
+          )}
         </BottomSheetView>
       </BottomSheet>
     </Portal>
@@ -83,9 +117,9 @@ const styles = StyleSheet.create({
     minHeight: 200,
   },
   indicator: {
-    backgroundColor: "#e4e4e4",
     width: 50,
     height: 4,
     borderRadius: 2,
+    marginTop: 2,
   },
 });

@@ -1,3 +1,4 @@
+import { useAppTheme } from "@/hooks/useTheme";
 import { useDynamicBottom } from "@/utils/useDynamicBottom";
 import { StyleSheet, ViewStyle } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,7 +12,7 @@ interface ScreenProps {
 export const Screen = ({
   children,
   style,
-  backgroundColor = "white",
+  backgroundColor = useAppTheme().theme.background,
 }: ScreenProps) => {
   return (
     <SafeAreaView

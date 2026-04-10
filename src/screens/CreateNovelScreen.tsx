@@ -1,3 +1,4 @@
+import { Header } from "@/components/Header";
 import { Screen } from "@/components/layout/Screen";
 import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { CNStepOne } from "@/Features/CreateNovelScreen/CNStepOne";
@@ -90,7 +91,7 @@ const CreateNovelScreen = () => {
   };
   return (
     <Screen>
-      <ProfileSettingsHeader title="Yeni Roman Oluştur" />
+      <Header title="Yeni Kitap Oluştur" isAdjacent={false} />
 
       <KeyboardAwareScrollView
         bottomOffset={24}

@@ -11,13 +11,15 @@ import BottomSheet, {
   BottomSheetView,
   BottomSheetBackdrop,
   BottomSheetBackdropProps,
+  useBottomSheetSpringConfigs, // Yaylanma konfigürasyonu için eklendi
 } from "@gorhom/bottom-sheet";
-
 import { Portal } from "@gorhom/portal";
 import { SeriesStatus } from "@/types/novel";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { LoadingDots } from "@/components/LoadingDots";
 import { useToastStore } from "@/store/useToastStore";
+import { useAppTheme } from "@/hooks/useTheme";
+import { Feather } from "@expo/vector-icons";
 
 export interface StatusEditSheetRef {
   present: () => void;
@@ -42,13 +44,22 @@ export const StatusEditSheet = forwardRef<
   StatusEditSheetRef,
   StatusEditSheetProps
 >(({ id, initialStatus, onClose }, ref) => {
+  const { theme, isDarkMode } = useAppTheme();
   const bottomSheetRef = useRef<BottomSheet>(null);
-  const [isVisible, setIsVisible] = useState(false); // Portal render kontrolü
+  const [isVisible, setIsVisible] = useState(false);
   const [selectedStatus, setSelectedStatus] =
     useState<SeriesStatus>(initialStatus);
   const { mutate: updateNovel, isPending } = useNovelMutation(id);
 
   const isDirty = selectedStatus !== initialStatus;
+
+  // Animasyon konfigürasyonu: Esneme ve tokluk ayarı
+  const animationConfigs = useBottomSheetSpringConfigs({
+    damping: 80,
+    stiffness: 300,
+    mass: 1,
+    overshootClamping: true,
+  });
 
   const handleClose = useCallback(() => {
     setIsVisible(false);
@@ -59,7 +70,6 @@ export const StatusEditSheet = forwardRef<
     present: () => {
       setSelectedStatus(initialStatus);
       setIsVisible(true);
-      // Portal'ın render olması için kısa bir süre tanıyalım
       setTimeout(() => bottomSheetRef.current?.expand(), 10);
     },
     close: () => bottomSheetRef.current?.close(),
@@ -72,15 +82,14 @@ export const StatusEditSheet = forwardRef<
         onSuccess: () => {
           useToastStore.getState().showToast({
             type: "Başarılı",
-            message: "Durum başarıyla güncellendi!",
+            message: "Durum güncellendi.",
           });
           bottomSheetRef.current?.close();
         },
         onError: () => {
           useToastStore.getState().showToast({
             type: "Hata",
-            message:
-              "Durum güncellenirken bir hata oluştu. Lütfen tekrar deneyin.",
+            message: "Hata oluştu.",
           });
         },
       },
@@ -93,13 +102,13 @@ export const StatusEditSheet = forwardRef<
         {...p}
         disappearsOnIndex={-1}
         appearsOnIndex={0}
-        opacity={0.4}
+        opacity={0.3}
       />
     ),
     [],
   );
 
-  const snapPoints = useMemo(() => ["55%"], []);
+  const snapPoints = useMemo(() => ["50%"], []);
 
   if (!isVisible) return null;
 
@@ -111,13 +120,24 @@ export const StatusEditSheet = forwardRef<
         snapPoints={snapPoints}
         backdropComponent={renderBackdrop}
         enablePanDownToClose={true}
-        backgroundStyle={styles.sheetBackground}
-        enableDynamicSizing={false}
-        handleIndicatorStyle={styles.indicator}
+        animateOnMount={true}
+        animationConfigs={animationConfigs} // Yaylanma animasyonu eklendi
+        enableContentPanningGesture={true}
+        enableOverDrag={false}
+        backgroundStyle={[
+          styles.sheetBackground,
+          { backgroundColor: theme.surface },
+        ]}
+        handleIndicatorStyle={[
+          styles.indicator,
+          { backgroundColor: isDarkMode ? "rgba(255,255,255,0.08)" : "#EEE" },
+        ]}
         onClose={handleClose}
       >
         <BottomSheetView style={styles.container}>
-          <Text style={styles.title}>Yayın Durumu</Text>
+          <Text style={[styles.title, { color: theme.textSecondary }]}>
+            YAYIN DURUMU
+          </Text>
 
           <View style={styles.optionsContainer}>
             {STATUS_OPTIONS.map((option) => {
@@ -125,26 +145,34 @@ export const StatusEditSheet = forwardRef<
               return (
                 <TouchableOpacity
                   key={option.value}
-                  style={styles.optionRow}
-                  activeOpacity={0.7}
+                  style={[
+                    styles.optionRow,
+                    isSelected && {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255,255,255,0.03)"
+                        : "rgba(0,0,0,0.01)",
+                    },
+                  ]}
+                  activeOpacity={0.5}
                   onPress={() => setSelectedStatus(option.value)}
                 >
                   <Text
                     style={[
                       styles.optionLabel,
-                      isSelected && styles.optionLabelActive,
+                      {
+                        color: isSelected
+                          ? theme.textPrimary
+                          : theme.textSecondary,
+                        opacity: isSelected ? 1 : 0.7,
+                      },
+                      isSelected && { fontFamily: "Mont-600" },
                     ]}
                   >
                     {option.label}
                   </Text>
-                  <View
-                    style={[
-                      styles.radioOuter,
-                      isSelected && styles.radioOuterActive,
-                    ]}
-                  >
-                    {isSelected && <View style={styles.radioInner} />}
-                  </View>
+                  {isSelected && (
+                    <Feather name="check" size={14} color={theme.textPrimary} />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -153,7 +181,8 @@ export const StatusEditSheet = forwardRef<
           <TouchableOpacity
             style={[
               styles.saveButton,
-              (isPending || !isDirty) && styles.disabledButton,
+              { backgroundColor: theme.textPrimary },
+              (isPending || !isDirty) && { opacity: 0.3 },
             ]}
             onPress={handleSave}
             disabled={isPending || !isDirty}
@@ -161,7 +190,11 @@ export const StatusEditSheet = forwardRef<
             {isPending ? (
               <LoadingDots />
             ) : (
-              <Text style={styles.saveButtonText}>Değişiklikleri Kaydet</Text>
+              <Text
+                style={[styles.saveButtonText, { color: theme.background }]}
+              >
+                KAYDET
+              </Text>
             )}
           </TouchableOpacity>
         </BottomSheetView>
@@ -172,79 +205,50 @@ export const StatusEditSheet = forwardRef<
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 30,
+    borderRadius: 40,
   },
   indicator: {
-    backgroundColor: "#E0E0E0",
-    width: 40,
+    width: 30,
+    height: 3,
   },
   container: {
-    paddingHorizontal: 24,
-    paddingTop: 8,
+    paddingHorizontal: 32,
+    paddingTop: 12,
     paddingBottom: 40,
   },
   title: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#0F172A",
-    marginBottom: 20,
+    fontSize: 9,
+    fontFamily: "Mont-700",
+    letterSpacing: 2,
+    marginBottom: 24,
+    textAlign: "center",
   },
   optionsContainer: {
-    gap: 12,
+    gap: 2,
   },
   optionRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: "#F8FAFC",
-    borderWidth: 1,
-    borderColor: "#F1F5F9",
   },
   optionLabel: {
-    fontSize: 13,
-    color: "#475569",
-    fontWeight: "500",
-  },
-  optionLabelActive: {
-    color: "#0F172A",
-    fontWeight: "600",
-  },
-  radioOuter: {
-    width: 12,
-    height: 12,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  radioOuterActive: {
-    borderColor: "#121c33",
-  },
-  radioInner: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: "#121c33",
+    fontSize: 12,
+    fontFamily: "Mont-500",
+    letterSpacing: 0.2,
   },
   saveButton: {
-    backgroundColor: "#121c33",
-    height: 52,
+    height: 48,
     justifyContent: "center",
-    borderRadius: 12,
-    marginTop: 24,
+    borderRadius: 16,
+    marginTop: 28,
     alignItems: "center",
   },
-  disabledButton: {
-    opacity: 0.6,
-  },
   saveButtonText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 15,
+    fontFamily: "Mont-700",
+    fontSize: 11,
+    letterSpacing: 1,
   },
 });

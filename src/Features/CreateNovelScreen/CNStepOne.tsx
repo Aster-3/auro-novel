@@ -18,6 +18,7 @@ import {
   CreateNovelScreenProps,
 } from "@/screens/CreateNovelScreen";
 import { slugifyText } from "@/utils/slugify";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 const AnimatedGradient = Animated.createAnimatedComponent(LinearGradient);
 
@@ -32,6 +33,7 @@ export const CNStepOne = ({
   errors: CreateNovelErrors;
   setErrors: (errors: CreateNovelErrors) => void;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const animatedValue = useRef(new Animated.Value(0)).current;
   const pressAnimation = useRef(new Animated.Value(0)).current;
 
@@ -105,6 +107,7 @@ export const CNStepOne = ({
     ],
   };
 
+  // Kapak gradient renkleri - Orijinal haliyle korundu
   const colors = [
     animatedValue.interpolate({
       inputRange: [0, 0.5, 1],
@@ -116,7 +119,7 @@ export const CNStepOne = ({
     }),
     animatedValue.interpolate({
       inputRange: [0, 0.5, 1],
-      outputRange: ["#cc2b5e", "#9d50bb", "#cc2b5e"],
+      outputRange: ["#ffafbd", "#ffc3a0", "#ffafbd"],
     }),
   ];
 
@@ -131,6 +134,7 @@ export const CNStepOne = ({
           style={[
             styles.coverPlaceholder,
             animatedPressStyle,
+            { backgroundColor: theme.surface }, // Karanlık mod uyumu
             errors.coverImage
               ? { borderWidth: 2, borderColor: "#ef4444" }
               : null,
@@ -160,9 +164,13 @@ export const CNStepOne = ({
           placeholder="Roman Başlığı"
           style={[
             styles.input,
+            {
+              color: theme.textPrimary,
+              borderColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9",
+            },
             errors.name ? { borderBottomColor: "#ef4444" } : null,
           ]}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={theme.textSecondary}
           value={formData.name}
           onChangeText={(text) => {
             setFormData({ ...formData, name: text });
@@ -186,9 +194,13 @@ export const CNStepOne = ({
           value={formData.slug}
           style={[
             styles.input,
+            {
+              color: theme.textPrimary,
+              borderColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#f1f5f9",
+            },
             errors.slug && { borderBottomColor: "#ef4444" },
           ]}
-          placeholderTextColor="#94a3b8"
+          placeholderTextColor={theme.textSecondary}
           onChangeText={(text) => {
             const newSlug = slugifyText(text);
 
@@ -201,8 +213,10 @@ export const CNStepOne = ({
           }}
         />
         <Animated.View style={styles.errorContainer}>
-          <Text style={styles.infoText}>*</Text>
-          <Text style={styles.infoText}>
+          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
+            *
+          </Text>
+          <Text style={[styles.infoText, { color: theme.textSecondary }]}>
             Önerilen Slug: {formData.name ? slugifyText(formData.name) : "---"}
           </Text>
         </Animated.View>
@@ -231,7 +245,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    backgroundColor: "#fff",
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -252,10 +265,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
     height: 50,
     borderBottomWidth: 1.5,
-    borderColor: "#f1f5f9",
     fontSize: 14,
     fontFamily: "Mont-500",
-    color: "#0f172a",
   },
   errorContainer: {
     flexDirection: "row",
@@ -276,15 +287,8 @@ const styles = StyleSheet.create({
     fontFamily: "Mont-500",
     fontWeight: "500",
   },
-  infoDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#0f0e31",
-  },
   infoText: {
-    color: "#0f0e31",
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Mont-500",
     fontWeight: "500",
   },

@@ -1,43 +1,33 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Text } from "react-native";
+import React, { useState, useCallback, useEffect } from "react";
+import { View, StyleSheet, Text, InteractionManager } from "react-native";
 import { ProgressSlider } from "./ProgressSlider";
 import { FontSettingsControl } from "./FontSettings";
 import { LayoutSettings } from "./LaytoutSettings";
 import { TextAlignSettings } from "./TextAlignSettings";
 import { ScrollAndThemeSettings } from "./ScrollAndThemeSettings";
-
 import { useReaderStore } from "@/store/useReaderStore";
 
-export const SettingsView = () => {
-  const fontSize = useReaderStore((state) => state.fontSize);
-  const setFontSize = useReaderStore((state) => state.setFontSize);
-
-  const setFontFamily = useReaderStore((state) => state.setFontFamily);
-
-  const lineHeight = useReaderStore((state) => state.lineHeight);
-  const setLineHeight = useReaderStore((state) => state.setLineHeight);
-
-  const paddingHorizontal = useReaderStore((state) => state.paddingHorizontal);
-  const setPaddingHorizontal = useReaderStore(
-    (state) => state.setPaddingHorizontal,
-  );
-
-  const textAlign = useReaderStore((state) => state.textAlign);
-  const setTextAlign = useReaderStore((state) => state.setTextAlign);
-
+export const SettingsView = React.memo(() => {
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
-  const toggleDarkMode = useReaderStore((state) => state.toggleDarkMode);
-
-  const scrollMode = useReaderStore((state) => state.scrollMode);
-  const setScrollMode = useReaderStore((state) => state.setScrollMode);
-
   const [progressText, setProgressText] = useState("09,8");
+  const [isMounted, setIsMounted] = useState(false);
 
-  const handleProgressChange = (val: number) => {
+  useEffect(() => {
+    InteractionManager.runAfterInteractions(() => {
+      setIsMounted(true);
+    });
+  }, []);
+
+  const handleProgressUpdate = useCallback((val: number) => {
     setProgressText((val * 100).toFixed(1).replace(".", ","));
-  };
+  }, []);
+
+  const handleProgressFinal = useCallback((val: number) => {
+    console.log("Final Değer Kaydediliyor:", val);
+  }, []);
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { opacity: isMounted ? 1 : 0 }]}>
       <View style={styles.progressWrapper}>
         <Text
           style={[
@@ -49,45 +39,27 @@ export const SettingsView = () => {
         </Text>
         <ProgressSlider
           initialProgress={0.098}
-          onProgressChange={handleProgressChange}
+          onProgressChange={handleProgressUpdate}
+          onSlidingComplete={handleProgressFinal}
           onNext={() => console.log("Sonraki Bölüm")}
           onPrev={() => console.log("Önceki Bölüm")}
         />
       </View>
 
-      <FontSettingsControl
-        fontSize={fontSize}
-        setFontSize={setFontSize}
-        setCurrentFont={setFontFamily}
-      />
+      <FontSettingsControl />
 
-      <LayoutSettings
-        lineHeight={lineHeight}
-        setLineHeight={setLineHeight}
-        paddingHorizontal={paddingHorizontal}
-        setPaddingHorizontal={setPaddingHorizontal}
-      />
+      <LayoutSettings />
 
-      <TextAlignSettings textAlign={textAlign} setTextAlign={setTextAlign} />
+      <TextAlignSettings />
 
-      <ScrollAndThemeSettings
-        scrollMode={scrollMode}
-        setScrollMode={setScrollMode}
-        themeMode={isDarkMode ? "night" : "day"}
-        setThemeMode={toggleDarkMode}
-      />
+      <ScrollAndThemeSettings />
     </View>
   );
-};
+});
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 20,
-    gap: 16,
-  },
-  progressWrapper: {
-    alignItems: "center",
-  },
+  container: { paddingHorizontal: 20, gap: 16 },
+  progressWrapper: { alignItems: "center" },
   progressText: {
     fontSize: 12,
     fontWeight: "700",

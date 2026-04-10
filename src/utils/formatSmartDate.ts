@@ -20,11 +20,10 @@ export const formatSmartDate = (dateString: string): string => {
 
   // 1 Haftayı geçtiyse (Net Tarih: 17 Mart 2026 : 15:20)
   const day = date.getDate();
-  // "long" küçük harf olmalı
   const month = date.toLocaleDateString("tr-TR", { month: "long" });
   const year = date.getFullYear();
-  const hours = date.getHours().toString().padStart(2, "0");
-  const minutes = date.getMinutes().toString().padStart(2, "0");
+  // const hours = date.getHours().toString().padStart(2, "0");
+  // const minutes = date.getMinutes().toString().padStart(2, "0");
 
-  return `${day} ${month} ${year} : ${hours}:${minutes}`;
+  return `${day} ${month} ${year}`;
 };

@@ -3,6 +3,7 @@ import { Text, View, StyleSheet, Pressable, Animated } from "react-native";
 import { CreateNovelIcon } from "@/components/icons/CreateNovelIcon";
 import { CashIcon } from "@/components/icons/CashIcon";
 import { globalNavigate } from "@/navigation/globalNavigate";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 const MENU_OPTIONS = [
   {
@@ -12,8 +13,9 @@ const MENU_OPTIONS = [
     icon: CreateNovelIcon,
   },
   {
-    id: "ödemeler",
-    label: "Ödemelerim",
+    id: "author_wallet",
+    label: "Yazar Cüzdanı",
+    onPresss: () => globalNavigate("AuthorWallet"),
     icon: CashIcon,
   },
 ];
@@ -29,6 +31,7 @@ export const AuthorPanelOptions = () => {
 };
 
 const AnimatedPressable = ({ option }: { option: any }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -57,12 +60,22 @@ const AnimatedPressable = ({ option }: { option: any }) => {
       style={styles.pressableWrapper}
     >
       <Animated.View
-        style={[styles.optionCard, { transform: [{ scale: scaleValue }] }]}
+        style={[
+          styles.optionCard,
+          {
+            transform: [{ scale: scaleValue }],
+            backgroundColor: theme.surface, // Statik #ffffff yerine surface
+            borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#e5e7eb", // Dinamik çerçeve
+            shadowOpacity: isDarkMode ? 0 : 0.05, // Karanlıkta gölgeyi temizledik
+          },
+        ]}
       >
         <View style={styles.iconContainer}>
-          <option.icon size={20} color="#1C274C" />
+          <option.icon size={20} color={theme.textPrimary} />
         </View>
-        <Text style={styles.label}>{option.label}</Text>
+        <Text style={[styles.label, { color: theme.textPrimary }]}>
+          {option.label}
+        </Text>
       </Animated.View>
     </Pressable>
   );
@@ -75,21 +88,18 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   pressableWrapper: {
-    borderRadius: 20,
+    borderRadius: 12,
   },
   optionCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#ffffff",
     paddingHorizontal: 16,
     paddingVertical: 4,
-    borderRadius: 20,
+    borderRadius: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
     shadowRadius: 8,
     borderWidth: 1,
-    borderColor: "#e5e7eb",
   },
   iconContainer: {
     padding: 8,
@@ -100,6 +110,5 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: "Mont-500",
     fontSize: 14,
-    color: "#03061E",
   },
 });

@@ -12,6 +12,7 @@ import {
 import { XIcon } from "@/components/icons/XIcon";
 import { Category } from "@/types/category";
 import { Tag } from "@/types/tag";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 if (
   Platform.OS === "android" &&
@@ -29,6 +30,7 @@ export const UTCSelectedItems = ({
   onRemove: (id: number) => void;
   mode: "tag" | "category";
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleDropdown = () => {
@@ -37,23 +39,40 @@ export const UTCSelectedItems = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.surface,
+          borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+        },
+      ]}
+    >
       <TouchableOpacity
         style={styles.header}
         onPress={toggleDropdown}
         activeOpacity={0.6}
       >
-        <Text style={styles.label}>
-          Seçilen {mode === "tag" ? "Etiketler" : "Kategoriler"}{" "}
-          <Text style={styles.countText}>({selectedItems.length})</Text>
+        <Text style={[styles.label, { color: theme.textSecondary }]}>
+          SEÇİLEN {mode === "tag" ? "ETİKETLER" : "KATEGORİLER"}{" "}
+          <Text style={{ color: theme.textPrimary, fontFamily: "Mont-700" }}>
+            ({selectedItems.length})
+          </Text>
         </Text>
         <View style={{ transform: [{ rotate: isOpen ? "180deg" : "0deg" }] }}>
-          <ChevronBottomIcon size={14} color="#1C274C" />
+          <ChevronBottomIcon size={12} color={theme.textSecondary} />
         </View>
       </TouchableOpacity>
 
       {isOpen && (
-        <View style={styles.content}>
+        <View
+          style={[
+            styles.content,
+            {
+              borderTopColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+            },
+          ]}
+        >
           {selectedItems.length > 0 ? (
             selectedItems.map((item, index) => {
               const isTag = mode === "tag";
@@ -64,22 +83,40 @@ export const UTCSelectedItems = ({
               return (
                 <View key={item.id}>
                   <View style={styles.itemRow}>
-                    <Text style={styles.itemText}>{displayName}</Text>
+                    <Text
+                      style={[styles.itemText, { color: theme.textPrimary }]}
+                    >
+                      {displayName}
+                    </Text>
                     <TouchableOpacity
                       onPress={() => onRemove(item.id)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
-                      <XIcon size={12} color="#f47069" />
+                      <XIcon
+                        size={10}
+                        color={isDarkMode ? "#fb7185" : "#f47069"}
+                      />
                     </TouchableOpacity>
                   </View>
                   {index !== selectedItems.length - 1 && (
-                    <View style={styles.itemSeparator} />
+                    <View
+                      style={[
+                        styles.itemSeparator,
+                        {
+                          backgroundColor: isDarkMode
+                            ? "rgba(255,255,255,0.03)"
+                            : "#F1F5F9",
+                        },
+                      ]}
+                    />
                   )}
                 </View>
               );
             })
           ) : (
-            <Text style={styles.emptyText}>Henüz bir seçim yapmadınız.</Text>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
+              Henüz bir seçim yapmadınız.
+            </Text>
           )}
         </View>
       )}
@@ -90,53 +127,46 @@ export const UTCSelectedItems = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#E5E5E5",
-    borderRadius: 10,
+    borderRadius: 14,
     overflow: "hidden",
+    marginBottom: 8,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 45,
+    height: 48,
     paddingHorizontal: 16,
   },
   label: {
-    fontSize: 14,
-    fontFamily: "Mont-500",
-    color: "#1C274C",
-  },
-  countText: {
-    color: "#8E8E93",
+    fontSize: 9, // Mikro-tipografi
+    fontFamily: "Mont-700",
+    letterSpacing: 1,
   },
   content: {
     borderTopWidth: 1,
-    borderTopColor: "#F2F2F7",
-    paddingBottom: 4,
+    paddingBottom: 8,
   },
   itemRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
   },
   itemText: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: "Mont-500",
-    color: "#3A3A3C",
+    letterSpacing: -0.2,
   },
   itemSeparator: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "#F2F2F7",
+    height: 1,
     marginLeft: 16,
   },
   emptyText: {
-    fontSize: 13,
-    color: "#8E8E93",
-    fontStyle: "italic",
+    fontSize: 11,
+    fontFamily: "Mont-500",
     padding: 16,
     textAlign: "center",
   },

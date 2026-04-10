@@ -1,3 +1,4 @@
+import { Fragment, memo } from "react";
 import {
   Pressable,
   Text,
@@ -6,143 +7,147 @@ import {
   StyleSheet,
 } from "react-native";
 import { LockIcon } from "./icons/LockIcon";
-import { DownloadIcon } from "./icons/DownloadIcon";
-import { Chapter } from "@/types/chapter";
-import { Fragment } from "react";
-import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { DownloadedsIcon } from "./icons/DownloadedsIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 
-interface ChapterItemProps {
-  chapter: Chapter;
-  index: number;
-  showVolumeHeader: boolean; // Yeni ekledik
-}
+export const ChapterItem = memo(
+  ({ chapter, index, showVolumeHeader, onNavigate }: any) => {
+    // Profesyonel lige geçiş: Artık manuel renk tanımlama yok!
+    const { theme, isDarkMode } = useAppTheme();
 
-export const ChapterItem = ({
-  chapter,
-  index,
-  showVolumeHeader,
-}: ChapterItemProps) => {
-  const volumeLabel = `Cilt: ${chapter.volumeOrder}${
-    chapter.volumeName ? ` - ${chapter.volumeName}` : ""
-  }`;
+    const volumeLabel = `Cilt ${chapter.volumeOrder}${
+      chapter.volumeName ? ` • ${chapter.volumeName}` : ""
+    }`;
 
-  const navigation = useAppNavigation();
+    return (
+      <Fragment>
+        {showVolumeHeader && (
+          <View style={styles.minimalVolumeContainer}>
+            <Text style={[styles.volumeText, { color: theme.textPrimary }]}>
+              {volumeLabel}
+            </Text>
+            <View
+              style={[
+                styles.line,
+                {
+                  backgroundColor: isDarkMode
+                    ? "rgba(255, 255, 255, 0.1)"
+                    : "rgba(0, 0, 0, 0.23)",
+                },
+              ]}
+            />
+          </View>
+        )}
 
-  const handlePress = () => {
-    navigation.navigate("ChapterRead", {
-      id: chapter.id,
-    });
-  };
+        <Pressable
+          onPress={onNavigate}
+          style={({ pressed }) => [
+            styles.chapterPressable,
+            {
+              backgroundColor: pressed
+                ? isDarkMode
+                  ? "rgba(255,255,255,0.03)"
+                  : "rgba(0,0,0,0.02)"
+                : "transparent",
+            },
+          ]}
+        >
+          <View style={styles.leftContent}>
+            <Text style={[styles.indexText, { color: theme.textPrimary }]}>
+              {String(index + 1).padStart(2, "0")}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={[styles.chapterTitle, { color: theme.textPrimary }]}
+            >
+              {chapter.title}
+            </Text>
+          </View>
 
-  return (
-    <Fragment>
-      {showVolumeHeader && (
-        <View style={styles.minimalVolumeContainer}>
-          <Text style={styles.volumeText}>{volumeLabel}</Text>
-          <View style={styles.line} />
-        </View>
-      )}
-
-      {/* Bölüm Satırı */}
-      <Pressable
-        onPress={handlePress}
-        style={({ pressed }) => [
-          styles.chapterPressable,
-          pressed && styles.pressedState,
-        ]}
-      >
-        <View style={styles.leftContent}>
-          <Text style={styles.indexText}>
-            {String(index + 1).padStart(2, "0")} -
-          </Text>
-          <Text numberOfLines={1} style={styles.chapterTitle}>
-            {chapter.title}
-          </Text>
-        </View>
-
-        <View style={styles.rightContent}>
-          {chapter.isLocked ? (
-            <View style={styles.iconWrapper}>
-              <LockIcon size={16} />
-            </View>
-          ) : (
-            <TouchableOpacity activeOpacity={0.7} style={styles.downloadButton}>
-              <DownloadIcon size={16} color="#0f3f92" />
-            </TouchableOpacity>
-          )}
-        </View>
-      </Pressable>
-    </Fragment>
-  );
-};
+          <View style={styles.rightContent}>
+            {chapter.isLocked ? (
+              <View style={styles.lockWrapper}>
+                <LockIcon size={17} color={theme.textSecondary} />
+              </View>
+            ) : (
+              <TouchableOpacity
+                activeOpacity={0.6}
+                style={[
+                  styles.downloadButton,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(255, 255, 255, 0.05)"
+                      : "#F1F5F9",
+                  },
+                ]}
+              >
+                <DownloadedsIcon size={16} color={theme.accent} />
+              </TouchableOpacity>
+            )}
+          </View>
+        </Pressable>
+      </Fragment>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
-  volumeContainer: {
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    backgroundColor: "#F9FAFB",
-    borderLeftWidth: 4,
-    borderLeftColor: "#0f3f92",
-    marginTop: 8,
-    justifyContent: "center",
-  },
-  volumeText: {
-    fontFamily: "Mont-700",
-    fontSize: 8,
-    color: "#4B5563",
-    textTransform: "uppercase",
-    letterSpacing: 1.2,
-  },
   minimalVolumeContainer: {
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 24,
-    paddingVertical: 12,
+    paddingTop: 24, // Biraz daha nefes alsın
+    paddingBottom: 6,
     gap: 12,
+  },
+  volumeText: {
+    fontFamily: "Mont-500", // Biraz daha tok
+    fontSize: 8,
+    textTransform: "uppercase",
+    letterSpacing: 1.2,
   },
   line: {
     flex: 1,
-    height: 1,
-    backgroundColor: "#E5E7EB",
+    height: 0.5,
   },
   chapterPressable: {
     paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingVertical: 14,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  pressedState: {
-    backgroundColor: "#f2f2f3",
   },
   leftContent: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    gap: 8,
+    gap: 14,
   },
   indexText: {
-    fontFamily: "Mont-400",
-    fontSize: 12,
-    color: "#9CA3AF",
+    fontFamily: "Mont-500",
+    fontSize: 11,
+    width: 22,
+    opacity: 0.7,
   },
   chapterTitle: {
-    fontFamily: "Mont-600",
-    fontSize: 13,
-    color: "#1F2937",
+    fontFamily: "Mont-500",
+    fontSize: 13.5, // Bir tık büyütüldü, okunaklılık arttı
+    letterSpacing: -0.2,
   },
   rightContent: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
   },
-  iconWrapper: {
-    padding: 10,
+  lockWrapper: {
+    width: 36,
+    height: 36,
+    justifyContent: "center",
+    alignItems: "center",
   },
   downloadButton: {
-    backgroundColor: "#EFF6FF",
-    padding: 10,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     justifyContent: "center",
     alignItems: "center",
   },

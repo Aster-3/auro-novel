@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
 import Animated, { FadeInUp, FadeOutUp } from "react-native-reanimated";
 import { useEffect, useState } from "react";
@@ -21,16 +20,19 @@ import { useUpdateProfileMutation } from "@/hooks/useUpdateProfileMutation";
 import { useMeQuery } from "@/hooks/useMeQuery";
 import * as ImagePicker from "expo-image-picker";
 import { loginMapper } from "@/utils/loginMapper";
-import { useModalStore } from "@/store/useModalStore";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { updateProfileSchema, UpdateProfileSchemaType } from "@/schemas/auth";
 import { useToastStore } from "@/store/useToastStore";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { Header } from "@/components/Header";
 
 const PersonalInfoScreen = () => {
+  const { theme, isDarkMode } = useAppTheme();
   const navigate = useAppNavigation();
   const queryClient = useQueryClient();
   const { mutate, isPending } = useUpdateProfileMutation();
+
   const {
     data: userData,
     isLoading,
@@ -55,6 +57,7 @@ const PersonalInfoScreen = () => {
     profileBackgroundImageUrl: undefined,
     description: undefined,
   });
+
   const [errors, setErrors] = useState<{ [key in keyof FormData]?: string[] }>(
     {},
   );
@@ -70,7 +73,8 @@ const PersonalInfoScreen = () => {
   };
 
   const getIconColor = (error?: string[]) => {
-    return error ? "#EF4444" : "#1C274C";
+    if (error) return "#EF4444";
+    return theme.textPrimary;
   };
 
   const handleUpdate = () => {
@@ -91,23 +95,12 @@ const PersonalInfoScreen = () => {
       return;
     }
     mutate(data, {
-      onSuccess: (res: any) => {
+      onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ["me"] });
-        queryClient.invalidateQueries({ queryKey: ["myComment"] });
-        queryClient.invalidateQueries({ queryKey: ["commentPreviews"] });
         navigate.goBack();
         useToastStore.getState().showToast({
           type: "Başarılı",
           message: "Profiliniz başarıyla güncellendi.",
-          duration: 3000,
-        });
-      },
-      onError: (err: any) => {
-        useToastStore.getState().showToast({
-          type: "Hata",
-          message:
-            err?.response?.data?.message ||
-            "Profil güncellenirken bir hata oluştu.",
         });
       },
     });
@@ -125,15 +118,6 @@ const PersonalInfoScreen = () => {
 
     if (pickedImage.canceled) return;
 
-    const fileSize = pickedImage.assets?.[0]?.fileSize;
-
-    if (fileSize && fileSize > 5 * 1024 * 1024) {
-      useToastStore.getState().showToast({
-        type: "Hata",
-        message: "Seçilen resim 5MB'dan büyük olamaz.",
-      });
-      return;
-    }
     const formattedImage = {
       uri: pickedImage.assets[0].uri,
       name: pickedImage.assets[0].fileName || "upload.jpg",
@@ -144,9 +128,7 @@ const PersonalInfoScreen = () => {
   };
 
   useEffect(() => {
-    if (userData) {
-      setFormData(userData);
-    }
+    if (userData) setFormData(userData);
   }, [userData]);
 
   const isFormReady = () => {
@@ -160,13 +142,16 @@ const PersonalInfoScreen = () => {
     );
   };
 
-  if (isLoading || error) {
-    return <Text>{error?.message || "Yükleniyor..."}</Text>;
-  }
+  if (isLoading || error)
+    return (
+      <Screen backgroundColor={theme.background}>
+        <LoadingDots />
+      </Screen>
+    );
 
   return (
-    <Screen>
-      <ProfileSettingsHeader title="Kişisel Bilgiler" />
+    <Screen backgroundColor={theme.background}>
+      <Header title="Kişisel Bilgiler" isAdjacent={false} />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -175,12 +160,18 @@ const PersonalInfoScreen = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* ── 1. ARKA PLAN RESMİ (COVER) ── */}
+          {/* 1. COVER SECTION */}
           <View style={styles.coverSection}>
             <TouchableOpacity
               onPress={() => handleImagePick("profileBackgroundImageUrl")}
               style={[
                 styles.coverPicker,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#EDF2F7",
+                },
                 errors.profileBackgroundImageUrl && styles.inputError,
               ]}
               activeOpacity={0.8}
@@ -196,39 +187,40 @@ const PersonalInfoScreen = () => {
                   contentFit="cover"
                 />
               ) : (
-                <View style={styles.placeholderContainer}>
-                  <Feather name="image" size={28} color="#A0AEC0" />
-                  <Text style={styles.placeholderText}>Arkaplan seç</Text>
+                <View
+                  style={[
+                    styles.placeholderContainer,
+                    { backgroundColor: theme.surface },
+                  ]}
+                >
+                  <Feather name="image" size={28} color={theme.textSecondary} />
+                  <Text
+                    style={[
+                      styles.placeholderText,
+                      { color: theme.textSecondary },
+                    ]}
+                  >
+                    Arkaplan seç
+                  </Text>
                 </View>
               )}
-
-              {/* Cover için belirgin koyu overlay */}
               <View style={styles.coverOverlay}>
-                <Feather
-                  name="camera"
-                  size={24}
-                  color="rgba(255,255,255,0.95)"
-                />
+                <Feather name="camera" size={20} color="white" />
                 <Text style={styles.coverOverlayText}>Düzenle</Text>
               </View>
             </TouchableOpacity>
-            {errors.profileBackgroundImageUrl && (
-              <Animated.Text
-                entering={FadeInUp}
-                exiting={FadeOutUp}
-                style={[styles.errorText, { marginTop: 4, marginLeft: 14 }]}
-              >
-                {errors.profileBackgroundImageUrl[0]}
-              </Animated.Text>
-            )}
           </View>
 
-          {/* ── 2. AVATAR (Profil Resmi, Cover'ın üstüne biner) ── */}
+          {/* 2. AVATAR SECTION */}
           <View style={styles.avatarSection}>
             <TouchableOpacity
               onPress={() => handleImagePick("profileImageUrl")}
               style={[
                 styles.avatarCircle,
+                {
+                  backgroundColor: theme.surface,
+                  borderColor: theme.background,
+                },
                 errors.profileImageUrl && styles.inputError,
               ]}
               activeOpacity={0.8}
@@ -244,42 +236,52 @@ const PersonalInfoScreen = () => {
                     style={styles.fullImage}
                     contentFit="cover"
                   />
-                  {/* Şeffaf Overlay */}
                   <View style={styles.avatarOverlay}>
-                    <Feather
-                      name="camera"
-                      size={24}
-                      color="rgba(255,255,255,0.9)"
-                    />
+                    <Feather name="camera" size={20} color="white" />
                   </View>
                 </>
               ) : (
-                <>
-                  <UserRegisterIcon color="#9A9A9A" size={36} />
-                  <View style={styles.emptyAddIconBadge}>
-                    <Feather name="plus" size={16} color="white" />
+                <View
+                  style={{ alignItems: "center", justifyContent: "center" }}
+                >
+                  <UserRegisterIcon color={theme.textSecondary} size={36} />
+                  <View
+                    style={[
+                      styles.emptyAddIconBadge,
+                      {
+                        backgroundColor: theme.accent,
+                        borderColor: theme.background,
+                      },
+                    ]}
+                  >
+                    <Feather
+                      name="plus"
+                      size={14}
+                      color={isDarkMode ? "#000" : "#FFF"}
+                    />
                   </View>
-                </>
+                </View>
               )}
             </TouchableOpacity>
-            {errors.profileImageUrl && (
-              <Animated.Text
-                entering={FadeInUp}
-                exiting={FadeOutUp}
-                style={[styles.errorText, { marginTop: 6 }]}
-              >
-                {errors.profileImageUrl[0]}
-              </Animated.Text>
-            )}
           </View>
 
           <View style={styles.inputsContainer}>
-            {/* ── Takma Ad ── */}
+            {/* Takma Ad */}
             <View style={styles.separateFieldContainer}>
-              <Text style={styles.fieldLabelAbove}>Takma Ad</Text>
+              <Text
+                style={[styles.fieldLabelAbove, { color: theme.textSecondary }]}
+              >
+                Takma Ad
+              </Text>
               <View
                 style={[
                   styles.separateInputWrapper,
+                  {
+                    backgroundColor: theme.surface,
+                    borderColor: isDarkMode
+                      ? "rgba(255,255,255,0.05)"
+                      : "#EDF2F7",
+                  },
                   errors.nickname && styles.inputError,
                 ]}
               >
@@ -288,9 +290,9 @@ const PersonalInfoScreen = () => {
                   size={18}
                 />
                 <TextInput
-                  style={styles.separateInput}
+                  style={[styles.separateInput, { color: theme.textPrimary }]}
                   placeholder="Takma Ad"
-                  placeholderTextColor="#9A9A9A"
+                  placeholderTextColor={theme.textSecondary}
                   value={formData.nickname}
                   onChangeText={(val) => {
                     setFormData({
@@ -302,29 +304,40 @@ const PersonalInfoScreen = () => {
                 />
               </View>
               {errors.nickname && (
-                <Animated.Text
-                  entering={FadeInUp}
-                  exiting={FadeOutUp}
-                  style={styles.errorText}
-                >
+                <Animated.Text entering={FadeInUp} style={styles.errorText}>
                   {errors.nickname[0]}
                 </Animated.Text>
               )}
             </View>
 
+            {/* Hakkımda */}
             <View style={styles.separateFieldContainer}>
-              <Text style={styles.fieldLabelAbove}>Hakkımda</Text>
+              <Text
+                style={[styles.fieldLabelAbove, { color: theme.textSecondary }]}
+              >
+                Hakkımda
+              </Text>
               <View
                 style={[
                   styles.separateInputWrapper,
                   styles.textAreaWrapper,
+                  {
+                    backgroundColor: theme.surface,
+                    borderColor: isDarkMode
+                      ? "rgba(255,255,255,0.05)"
+                      : "#EDF2F7",
+                  },
                   errors.description && styles.inputError,
                 ]}
               >
                 <TextInput
-                  style={[styles.separateInput, styles.textArea]}
+                  style={[
+                    styles.separateInput,
+                    styles.textArea,
+                    { color: theme.textPrimary },
+                  ]}
                   placeholder="Kendinden bahset..."
-                  placeholderTextColor="#9A9A9A"
+                  placeholderTextColor={theme.textSecondary}
                   value={formData.description}
                   multiline
                   onChangeText={(val) => {
@@ -333,22 +346,14 @@ const PersonalInfoScreen = () => {
                   }}
                 />
               </View>
-              {errors.description && (
-                <Animated.Text
-                  entering={FadeInUp}
-                  exiting={FadeOutUp}
-                  style={styles.errorText}
-                >
-                  {errors.description[0]}
-                </Animated.Text>
-              )}
             </View>
           </View>
 
           <TouchableOpacity
             style={[
               styles.button,
-              (isPending || !isFormReady()) && { opacity: 0.7 },
+              { backgroundColor: theme.textPrimary },
+              (isPending || !isFormReady()) && { opacity: 0.5 },
             ]}
             onPress={handleUpdate}
             disabled={isPending || !isFormReady()}
@@ -356,7 +361,9 @@ const PersonalInfoScreen = () => {
             {isPending ? (
               <LoadingDots />
             ) : (
-              <Text style={styles.buttonText}>Güncelle</Text>
+              <Text style={[styles.buttonText, { color: theme.background }]}>
+                Güncelle
+              </Text>
             )}
           </TouchableOpacity>
         </ScrollView>
@@ -366,42 +373,32 @@ const PersonalInfoScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 48,
-  },
-
-  coverSection: {
-    marginTop: 10,
-    marginHorizontal: 14,
-  },
+  scrollContent: { flexGrow: 1, paddingBottom: 48 },
+  coverSection: { marginTop: 10, marginHorizontal: 14 },
   coverPicker: {
     width: "100%",
     height: 160,
-    backgroundColor: "#F7FAFC",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#EDF2F7",
     overflow: "hidden",
     position: "relative",
   },
   coverOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.59)",
-    justifyContent: "center",
-    alignItems: "center",
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
     flexDirection: "row",
-    gap: 8,
+    alignItems: "center",
+    gap: 6,
   },
-  coverOverlayText: {
-    color: "rgba(255,255,255,0.95)",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-
+  coverOverlayText: { color: "white", fontSize: 12, fontFamily: "Mont-600" },
   avatarSection: {
     alignItems: "center",
-    marginTop: -48,
+    marginTop: -52,
     marginBottom: 24,
     zIndex: 10,
   },
@@ -409,127 +406,85 @@ const styles = StyleSheet.create({
     width: 104,
     height: 104,
     borderRadius: 52,
-    backgroundColor: "#FFFFFF", // Etrafındaki border ile uyumlu olması için arka planı beyaz yaptım
-    borderWidth: 4, // Arka plandan ayrışması için kalın beyaz çerçeve
-    borderColor: "#FFFFFF",
+    borderWidth: 4,
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-    position: "relative",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 4, // Android için de hafif gölge
+    elevation: 4,
   },
   avatarOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
-
-  // ── 3. Form Stilleri (Ayrılmış Inputs) ──
-  inputsContainer: {
-    gap: 24,
-    marginHorizontal: 14,
-  },
-  separateFieldContainer: {
-    gap: 8,
-  },
+  inputsContainer: { gap: 24, marginHorizontal: 14 },
+  separateFieldContainer: { gap: 8 },
   fieldLabelAbove: {
-    fontSize: 13,
-    color: "#4A5568",
-    fontWeight: "600",
+    fontSize: 12,
+    fontFamily: "Mont-600",
     marginLeft: 4,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
   separateInputWrapper: {
-    height: 48,
-    backgroundColor: "#F7FAFC",
-    borderRadius: 12,
+    height: 52,
+    borderRadius: 14,
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: 16,
     gap: 10,
     borderWidth: 1,
-    borderColor: "#EDF2F7",
   },
-  separateInput: {
-    flex: 1,
-    fontSize: 15,
-    color: "#2D3748",
-    textAlign: "left",
-  },
+  separateInput: { flex: 1, fontSize: 14, fontFamily: "Mont-500" },
   textAreaWrapper: {
-    height: 150,
+    height: 120,
     alignItems: "flex-start",
     paddingVertical: 14,
   },
-  textArea: {
-    textAlign: "left",
-    textAlignVertical: "top",
-    lineHeight: 22,
-  },
-
-  // ── Buton ──
+  textArea: { textAlignVertical: "top", lineHeight: 20 },
   button: {
-    backgroundColor: "#1A202C",
-    height: 54,
+    height: 56,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 14,
-    marginTop: 36,
+    marginTop: 32,
   },
-  buttonDisabled: {
-    backgroundColor: "#27303c",
-  },
-  buttonText: {
-    color: "white",
-    fontSize: 15,
-    fontWeight: "600",
-    letterSpacing: 0.4,
-  },
-
-  // ── Ortak Stiller ──
-  fullImage: {
-    width: "100%",
-    height: "100%",
-  },
+  buttonText: { fontSize: 15, fontFamily: "Mont-700", letterSpacing: 0.5 },
+  fullImage: { width: "100%", height: "100%" },
   placeholderContainer: {
     ...StyleSheet.absoluteFillObject,
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: "#F7FAFC",
   },
-  placeholderText: {
-    color: "#A0AEC0",
-    fontSize: 13,
-    fontWeight: "500",
-  },
+  placeholderText: { fontSize: 12, fontFamily: "Mont-500" },
   emptyAddIconBadge: {
     position: "absolute",
-    bottom: 8,
-    right: 8,
-    backgroundColor: "#4A5568",
-    borderRadius: 14,
-    width: 28,
-    height: 28,
+    bottom: 0,
+    right: 0,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
     justifyContent: "center",
     alignItems: "center",
     borderWidth: 2,
-    borderColor: "white",
   },
   inputError: {
-    borderColor: "#FC8181",
-    backgroundColor: "#FFF5F5",
+    borderColor: "#EF4444",
+    backgroundColor: "rgba(239, 68, 68, 0.05)",
   },
   errorText: {
-    color: "#E53E3E",
-    fontSize: 12,
-    fontWeight: "500",
+    color: "#EF4444",
+    fontSize: 11,
+    fontFamily: "Mont-500",
     marginLeft: 4,
+    marginTop: 4,
   },
 });
 

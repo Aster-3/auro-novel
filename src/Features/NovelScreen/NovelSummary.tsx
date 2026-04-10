@@ -8,7 +8,18 @@ import {
   StyleSheet,
   TouchableOpacity,
   LayoutAnimation,
+  Platform,
+  UIManager,
 } from "react-native";
+import { useReaderStore } from "@/store/useReaderStore";
+import { useAppTheme } from "@/hooks/useTheme";
+
+if (
+  Platform.OS === "android" &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 export const NovelSummary = ({
   summary,
@@ -24,16 +35,21 @@ export const NovelSummary = ({
     setExpanded(!expanded);
   };
 
+  const { theme } = useAppTheme();
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Özet</Text>
+      <Text style={[styles.title, { color: theme.textPrimary }]}>Özet</Text>
+
       <NovelTags tags={tags} />
 
-      <View style={styles.quoteBlock}>
+      <View
+        style={[styles.contentBlock, { borderLeftColor: theme.textPrimary }]}
+      >
         <Text
           onPress={toggleExpanded}
-          style={styles.summaryText}
-          numberOfLines={expanded ? undefined : 4}
+          style={[styles.summaryText, { color: theme.textPrimary }]}
+          numberOfLines={expanded ? undefined : 3}
         >
           {summary ? summary : "Yazar tarafından henüz bir özet girilmedi..."}
         </Text>
@@ -43,13 +59,16 @@ export const NovelSummary = ({
           activeOpacity={0.7}
           style={styles.readMoreButton}
         >
-          <Text style={styles.readMoreText}>
-            {expanded ? "Kısalt" : "Devamını Gör"}
+          <Text style={[styles.readMoreText, { color: theme.textSecondary }]}>
+            {expanded ? "Daha az göster" : "Devamını oku"}
           </Text>
           <View
-            style={{ transform: [{ rotate: expanded ? "180deg" : "0deg" }] }}
+            style={{
+              transform: [{ rotate: expanded ? "180deg" : "0deg" }],
+              opacity: 0.8,
+            }}
           >
-            <DownChevronIcon color="#111827" size={14} />
+            <DownChevronIcon color={theme.textSecondary} size={12} />
           </View>
         </TouchableOpacity>
       </View>
@@ -58,40 +77,34 @@ export const NovelSummary = ({
 };
 
 const styles = StyleSheet.create({
-  container: { gap: 12 },
-  title: {
-    fontFamily: "Mont-700",
-    fontSize: 15,
-    color: "#03061ed3",
-    letterSpacing: -0.2,
+  container: {
+    gap: 14,
   },
-  quoteBlock: {
-    borderLeftWidth: 1.5,
-    borderLeftColor: "#111827be",
+  title: {
+    fontFamily: "Mont-700", // Kallavi başlık kuralı
+    fontSize: 16, // Diğer sectionlarla senkron
+    letterSpacing: -0.5,
+  },
+  contentBlock: {
+    borderLeftWidth: 1,
     paddingLeft: 16,
-    marginLeft: 4,
-    gap: 8,
+    marginLeft: 2,
+    gap: 6,
   },
   summaryText: {
-    marginTop: 8,
     fontFamily: "Mont-500",
     fontSize: 13,
+    lineHeight: 22,
     letterSpacing: -0.1,
-    lineHeight: 24,
-    color: "#29303b",
   },
   readMoreButton: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    marginTop: 4,
-    alignSelf: "flex-start",
-    zIndex: 1,
+    gap: 4,
+    marginTop: 2,
   },
   readMoreText: {
     fontSize: 12,
-    fontFamily: "Mont-700",
-    color: "#111827",
-    textDecorationLine: "underline",
+    fontFamily: "Mont-600",
   },
 });

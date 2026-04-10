@@ -10,16 +10,30 @@ export interface UserMe {
   description?: string;
 }
 
+// interface AuthState {
+//   user: UserMe | null;
+//   setUser: (user: UserMe) => void;
+//   accessToken: string | null;
+//   setAccessToken: (token: string) => void;
+// }
+
+// Başlangıç değerlerini bir objede topla
+const initialState = {
+  user: null,
+  accessToken: null,
+};
+
 interface AuthState {
   user: UserMe | null;
   setUser: (user: UserMe) => void;
   accessToken: string | null;
   setAccessToken: (token: string) => void;
+  logout: () => void; // Reset fonksiyonu ekle
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
+  ...initialState,
   setUser: (user: UserMe) => set({ user }),
-  accessToken: null,
   setAccessToken: (accessToken: string) => set({ accessToken }),
+  logout: () => set(initialState), // Tüm state'i tek seferde sıfırla
 }));

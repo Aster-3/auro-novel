@@ -1,14 +1,9 @@
 import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
 import { ProfileHeaderText } from "./ProfileHeaderText";
-
 import { SupportIcon } from "@/components/icons/SupportIcon";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
-
-const getPressStyle = (pressed: boolean) => ({
-  backgroundColor: pressed ? "#f0f0f0" : "transparent",
-  opacity: pressed ? 0.7 : 1,
-});
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 const iconMap = {
   support_and_feedback: SupportIcon,
@@ -25,6 +20,7 @@ const options = [
 export const ProfileBodyBottom = () => {
   const navigation = useNavigation<any>();
   const isLoggedIn = !!useAuthStore((state) => state.user);
+  const { theme, isDarkMode } = useAppTheme();
 
   const handlePress = (option: any) => {
     if (!isLoggedIn) {
@@ -40,7 +36,14 @@ export const ProfileBodyBottom = () => {
   return (
     <View style={styles.wrapper}>
       <ProfileHeaderText title="Diğer" />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDarkMode ? theme.backgroundSecondary : "#F9F9F9",
+          },
+        ]}
+      >
         {options.map((option) => {
           const IconComponent = iconMap[option.id as keyof typeof iconMap];
           return (
@@ -48,17 +51,23 @@ export const ProfileBodyBottom = () => {
               key={option.id}
               style={({ pressed }) => [
                 styles.subcontainer,
-                getPressStyle(pressed),
+                {
+                  backgroundColor: pressed
+                    ? isDarkMode
+                      ? "rgba(255,255,255,0.05)"
+                      : "#f0f0f0"
+                    : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
               onPress={() => handlePress(option)}
             >
               {IconComponent && (
-                <IconComponent
-                  color={option.id !== "logout" ? "#1C274C" : "#da0303"}
-                  size={18}
-                />
+                <IconComponent color={theme.textPrimary} size={18} />
               )}
-              <Text style={styles.text}>{option.label}</Text>
+              <Text style={[styles.text, { color: theme.textPrimary }]}>
+                {option.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -76,7 +85,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 16,
-    backgroundColor: "white",
     paddingHorizontal: 12,
     borderRadius: 16,
     alignItems: "center",
@@ -94,6 +102,5 @@ const styles = StyleSheet.create({
   text: {
     fontFamily: "Mont-500",
     fontSize: 14,
-    color: "#03061E",
   },
 });

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, useWindowDimensions } from "react-native";
 import Carousel from "react-native-reanimated-carousel";
 import { Image, ImageSource } from "expo-image";
+import { useAppTheme } from "@/hooks/useTheme";
 
 interface CarouselItemType {
   id: string;
@@ -19,6 +20,7 @@ const DATA: CarouselItemType[] = [
 export const HomeCarousel = () => {
   const { width } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
+  const { theme, isDarkMode } = useAppTheme(); // Renkleri çektik
 
   const carouselHeight = width / 3;
 
@@ -53,7 +55,12 @@ export const HomeCarousel = () => {
           parallaxScrollingOffset: 45,
         }}
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: isDarkMode ? "#000" : "#F1F5F9" },
+            ]}
+          >
             <Image
               source={item.image}
               style={styles.image}
@@ -69,7 +76,16 @@ export const HomeCarousel = () => {
             key={index.toString()}
             style={[
               styles.dot,
-              activeIndex === index ? styles.activeDot : styles.inactiveDot,
+              activeIndex === index
+                ? [styles.activeDot, { backgroundColor: theme.accent }] // Aktif nokta artık aksan rengin
+                : [
+                    styles.inactiveDot,
+                    {
+                      backgroundColor: isDarkMode
+                        ? "rgba(255,255,255,0.2)"
+                        : "rgba(0,0,0,0.1)",
+                    },
+                  ], // Inaktif nokta temaya göre şeffaf
             ]}
           />
         ))}
@@ -83,7 +99,6 @@ const styles = StyleSheet.create({
     flex: 1,
     borderRadius: 24,
     overflow: "hidden",
-    backgroundColor: "#000",
     width: "100%",
   },
   image: {
@@ -102,10 +117,8 @@ const styles = StyleSheet.create({
   },
   activeDot: {
     width: 24,
-    backgroundColor: "#2d4161", // Slate-800 (Daha yumuşak bir siyah/lacivert)
   },
   inactiveDot: {
     width: 12,
-    backgroundColor: "#dcdcdd", // Aktif rengin %20 şeffaf hali
   },
 });

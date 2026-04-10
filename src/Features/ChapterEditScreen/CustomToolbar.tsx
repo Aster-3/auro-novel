@@ -6,19 +6,16 @@ import {
   View,
   Text,
   StyleSheet,
-  Modal,
-  FlatList,
   Keyboard,
   LayoutAnimation,
 } from "react-native";
-import { VolumesModal } from "./VolumesModal";
-import { RightArrowIcon } from "@/components/icons/RightArrowIcon";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useCreateVolume } from "@/hooks/useCreateVolume";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const CustomToolbar = React.memo(
   ({ editor, contentWordCount }: { editor: any; contentWordCount: number }) => {
+    const { theme, isDarkMode } = useAppTheme();
     const [editorState, setEditorState] = useState({
       isBoldActive: false,
       isItalicActive: false,
@@ -30,7 +27,6 @@ export const CustomToolbar = React.memo(
       if (!editor) return;
       const interval = setInterval(() => {
         const newState = editor.getEditorState();
-
         setEditorState((prevState) => {
           if (
             prevState.isBoldActive !== newState.isBoldActive ||
@@ -71,154 +67,155 @@ export const CustomToolbar = React.memo(
     }, []);
 
     const insets = useSafeAreaInsets();
-
     const bottomPadding = isKeyboardVisible ? 0 : insets.bottom;
 
     return (
-      <View style={{ paddingBottom: bottomPadding, backgroundColor: "#fff" }}>
-        <View style={styles.wrapper}>
+      <View
+        style={{ paddingBottom: bottomPadding, backgroundColor: theme.surface }}
+      >
+        <View
+          style={[
+            styles.wrapper,
+            {
+              backgroundColor: theme.surface,
+              borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#eff2f6",
+            },
+          ]}
+        >
           <View style={styles.toolbarWrapper}>
-            <TouchableOpacity
-              style={[
-                styles.toolbarButton,
-                editorState.isBoldActive && styles.toolbarButtonActive,
-              ]}
-              onPress={() => editor.toggleBold()}
-            >
-              <Text style={[styles.toolbarIcon, { fontWeight: "bold" }]}>
-                B
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.toolbarButton,
-                editorState.isItalicActive && styles.toolbarButtonActive,
-              ]}
-              onPress={() => editor.toggleItalic()}
-            >
-              <Text
+            {[
+              {
+                id: "bold",
+                label: "B",
+                action: () => editor.toggleBold(),
+                active: editorState.isBoldActive,
+                style: { fontWeight: "bold" as const },
+              },
+              {
+                id: "italic",
+                label: "I",
+                action: () => editor.toggleItalic(),
+                active: editorState.isItalicActive,
+                style: { fontStyle: "italic" as const, fontFamily: "serif" },
+              },
+              {
+                id: "underline",
+                label: "U",
+                action: () => editor.toggleUnderline(),
+                active: editorState.isUnderlineActive,
+                style: { textDecorationLine: "underline" as const },
+              },
+              {
+                id: "strike",
+                label: "S",
+                action: () => editor.toggleStrike(),
+                active: editorState.isStrikeActive,
+                style: { textDecorationLine: "line-through" as const },
+              },
+            ].map((btn) => (
+              <TouchableOpacity
+                key={btn.id}
                 style={[
-                  styles.toolbarIcon,
-                  { fontStyle: "italic", fontFamily: "serif" },
+                  styles.toolbarButton,
+                  btn.active && {
+                    backgroundColor: isDarkMode
+                      ? "rgba(255,255,255,0.1)"
+                      : "#f1f5f9",
+                  },
                 ]}
+                onPress={btn.action}
               >
-                I
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.toolbarButton,
-                editorState.isUnderlineActive && styles.toolbarButtonActive,
-              ]}
-              onPress={() => editor.toggleUnderline()}
-            >
-              <Text
-                style={[
-                  styles.toolbarIcon,
-                  { textDecorationLine: "underline" },
-                ]}
-              >
-                U
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.toolbarButton,
-                editorState.isStrikeActive && styles.toolbarButtonActive,
-              ]}
-              onPress={() => editor.toggleStrike()}
-            >
-              <Text
-                style={[
-                  styles.toolbarIcon,
-                  { textDecorationLine: "line-through" },
-                ]}
-              >
-                S
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.toolbarIcon,
+                    { color: theme.textPrimary },
+                    btn.style,
+                  ]}
+                >
+                  {btn.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
 
-          <TouchableOpacity style={styles.volumesButton}>
-            <Text style={styles.volumeText}>{contentWordCount} Kelime</Text>
-            <RightChevronIcon size={15} color="#1f2a39" />
-          </TouchableOpacity>
+          <View
+            style={[
+              styles.wordCountBadge,
+              {
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.05)"
+                  : "#F8FAFC",
+              },
+            ]}
+          >
+            <Text style={[styles.volumeText, { color: theme.textSecondary }]}>
+              {contentWordCount} Kelime
+            </Text>
+          </View>
         </View>
       </View>
     );
   },
 );
 
-const styles = StyleSheet.create({
-  wrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    justifyContent: "space-between",
-    backgroundColor: "#fff",
-    height: 50,
-    borderTopWidth: 1,
-    borderColor: "#eff2f6",
-  },
-  toolbarWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  toolbarButton: {
-    width: 35,
-    height: 35,
-    justifyContent: "center",
-    alignItems: "center",
-    borderRadius: 8,
-  },
-  toolbarButtonActive: {
-    backgroundColor: "#e6e6e6",
-  },
-  toolbarIcon: {
-    fontSize: 16,
-    color: "#334155",
-  },
-  volumesButton: {
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-    borderRadius: 8,
-    paddingVertical: 6,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  volumeText: {
-    color: "#0a1e3f",
-    fontSize: 12,
-    fontFamily: "Mont-600",
-  },
-});
-
-export const customCodeBlockCSS = `
+// EDITÖRÜN İÇİNDEKİ CSS (Dinamik Renkler)
+export const getCustomCSS = (isDarkMode: boolean, theme: any) => `
   .ProseMirror {
-    background-color: #ffffff !important;
+    background-color: ${isDarkMode ? theme.surface : "#ffffff"} !important;
     outline: none !important;
-    padding-bottom: 100px;
+    padding-bottom: 150px;
   }
   .ProseMirror p {
     font-family: 'Montserrat', sans-serif !important;
     font-size: 16px !important;
-    line-height: 1.6 !important; 
+    line-height: 1.7 !important; 
     margin-bottom: 16px !important; 
-    color: #334155 !important;
+    color: ${isDarkMode ? theme.textPrimary : "#1e293b"} !important;
   }
   .ProseMirror p.is-editor-empty:first-child::before {
-    content: "Buraya yazmaya başlayın..." !important;
-    color: #bcc0c6 !important;
+    content: "Hikayeni anlatmaya başla..." !important;
+    color: ${isDarkMode ? "rgba(255,255,255,0.2)" : "#94a3b8"} !important;
     font-style: italic;
     float: left;
     height: 0;
     pointer-events: none;
   }
 `;
+
+const styles = StyleSheet.create({
+  wrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    justifyContent: "space-between",
+    height: 56,
+    borderTopWidth: 1,
+  },
+  toolbarWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  toolbarButton: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  toolbarIcon: {
+    fontSize: 15,
+    fontFamily: "Mont-600",
+  },
+  wordCountBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  volumeText: {
+    fontSize: 10, // Mikro-tipografi
+    fontFamily: "Mont-700",
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+});

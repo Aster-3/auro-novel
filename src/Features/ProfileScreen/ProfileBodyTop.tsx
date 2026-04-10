@@ -9,11 +9,7 @@ import { useModalStore } from "@/store/useModalStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useNavigation } from "@react-navigation/native";
-
-const getPressStyle = (pressed: boolean) => ({
-  backgroundColor: pressed ? "#f0f0f0" : "transparent",
-  opacity: pressed ? 0.7 : 1,
-});
+import { useAppTheme } from "@/hooks/useTheme";
 
 const iconMap = {
   personal_info: UserIcon,
@@ -48,8 +44,8 @@ const options = [
         title: "Çıkış Yap",
         message: "Hesabınızdan çıkış yapmak istediğinize emin misiniz?",
         onConfirm: () => {
-          useAuthStore.setState({ user: null });
           TokenStorage.clearTokens();
+          useAuthStore.getState().logout();
         },
       }),
   },
@@ -58,6 +54,7 @@ const options = [
 export const ProfileBodyTop = () => {
   const isLoggedIn = !!useAuthStore((state) => state.user);
   const navigation = useNavigation<any>();
+  const { theme, isDarkMode } = useAppTheme();
 
   const handlePress = (option: any) => {
     if (option.id === "logout") {
@@ -78,7 +75,14 @@ export const ProfileBodyTop = () => {
   return (
     <View style={styles.wrapper}>
       <ProfileHeaderText title="Hesap" />
-      <View style={styles.container}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: isDarkMode ? theme.backgroundSecondary : "#F9F9F9",
+          },
+        ]}
+      >
         {options.map((option) => {
           const IconComponent = iconMap[option.id as keyof typeof iconMap];
           if (option.id === "logout" && !isLoggedIn) return null;
@@ -87,17 +91,26 @@ export const ProfileBodyTop = () => {
               key={option.id}
               style={({ pressed }) => [
                 styles.subcontainer,
-                getPressStyle(pressed),
+                {
+                  backgroundColor: pressed
+                    ? isDarkMode
+                      ? "rgba(255, 255, 255, 0.29)"
+                      : "#f0f0f0"
+                    : "transparent",
+                  opacity: pressed ? 0.7 : 1,
+                },
               ]}
               onPress={() => handlePress(option)}
             >
               {IconComponent && (
                 <IconComponent
-                  color={option.id !== "logout" ? "#1C274C" : "#da0303"}
+                  color={option.id !== "logout" ? theme.textPrimary : "#da0303"}
                   size={18}
                 />
               )}
-              <Text style={styles.text}>{option.label}</Text>
+              <Text style={[styles.text, { color: theme.textPrimary }]}>
+                {option.label}
+              </Text>
             </Pressable>
           );
         })}
@@ -115,7 +128,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 16,
-    backgroundColor: "white",
     paddingHorizontal: 12,
     borderRadius: 16,
     alignItems: "center",
@@ -130,5 +142,8 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 12,
   },
-  text: { fontFamily: "Mont-500", fontSize: 14, color: "#03061E" },
+  text: {
+    fontFamily: "Mont-500",
+    fontSize: 14,
+  },
 });

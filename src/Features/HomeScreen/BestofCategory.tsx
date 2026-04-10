@@ -21,7 +21,7 @@ export const BestofCategory = () => {
 
   const groupedData = chunkData(data, 2);
   return (
-    <View style={{ gap: 12 }}>
+    <View style={{ gap: 16 }}>
       <SectionHeader headerName="Best of Category" />
       <CategorySelect
         categories={categories}

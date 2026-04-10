@@ -1,5 +1,6 @@
 import { SearchIcon2 } from "@/components/icons/SearchIcon2";
 import { TextInput, StyleSheet, View } from "react-native";
+import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const UTCSearch = ({
   searchValue,
@@ -10,19 +11,29 @@ export const UTCSearch = ({
   setSearchValue: (value: string) => void;
   mode: "tag" | "category";
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
+
   return (
     <View style={styles.container}>
-      {/* Referansındaki 'subContainer' mantığıyla dış çerçeve */}
-      <View style={styles.searchWrapper}>
-        <SearchIcon2 color="#1C274C" size={16} />
+      <View
+        style={[
+          styles.searchWrapper,
+          {
+            backgroundColor: theme.surface,
+            borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+          },
+        ]}
+      >
+        <SearchIcon2 color={theme.textSecondary} size={14} />
         <TextInput
-          style={styles.textInput}
+          style={[styles.textInput, { color: theme.textPrimary }]}
           value={searchValue}
           onChangeText={(text) => setSearchValue(text.trimStart())}
           placeholder={mode === "tag" ? "Etiket Ara..." : "Kategori Ara..."}
-          placeholderTextColor="#9D9D9D"
-          selectionColor="#1C274C"
-          cursorColor="#1C274C" // Android için imleç rengi
+          placeholderTextColor={theme.textSecondary}
+          selectionColor={theme.accent}
+          cursorColor={theme.accent}
+          autoCorrect={false}
         />
       </View>
     </View>
@@ -32,25 +43,23 @@ export const UTCSearch = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginBottom: 10, // Diğer kutuyla arasındaki mesafe
+    marginBottom: 12,
   },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 45, // Referans kodundaki height: 45 ile aynı
+    height: 48, // Bir tık daha dolgun ve premium
     paddingHorizontal: 16,
-    backgroundColor: "#ffffff",
     borderWidth: 1,
-    borderColor: "#E5E5E5", // Referans kodundaki borderColor
-    borderRadius: 10, // Referans kodundaki borderRadius
+    borderRadius: 14, // Daha yumuşak köşeler
   },
   textInput: {
     flex: 1,
     height: "100%",
-    marginLeft: 10,
-    fontSize: 14, // Referans kodundaki label fontSize
+    marginLeft: 8,
+    fontSize: 13, // 14'ten 13'e çekerek daha minimal yaptık
     fontFamily: "Mont-500",
-    color: "#1C274C", // Referans kodundaki ana yazı rengi
-    paddingVertical: 0, // Gereksiz iç boşlukları sıfırladık
+    letterSpacing: -0.2, // Yazıyı daha sıkı ve şık gösterir
+    paddingVertical: 0,
   },
 });
