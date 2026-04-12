@@ -32,7 +32,6 @@ import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
 // Hooklar
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
-import { useReaderStore } from "@/store/useReaderStore";
 import { useAppTheme } from "@/hooks/useTheme";
 
 const SECTIONS = [

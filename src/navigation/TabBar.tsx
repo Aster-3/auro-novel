@@ -13,7 +13,7 @@ export function TabBar({ state, navigation }: any) {
         style={[
           styles.container,
           {
-            backgroundColor: isDarkMode ? "#0d0c0c" : "#FFFFFF",
+            backgroundColor: isDarkMode ? "#16151b" : "#FFFFFF",
             shadowColor: isDarkMode ? "#000" : "#000",
             shadowOpacity: isDarkMode ? 0.3 : 0.1,
           },

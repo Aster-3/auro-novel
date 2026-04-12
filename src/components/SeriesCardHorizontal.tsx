@@ -1,19 +1,23 @@
 import { Image, Text, TouchableOpacity, View } from "react-native";
-import { ChapterIcon } from "./icons/ChapterIcon";
 import { AuthorIcon } from "./icons/AuthorIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { StatusIcon } from "./icons/StatusIcon";
-import { RecommendIcon } from "./icons/RecommendIcon";
 import { useAppTheme } from "@/hooks/useTheme";
+import { LittleRecommendIcon } from "./icons/LittleRecommendIcon";
+import { TableOfContentsIcon } from "./icons/TableOfContentsIcon";
+import { GetLastUpdatedNovel } from "@/types/novel";
 
-export const SeriesCardHorizontal = ({ props }: { props: any }) => {
+export const SeriesCardHorizontal = ({
+  novel,
+}: {
+  novel: GetLastUpdatedNovel;
+}) => {
   const navigation = useAppNavigation();
   const { theme } = useAppTheme();
 
   return (
     <TouchableOpacity
       onPress={() => {
-        navigation.navigate("Novel", props);
+        navigation.navigate("Novel", { id: novel.id });
       }}
       style={{
         flexDirection: "row",
@@ -29,7 +33,10 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
           overflow: "hidden",
         }}
       >
-        <Image source={props.cover} style={{ width: "100%", height: "100%" }} />
+        <Image
+          source={{ uri: novel.coverImage }}
+          style={{ width: "100%", height: "100%" }}
+        />
       </View>
       <View style={{ display: "flex", gap: 4, maxWidth: 120 }}>
         <Text
@@ -37,31 +44,16 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
           ellipsizeMode="tail"
           style={{
             fontFamily: "Mont-600",
-            color: theme.textPrimary, // Statik #343434 yerine dinamik renk
+            color: theme.textPrimary,
             fontSize: 14,
             textAlign: "left",
           }}
         >
-          {props.name}
+          {novel.name}
         </Text>
 
         <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <AuthorIcon color={theme.textSecondary} />
-          <Text
-            numberOfLines={2}
-            ellipsizeMode="tail"
-            style={{
-              fontFamily: "Mont-500",
-              color: theme.textSecondary, // Statik #7b7a7a yerine dinamik renk
-              fontSize: 10,
-              textAlign: "left",
-            }}
-          >
-            {props.author}
-          </Text>
-        </View>
-        <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <ChapterIcon color={theme.textSecondary} />
+          <AuthorIcon size={14} color={theme.textSecondary} />
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
@@ -72,12 +64,27 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
               textAlign: "left",
             }}
           >
-            Latest Chapter: {props.lastChapter}
+            {novel.authorName}
+          </Text>
+        </View>
+        <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
+          <TableOfContentsIcon size={12} color={theme.textSecondary} />
+          <Text
+            numberOfLines={2}
+            ellipsizeMode="tail"
+            style={{
+              fontFamily: "Mont-500",
+              color: theme.textSecondary,
+              fontSize: 10,
+              textAlign: "left",
+            }}
+          >
+            Son Bölüm: {novel.chapterCount}
           </Text>
         </View>
 
         <View style={{ flexDirection: "row", gap: 4, alignItems: "center" }}>
-          <RecommendIcon color="#03a964" />
+          <LittleRecommendIcon color="#03a964" size={14} />
           <Text
             numberOfLines={2}
             ellipsizeMode="tail"
@@ -88,7 +95,8 @@ export const SeriesCardHorizontal = ({ props }: { props: any }) => {
               textAlign: "left",
             }}
           >
-            %{props.recommendRate} Recommend
+            %{novel.recommendRate ? novel.recommendRate.toFixed(1) : "---"}{" "}
+            Tavsiye Edilme
           </Text>
         </View>
       </View>

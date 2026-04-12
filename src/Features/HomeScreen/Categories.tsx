@@ -27,7 +27,7 @@ const data = [
 export const Categories = () => {
   return (
     <View style={{ display: "flex", gap: 12 }}>
-      <SectionHeader headerName="Categories You Might Be Interested In" />
+      <SectionHeader headerName="Kategoriler" />
       <ScrollView
         showsHorizontalScrollIndicator={false}
         horizontal

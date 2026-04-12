@@ -20,39 +20,42 @@ export const NovelNavCard = () => {
       style={[
         styles.container,
         {
-          bottom: dynamicBottom + 10,
-          backgroundColor: isDarkMode ? "#07091a" : "#F8FAFC",
-          shadowColor: isDarkMode ? "#000" : "#050c40",
-          shadowOpacity: isDarkMode ? 0.4 : 0.15, // Karanlıkta daha tok bir gölge
+          bottom: dynamicBottom + 16,
+          backgroundColor: isDarkMode ? "rgb(8, 8, 17)" : "#FFFFFF",
+          borderColor: isDarkMode ? "rgba(255, 255, 255, 0.08)" : "#F1F5F9",
         },
-        styles.shadow,
-        isDarkMode &&
-          Platform.OS === "android" && {
-            borderWidth: 1,
-            borderColor: "rgba(255, 255, 255, 0.1)",
-          },
       ]}
     >
+      {/* OKU BUTONU */}
       <TouchableOpacity
         activeOpacity={0.8}
         style={[
           styles.readButton,
-          { backgroundColor: isDarkMode ? "#ffffff" : "#050c40" },
+          { backgroundColor: isDarkMode ? "#FFFFFF" : "#0F172A" },
         ]}
       >
-        <BookReadIcon size={18} color={isDarkMode ? "#0F172A" : "white"} />
+        <BookReadIcon size={16} color={isDarkMode ? "#07091A" : "#FFFFFF"} />
         <Text
-          style={[styles.readText, { color: isDarkMode ? "#0F172A" : "white" }]}
+          style={[
+            styles.readText,
+            { color: isDarkMode ? "#07091A" : "#FFFFFF" },
+          ]}
         >
           Hemen Oku
         </Text>
       </TouchableOpacity>
 
+      {/* AYIRICI ÇİZGİ (Opsiyonel, daha teknik durur) */}
+      <View
+        style={[
+          styles.divider,
+          { backgroundColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#E2E8F0" },
+        ]}
+      />
+
+      {/* KAYDET BUTONU */}
       <TouchableOpacity activeOpacity={0.6} style={styles.saveButton}>
-        <BookmarkIcon
-          size={20}
-          color={isDarkMode ? theme.textPrimary : "#050c40"}
-        />
+        <BookmarkIcon size={18} color={isDarkMode ? "#FFFFFF" : "#0F172A"} />
         <Text style={[styles.saveText, { color: theme.textSecondary }]}>
           Kaydet
         </Text>
@@ -64,50 +67,55 @@ export const NovelNavCard = () => {
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
-    left: 20,
-    right: 20,
+    left: 30,
+    right: 30,
     flexDirection: "row",
-    borderRadius: 22,
-    padding: 6,
+    borderRadius: 20,
+    padding: 8,
     alignItems: "center",
-  },
-  shadow: {
+    borderWidth: 1,
     ...Platform.select({
       ios: {
-        // shadowColor ve shadowOpacity yukarıda dinamik yapıldı
-        shadowOffset: { width: 0, height: 12 },
-        shadowRadius: 16,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
       },
       android: {
-        elevation: 2, // Karanlık modda elevation 2 yetmez, 8 iyidir
+        elevation: 2,
       },
     }),
   },
   readButton: {
-    flex: 2.4,
+    flex: 2,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 18,
-    paddingVertical: 15,
-    gap: 8,
+    paddingVertical: 12, // Daha ince
+    gap: 6,
   },
   readText: {
-    fontFamily: "Mont-600",
-    fontSize: 14,
-    letterSpacing: -0.2,
+    fontFamily: "Mont-700", // Daha kalın font, küçük boyutta daha iyi okunur
+    fontSize: 13,
+    letterSpacing: -0.3,
+  },
+  divider: {
+    width: 1,
+    height: 20,
+    marginHorizontal: 10,
   },
   saveButton: {
     flex: 1,
+    flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    gap: 4,
+    gap: 2,
   },
   saveText: {
-    fontFamily: "Mont-600",
-    fontSize: 10,
-    textAlign: "center",
+    fontFamily: "Mont-800",
+    fontSize: 8, // Mikro tipografi
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
   },
 });

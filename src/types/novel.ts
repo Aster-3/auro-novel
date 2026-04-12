@@ -1,3 +1,4 @@
+import { string } from "zod";
 import { Category } from "./category";
 import { Tag } from "./tag";
 
@@ -36,6 +37,23 @@ export interface SearchNovelResult {
   nextPage: number | null;
   currentPage: number;
   lastPage: number;
+}
+
+export interface WeeklyTrendNovel {
+  id: string;
+  name: string;
+  coverImage: string;
+  weeklyRankingScore: number;
+}
+
+export interface GetLastUpdatedNovel {
+  id: string;
+  name: string;
+  coverImage: string;
+  lastChapterDate: string;
+  recommendRate: number | null;
+  chapterCount: number;
+  authorName: string;
 }
 
 export enum SourceType {

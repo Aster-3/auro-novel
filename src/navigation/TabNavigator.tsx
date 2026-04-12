@@ -11,7 +11,10 @@ const Tab = createBottomTabNavigator();
 
 export const TabNavigator = () => {
   return (
-    <Tab.Navigator tabBar={(props) => <TabBar {...props} />}>
+    <Tab.Navigator
+      detachInactiveScreens={true}
+      tabBar={(props) => <TabBar {...props} />}
+    >
       <Tab.Screen
         name="Home"
         component={HomeScreen}

@@ -2,22 +2,22 @@ import { ScrollView, Text, View } from "react-native";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
 import { useNovels } from "@/hooks/useNovels";
+import { useWeeklyTrendNovels } from "@/hooks/useWeeklyTrendNovels";
 
 export const WeeklyPopular = () => {
-  const { data, isLoading, error } = useNovels();
-  console.log("weekly series:", data);
+  const { data, isLoading, error } = useWeeklyTrendNovels();
   if (isLoading) return <Text>Loading...</Text>;
   if (error) return <Text>{error.message}</Text>;
   return (
-    <View style={{ display: "flex", gap: 12 }}>
-      <SectionHeader headerName="Weekly Popular Series" />
+    <View style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+      <SectionHeader headerName="Haftalık Popüler Seriler" />
       <ScrollView
         contentContainerStyle={{ gap: 12 }}
         showsHorizontalScrollIndicator={false}
         horizontal
         style={{ width: "100%" }}
       >
-        {data?.items.map((novel) => (
+        {data?.map((novel) => (
           <SeriesCardVertical
             key={novel.id}
             id={novel.id}

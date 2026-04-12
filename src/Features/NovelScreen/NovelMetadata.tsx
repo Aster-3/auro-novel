@@ -1,5 +1,5 @@
 import { AuthorIcon } from "@/components/icons/AuthorIcon";
-import { RecommendIcon } from "@/components/icons/RecommendIcon";
+import { LittleRecommendIcon } from "@/components/icons/LittleRecommendIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
 import { ViewIcon } from "@/components/icons/ViewIcon";
 import { Author, SeriesStatus } from "@/types/novel";
@@ -14,6 +14,7 @@ import {
   Pressable,
 } from "react-native";
 import { Image } from "expo-image";
+import { LittleEyeIcon } from "@/components/icons/LittleEyeIcon";
 
 export const NovelMetaData = ({
   cover,
@@ -151,11 +152,11 @@ export const NovelMetaData = ({
 
         <View style={[styles.row, styles.rowSpace]}>
           <View style={styles.row}>
-            <ViewIcon color="white" size={14} />
+            <LittleEyeIcon color="white" size={14} />
             <Text style={styles.text}>{formatViewCount(viewCount)}</Text>
           </View>
           <View style={styles.row}>
-            <RecommendIcon color="white" />
+            <LittleRecommendIcon color="white" size={14} />
             <Text style={styles.text}>
               {recommendRate
                 ? `${recommendRate}% Öneriliyor`

@@ -2,25 +2,16 @@ import Svg, { ClipPath, Defs, G, Path } from "react-native-svg";
 
 export const AuthorIcon = ({
   color = "#070000",
-  size = 10,
+  size = 16,
 }: {
   color?: string;
   size?: number;
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 14 14" fill="none">
-    <G
-      clipPath="url(#clip0_49_1473)"
+  <Svg width={size} height={size} viewBox="0 0 18 18" fill="none">
+    <Path
+      d="M3 16.5h3m9 0H9M10.416 2.747l.556-.556a2.36 2.36 0 013.337 3.337l-.556.556m-3.337-3.337s.07 1.182 1.112 2.225c1.043 1.042 2.225 1.112 2.225 1.112m-3.337-3.337L5.303 7.86c-.346.346-.52.52-.668.71a3.93 3.93 0 00-.45.727c-.103.219-.18.45-.336.915l-.656 1.97m10.56-6.098L11.197 8.64m-8.004 3.541l-.16.482a.636.636 0 00.804.804l.482-.16M3.193 12.18l1.126 1.126m4.321-2.11c-.346.346-.52.52-.71.668a3.935 3.935 0 01-.727.45c-.219.103-.45.18-.915.336l-1.97.656"
       stroke={color}
-      strokeWidth={1.5}
       strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <Path d="M7.583 12.25h4.667M12.351 3.974a1.644 1.644 0 10-2.325-2.326L2.241 9.435a1.167 1.167 0 00-.291.484l-.771 2.539a.291.291 0 00.363.362l2.54-.77c.182-.055.349-.155.484-.29l7.785-7.786z" />
-    </G>
-    <Defs>
-      <ClipPath id="clip0_49_1473">
-        <Path fill="#fff" d="M0 0H14V14H0z" />
-      </ClipPath>
-    </Defs>
+    />
   </Svg>
 );

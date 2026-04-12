@@ -1,53 +1,74 @@
+import React, { useState, useEffect } from "react";
+import { ScrollView, View } from "react-native";
 import { CategorySelect } from "@/components/CategorySelecy";
 import { SectionHeader } from "@/components/SectionHeader";
-import { SeriesCardHorizontal } from "@/components/SeriesCardHorizontal";
-import { useState } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { data } from "./UpdatedSeries";
-import { chunkData } from "@/utils/chunkData";
-const categories = [
-  "Xianxia",
-  "Urban Fantasy",
-  "Apocalypse",
-  "Isekai",
-  "Mystery",
-  "Cultivation",
-  "Martial Art",
-  "Romance",
-];
+import { SeriesCardVertical } from "@/components/SeriesCardVertical";
+import { useRandomTagQuery } from "@/hooks/useRandomTagQuery";
+import { useGetNovelsByTag } from "@/hooks/useGetNovelsByTag";
+import { SeriesCardVerticalSkeleton } from "@/components/SeriesCardVerticalSkeleton";
+import Animated, { FadeIn, FadeInRight } from "react-native-reanimated";
 
 export const BestofCategory = () => {
-  const [selectedCategory, setSelectedCategory] = useState(categories[0]);
+  const { data: tags, isLoading: tagsLoading } = useRandomTagQuery(20);
+  const [selectedCategory, setSelectedCategory] = useState<any>(null);
 
-  const groupedData = chunkData(data, 2);
+  const { data: novelsByTag, isLoading: novelsLoading } = useGetNovelsByTag(
+    selectedCategory?.id || "",
+  );
+
+  useEffect(() => {
+    if (tags && tags.length > 0 && !selectedCategory) {
+      setSelectedCategory(tags[0]);
+    }
+  }, [tags]);
+
+  const skeletonCount = [1, 2, 3, 4, 5];
+
+  if (tagsLoading) return null;
+
   return (
-    <View style={{ gap: 16 }}>
-      <SectionHeader headerName="Best of Category" />
+    <View style={{ gap: 8 }}>
+      <SectionHeader headerName="Kategorisinin En Çok Önerilenleri" />
+
       <CategorySelect
-        categories={categories}
-        selectedCategory={selectedCategory}
+        categories={tags || []}
+        selectedCategory={selectedCategory || (tags ? tags[0] : null)}
         setSelectedCategory={setSelectedCategory}
       />
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 40, marginTop: 4 }}
-        style={{ width: "100%" }}
-      >
-        {groupedData.map((column, columnIndex) => (
-          <View
-            key={columnIndex}
-            style={{
-              flexDirection: "column",
-              gap: 24,
-            }}
-          >
-            {column.map((item: any) => (
-              <SeriesCardHorizontal key={item.id} props={item} />
-            ))}
-          </View>
-        ))}
-      </ScrollView>
+
+      <View style={{ minHeight: 180 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          decelerationRate={0.9}
+          overScrollMode="never"
+          contentContainerStyle={{ gap: 16, paddingHorizontal: 4 }}
+        >
+          {novelsLoading || !novelsByTag
+            ? skeletonCount.map((i) => (
+                <Animated.View
+                  key={`skeleton-${i}`}
+                  entering={FadeIn.duration(400)}
+                >
+                  <SeriesCardVerticalSkeleton />
+                </Animated.View>
+              ))
+            : novelsByTag.map((novel: any, index: number) => (
+                <Animated.View
+                  key={`${selectedCategory?.id}-${novel.id}`}
+                  entering={FadeInRight.delay(index * 50)
+                    .duration(400)
+                    .damping(5)}
+                >
+                  <SeriesCardVertical
+                    id={novel.id}
+                    cover={novel.coverImage}
+                    name={novel.name}
+                  />
+                </Animated.View>
+              ))}
+        </ScrollView>
+      </View>
     </View>
   );
 };

@@ -157,11 +157,11 @@ const styles = StyleSheet.create({
   avatar: {
     width: 45,
     height: 45,
-    borderRadius: 26,
-    borderWidth: 2,
+    borderRadius: 16,
+    borderWidth: 1,
   },
   textContainer: {
-    marginLeft: 8,
+    marginLeft: 12,
   },
   username: {
     fontFamily: "Mont-700",
@@ -170,7 +170,8 @@ const styles = StyleSheet.create({
   },
   userSubtitle: {
     fontFamily: "Mont-500",
-    fontSize: 12,
+    fontSize: 11,
+    letterSpacing: -0.3,
   },
   currencyStack: {
     alignItems: "flex-end",

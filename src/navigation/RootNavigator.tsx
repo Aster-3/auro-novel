@@ -1,3 +1,5 @@
+import React, { useEffect } from "react";
+import { View, ActivityIndicator } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TabNavigator } from "./TabNavigator";
 import NovelScreen from "../screens/NovelScreen";
@@ -26,22 +28,37 @@ import ChapterReadScreen from "@/screens/ChapterReadScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useReaderStore } from "@/store/useReaderStore";
 import { useAppTheme } from "@/hooks/useTheme";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export const RootNavigator = () => {
   const { data: meData, isLoading } = useMeQuery([]);
-
   const { theme } = useAppTheme();
 
-  if (isLoading) {
-    return null;
-  }
+  // PERFORMANS KRİTİK: Store güncellemesi render sırasında yapılmamalıdır.
+  // Bu işlem yan etki (side effect) olduğu için useEffect içine alınmalı.
+  useEffect(() => {
+    if (meData) {
+      useAuthStore.setState({ user: meData });
+    }
+  }, [meData]);
 
-  if (meData) {
-    useAuthStore.setState({ user: meData });
+  // KULLANICI DENEYİMİ: Uygulama verileri çekerken boş ekran (null) göstermek
+  // yerine bir yükleme göstergesi eklemek "kasma" algısını azaltır.
+  if (isLoading) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={theme.textPrimary || "#000"} />
+      </View>
+    );
   }
 
   return (
@@ -52,6 +69,7 @@ export const RootNavigator = () => {
         fullScreenGestureEnabled: true,
         animation: "slide_from_right",
         orientation: "portrait",
+        // Arka plandaki ekranları dondurarak bellek kullanımını azaltır.
         freezeOnBlur: true,
         contentStyle: { backgroundColor: theme.background },
       }}
@@ -104,7 +122,7 @@ export const RootNavigator = () => {
         <Stack.Screen
           name="ChapterRead"
           options={{
-            animation: "fade",
+            animation: "fade", // Okuma ekranı geçişi daha yumuşak olur
           }}
           component={ChapterReadScreen}
         />

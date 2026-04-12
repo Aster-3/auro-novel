@@ -1,5 +1,9 @@
 import api from "@/api/axiosInstance";
-import { UpdateNovelFormData } from "@/types/novel";
+import {
+  GetLastUpdatedNovel,
+  UpdateNovelFormData,
+  WeeklyTrendNovel,
+} from "@/types/novel";
 
 export const getNovels = async () => {
   const { data } = await api.get("/novels");
@@ -56,4 +60,37 @@ export const addCategoryToNovel = async (
 
 export const incrementNovelViewCount = async (novelId: string) => {
   await api.post(`/novels/${novelId}/views`);
+};
+
+export const getLastUpdatedNovels = async (
+  limit: number,
+): Promise<GetLastUpdatedNovel[]> => {
+  const { data } = await api.get("/novels/last-updated", {
+    params: { limit },
+  });
+  return data;
+};
+
+export const getWeeklyTrendingNovels = async (
+  limit?: number,
+): Promise<WeeklyTrendNovel[]> => {
+  const { data } = await api.get("/novels/weekly-trending", {
+    params: { limit },
+  });
+  return data;
+};
+
+export const getNovelsByTag = async (tagId: string) => {
+  const { data } = await api.get(`/novels/with-tag/${tagId}`);
+  await new Promise((resolve) => setTimeout(resolve, 500)); // Simulate network delay
+  return data;
+};
+
+export const getLastCreatedNovels = async (
+  limit: number,
+): Promise<{ id: string; name: string; coverImage: string }[]> => {
+  const { data } = await api.get("/novels/last-created", {
+    params: { limit },
+  });
+  return data;
 };

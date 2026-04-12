@@ -46,6 +46,7 @@ export const colors = {
       textPrimary: "#1b2838",
       textSecondary: "#64748b",
     },
+    surfaceHover: "#e2e8f0",
   },
   dark: {
     background: "#10121B",
@@ -67,5 +68,6 @@ export const colors = {
       textPrimary: "#f0f5ff",
       textSecondary: "#94a3b8",
     },
+    surfaceHover: "#121f30",
   },
 };

@@ -32,13 +32,18 @@ export const NovelParallax = ({
       const task = InteractionManager.runAfterInteractions(() => {
         setRefreshKey((prev) => prev + 1);
       });
-
-      return () => {
-        task.cancel();
-      };
+      return () => task.cancel();
     }, []),
   );
 
+  // useEffect bir hook'tur, erken return'den ÖNCE gelmeli
+  useEffect(() => {
+    if (!isLoading && data?.items && data.items.length > 0) {
+      onNovelSelect(data.items[0].id);
+    }
+  }, [isLoading, data]); // Bağımlılıkları eklemek daha güvenlidir
+
+  // 2. ERKEN RETURN'LER (KOŞULLAR) HOOK'LARDAN SONRA GELMELİ
   if (isLoading) {
     return (
       <View style={styles.itemContainer}>
@@ -55,18 +60,12 @@ export const NovelParallax = ({
     );
   }
 
-  useEffect(() => {
-    if (data.items.length > 0) {
-      onNovelSelect(data.items[0].id);
-    }
-  }, []);
-
+  // 3. ASIL RENDER MANTIĞI
   const handleSnap = (newIndex: number) => {
     const realIndex = carouselRef.current?.getCurrentIndex();
     savedIndex.current = realIndex;
     onNovelSelect(data.items[realIndex].id);
   };
-
   const renderNovelItem = ({ item }: { item: any }) => {
     return (
       <Pressable

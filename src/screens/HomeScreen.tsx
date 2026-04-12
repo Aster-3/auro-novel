@@ -1,4 +1,5 @@
-import { View, ScrollView, StyleSheet } from "react-native";
+import React, { useMemo } from "react";
+import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
 import { Screen } from "../components/layout/Screen";
 import { FakeSearchBar } from "../components/fakeSearchBar";
 import { HomeCarousel } from "../Features/HomeScreen/Carousel";
@@ -8,46 +9,44 @@ import { Categories } from "@/Features/HomeScreen/Categories";
 import { BestofCategory } from "@/Features/HomeScreen/BestofCategory";
 import { RecenltyAdded } from "@/Features/HomeScreen/RecenltyAdded";
 import { useDynamicBottom } from "@/utils/useDynamicBottom";
-import { useAppTheme } from "@/hooks/useTheme";
 
 const HomeScreen = () => {
   const dynamicBottom = useDynamicBottom();
-  const { theme, isDarkMode } = useAppTheme();
+
+  // Performans için padding değerini memoize ediyoruz
+  const contentContainerStyle = useMemo(
+    () => [styles.scrollContent, { paddingBottom: dynamicBottom + 40 }],
+    [dynamicBottom],
+  );
 
   return (
-    <Screen
-      style={[styles.container, { backgroundColor: theme.background }] as any}
-    >
-      {/* Search Bar Wrapper: Scroll'dan bağımsız, sabit kalarak güven verir */}
+    <Screen style={styles.container}>
       <View style={styles.searchWrapper}>
         <FakeSearchBar />
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        // gap'i buraya değil, bileşenlerin kendi içindeki marjinlerine bırakıyoruz
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: dynamicBottom + 40 },
-        ]}
+        removeClippedSubviews={true}
+        contentContainerStyle={contentContainerStyle}
       >
-        {/* Karusel: En üstte, nefes alan bir alanla */}
+        {/* İPUCU: Her bir section'ın içine "isLoading" kontrolü ekleyip 
+          veriler gelene kadar Skeleton gösterilmesini sağlamalısın.
+        */}
+
         <View style={styles.section}>
           <HomeCarousel />
         </View>
 
-        {/* Popüler ve Güncellenenler: Birbirine daha yakın durmalı (Haftalık Akış) */}
         <View style={styles.groupSection}>
           <WeeklyPopular />
           <UpdatedSeries />
         </View>
 
-        {/* Kategoriler: Araya giren bir ayraç gibi (Surface rengi burada fark yaratır) */}
         <View style={styles.categoryWrapper}>
           <Categories />
         </View>
 
-        {/* Kategori Bazlı En İyiler ve Yeni Eklenenler */}
         <View style={styles.section}>
           <BestofCategory />
         </View>
@@ -70,20 +69,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     paddingTop: 8,
+    zIndex: 10, // Üstte kalmasını garantiye alalım
   },
   scrollContent: {
     paddingTop: 4,
   },
   section: {
-    marginBottom: 32, // Sectionlar arası belirgin boşluk
+    marginBottom: 24,
   },
   groupSection: {
-    gap: 28, // İlgili sectionlar arası mesafe
-    marginBottom: 24,
+    marginBottom: 16,
   },
   categoryWrapper: {
     marginBottom: 24,
-    // Burada istersen çok hafif bir arka plan rengiyle kategorileri ayırabilirsin
     paddingVertical: 4,
   },
 });
