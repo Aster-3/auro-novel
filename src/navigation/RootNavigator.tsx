@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TabNavigator } from "./TabNavigator";
@@ -25,10 +25,12 @@ import NovelPanelScreen from "@/screens/NovelPanelScreen";
 import UpdateTagCategoryScreen from "@/screens/UpdateTagCategoryScreen";
 import ChapterEditScreen from "@/screens/ChapterEditScreen";
 import ChapterReadScreen from "@/screens/ChapterReadScreen";
+import UserProfileScreen from "@/screens/UserProfileScreen";
 
 import { useMeQuery } from "@/hooks/useMeQuery";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppTheme } from "@/hooks/useTheme";
+import { enableScreens } from "react-native-screens";
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -36,16 +38,24 @@ export const RootNavigator = () => {
   const { data: meData, isLoading } = useMeQuery([]);
   const { theme } = useAppTheme();
 
-  // PERFORMANS KRİTİK: Store güncellemesi render sırasında yapılmamalıdır.
-  // Bu işlem yan etki (side effect) olduğu için useEffect içine alınmalı.
   useEffect(() => {
     if (meData) {
       useAuthStore.setState({ user: meData });
     }
   }, [meData]);
 
-  // KULLANICI DENEYİMİ: Uygulama verileri çekerken boş ekran (null) göstermek
-  // yerine bir yükleme göstergesi eklemek "kasma" algısını azaltır.
+  enableScreens();
+
+  const globalScreenOptions = useMemo(
+    () => ({
+      headerShown: false,
+      animation: "slide_from_right" as const,
+      freezeOnBlur: true,
+      contentStyle: { backgroundColor: theme.background },
+    }),
+    [theme.background],
+  );
+
   if (isLoading) {
     return (
       <View
@@ -62,26 +72,11 @@ export const RootNavigator = () => {
   }
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false,
-        gestureEnabled: true,
-        fullScreenGestureEnabled: true,
-        animation: "slide_from_right",
-        orientation: "portrait",
-        // Arka plandaki ekranları dondurarak bellek kullanımını azaltır.
-        freezeOnBlur: true,
-        contentStyle: { backgroundColor: theme.background },
-      }}
-    >
+    <Stack.Navigator screenOptions={globalScreenOptions}>
       <Stack.Screen name="Main" component={TabNavigator} />
 
-      <Stack.Group screenOptions={{ animation: "slide_from_right" }}>
-        <Stack.Screen
-          name="Novel"
-          getId={({ params }) => params?.id}
-          component={NovelScreen}
-        />
+      <Stack.Group>
+        <Stack.Screen name="Novel" component={NovelScreen} />
         <Stack.Screen name="Search" component={SearchScreen} />
         <Stack.Screen name="Settings" component={SettingsScreen} />
         <Stack.Screen name="PersonalInfo" component={PersonalInfoScreen} />
@@ -126,6 +121,7 @@ export const RootNavigator = () => {
           }}
           component={ChapterReadScreen}
         />
+        <Stack.Screen name="UserProfile" component={UserProfileScreen} />
       </Stack.Group>
 
       <Stack.Group screenOptions={{ presentation: "modal" }}>

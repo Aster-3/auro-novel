@@ -78,11 +78,11 @@ export const NovelSummary = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 14,
+    gap: 0,
   },
   title: {
     fontFamily: "Mont-700", // Kallavi başlık kuralı
-    fontSize: 16, // Diğer sectionlarla senkron
+    fontSize: 16,
     letterSpacing: -0.5,
   },
   contentBlock: {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -10,7 +10,6 @@ import {
 import { Image } from "expo-image";
 import { Reply } from "@/types/reply";
 import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
-import { LikeİconFill } from "@/components/icons/LikeİconFill";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { TrashIcon } from "@/components/icons/TrashIcon";
 import { formatSmartDate } from "@/utils/formatSmartDate";
@@ -35,12 +34,9 @@ export const ReplyItem = ({
   const user = useAuthStore((state) => state.user);
   const { mutate } = useReplyLikeMutation(rootCommentId);
 
-  // Yanıt metni için genişleme state'leri
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [measured, setMeasured] = useState(false);
-
-  // Alıntı metni için state
   const [quoteExpanded, setQuoteExpanded] = useState(false);
 
   const toggleQuote = useCallback(() => {
@@ -54,12 +50,11 @@ export const ReplyItem = ({
   }, [expanded]);
 
   const toggleLike = () => {
-    if (!reply || !user) {
-      if (!user)
-        useToastStore.getState().showToast({
-          type: "Bilgi",
-          message: "Beğenmek için giriş yapmalısınız.",
-        });
+    if (!user) {
+      useToastStore.getState().showToast({
+        type: "Bilgi",
+        message: "Beğenmek için giriş yapmalısınız.",
+      });
       return;
     }
     mutate(reply.id);
@@ -72,6 +67,20 @@ export const ReplyItem = ({
       onConfirm: () => onDelete?.(reply.id),
     });
   };
+
+  // CommentCardFull ile senkronize tema değerleri
+  const cardTheme = useMemo(
+    () => ({
+      actions: isDarkMode ? "#94A3B8" : "#64748B",
+      likeColor: isDarkMode ? "#0064f1" : "#080441db",
+      buttonBg: isDarkMode ? "rgba(255,255,255,0.03)" : "#F8FAFC",
+      deleteBg: isDarkMode
+        ? "rgba(225, 29, 72, 0.08)"
+        : "rgba(225, 29, 72, 0.05)",
+      deleteText: "#BE123C",
+    }),
+    [isDarkMode],
+  );
 
   return (
     <View style={s.card}>
@@ -117,10 +126,9 @@ export const ReplyItem = ({
             >
               <View style={s.quoteContent}>
                 <Text style={[s.quoteNick, { color: theme.textSecondary }]}>
-                  @
                   {reply.parentReply.isDeleted
                     ? "silinmiş"
-                    : reply.parentReply.user.nickname.toLowerCase()}
+                    : reply.parentReply.user.nickname}
                 </Text>
                 <Text
                   style={[s.quoteText, { color: theme.textSecondary }]}
@@ -134,7 +142,6 @@ export const ReplyItem = ({
             </TouchableOpacity>
           )}
 
-          {/* YANIT METNİ - Sınırlama ve Açılma Mantığı */}
           <Pressable onPress={() => isTruncated && toggleExpanded()}>
             <Text
               style={[s.replyText, { color: theme.textPrimary }]}
@@ -152,8 +159,8 @@ export const ReplyItem = ({
 
           {isTruncated && (
             <TouchableOpacity onPress={toggleExpanded} style={s.moreBtn}>
-              <Text style={[s.moreBtnText, { color: theme.accent }]}>
-                {expanded ? "DAHA AZ GÖSTER" : "DEVAMINI GÖR"}
+              <Text style={[s.moreBtnText, { color: cardTheme.actions }]}>
+                {expanded ? "KÜÇÜLT" : "OKUMAYA DEVAM ET"}
               </Text>
             </TouchableOpacity>
           )}
@@ -161,76 +168,54 @@ export const ReplyItem = ({
           <View style={s.footer}>
             {/* BEĞEN BUTONU */}
             <TouchableOpacity
-              style={[
-                s.action,
-                {
-                  backgroundColor: isDarkMode
-                    ? "rgba(255,255,255,0.05)"
-                    : "#F1F5F9",
-                },
-                reply.viewerHasLiked && {
-                  backgroundColor: isDarkMode
-                    ? "rgba(16,185,129,0.15)"
-                    : "#ECFDF5",
-                },
-              ]}
+              style={[s.action, { backgroundColor: cardTheme.buttonBg }]}
               activeOpacity={0.7}
               onPress={toggleLike}
             >
-              {reply.viewerHasLiked ? (
-                <LikeİconFill color="#10B981" size={12} />
-              ) : (
-                <CommentLikeIcon color={theme.textSecondary} size={12} />
-              )}
+              <CommentLikeIcon
+                isLiked={reply.viewerHasLiked}
+                color={
+                  reply.viewerHasLiked ? cardTheme.likeColor : cardTheme.actions
+                }
+                size={15}
+              />
               <Text
                 style={[
                   s.actionText,
                   {
                     color: reply.viewerHasLiked
-                      ? "#10B981"
-                      : theme.textSecondary,
+                      ? cardTheme.likeColor
+                      : cardTheme.actions,
                   },
                 ]}
               >
-                {reply.likeCount === 0 ? "BEĞEN" : reply.likeCount}
+                {reply.likeCount > 0 ? reply.likeCount : "BEĞEN"}
               </Text>
             </TouchableOpacity>
 
             {/* YANITLA BUTONU */}
             <TouchableOpacity
-              style={[
-                s.action,
-                {
-                  backgroundColor: isDarkMode
-                    ? "rgba(255,255,255,0.05)"
-                    : "#F1F5F9",
-                },
-              ]}
+              style={[s.action, { backgroundColor: cardTheme.buttonBg }]}
               activeOpacity={0.7}
               onPress={() => openReplySheet(reply)}
             >
-              <ReplyIcon color={theme.textSecondary} size={11} />
-              <Text style={[s.actionText, { color: theme.textSecondary }]}>
+              <ReplyIcon color={cardTheme.actions} size={15} />
+              <Text style={[s.actionText, { color: cardTheme.actions }]}>
                 YANITLA
               </Text>
             </TouchableOpacity>
 
-            {/* SİL BUTONU (Sadece kendi yanıtıysa) */}
+            {/* SİL BUTONU */}
             {onDelete && (
               <TouchableOpacity
-                style={[
-                  s.action,
-                  {
-                    backgroundColor: isDarkMode
-                      ? "rgba(239,68,68,0.1)"
-                      : "#FEF2F2",
-                  },
-                ]}
+                style={[s.action, { backgroundColor: cardTheme.deleteBg }]}
                 activeOpacity={0.7}
                 onPress={handleDelete}
               >
-                <TrashIcon color="#EF4444" size={12} />
-                <Text style={[s.actionText, { color: "#EF4444" }]}>SİL</Text>
+                <TrashIcon color={cardTheme.deleteText} size={14} />
+                <Text style={[s.actionText, { color: cardTheme.deleteText }]}>
+                  SİL
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -252,7 +237,7 @@ const s = StyleSheet.create({
   card: { paddingHorizontal: 12, paddingTop: 16 },
   row: { flexDirection: "row", gap: 12 },
   leftCol: { alignItems: "center" },
-  avatar: { width: 32, height: 32, borderRadius: 10 },
+  avatar: { width: 32, height: 32, borderRadius: 14 },
   content: { flex: 1, gap: 8, paddingBottom: 16 },
   header: { flexDirection: "row", alignItems: "center", gap: 6 },
   nickname: { fontSize: 13, fontFamily: "Mont-700" },
@@ -286,19 +271,29 @@ const s = StyleSheet.create({
   },
   moreBtnText: {
     fontSize: 9,
-    fontFamily: "Mont-800",
-    letterSpacing: 0.5,
+    fontFamily: "Mont-700",
+    letterSpacing: 0.2,
     textTransform: "uppercase",
   },
-  footer: { flexDirection: "row", gap: 8, marginTop: 4 },
+  footer: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+    marginTop: 6,
+  },
   action: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
+    gap: 6,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 8,
     borderRadius: 12,
   },
-  actionText: { fontSize: 9, fontFamily: "Mont-800", letterSpacing: 0.3 },
+  actionText: {
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    letterSpacing: 0.3,
+    textTransform: "uppercase",
+  },
   separator: { height: 1, marginLeft: 44, marginTop: 4 },
 });

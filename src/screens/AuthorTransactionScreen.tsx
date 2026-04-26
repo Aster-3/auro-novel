@@ -7,7 +7,6 @@ import { useAuthorTransactionsQuery } from "@/hooks/useAuthorTransactionsQuery";
 import { AuthorTransactionType } from "@/types/author";
 import { useState } from "react";
 import { ScrollView, View } from "react-native";
-import { fi } from "zod/v4/locales";
 
 const AuthorTransactionScreen = () => {
   const [filter, setFilter] = useState<AuthorTransactionType | null>(null);

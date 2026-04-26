@@ -22,12 +22,12 @@ export function TabBar({ state, navigation }: any) {
         {state.routes.map((route: any, index: number) => {
           const isFocused = state.index === index;
 
-          // Renkleri temadan alıyoruz
           const color = isFocused ? theme.textPrimary : theme.textSecondary;
           const IconComponent = TAB_ICONS[route.name] || DefaultIcon;
+          const isChat = route.name === "Chat";
 
           const onPress = () => {
-            if (!isFocused) {
+            if (!isFocused && !isChat) {
               navigation.navigate(route.name);
             }
           };

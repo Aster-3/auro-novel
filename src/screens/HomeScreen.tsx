@@ -66,7 +66,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchWrapper: {
-    paddingHorizontal: 16,
     paddingBottom: 12,
     paddingTop: 8,
     zIndex: 10, // Üstte kalmasını garantiye alalım

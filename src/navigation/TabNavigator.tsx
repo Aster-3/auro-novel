@@ -2,10 +2,10 @@ import { TabBar } from "./TabBar";
 
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import HomeScreen from "../screens/HomeScreen";
-import DiscoverScreen from "../screens/DiscoverScreen";
 import { ProfileStack } from "./ProfileStack";
 import NotificationScreen from "../screens/NotificationScreen";
 import LibraryScreen from "../screens/LibraryScreen";
+import ChatScreen from "@/screens/ChatScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -22,8 +22,13 @@ export const TabNavigator = () => {
       />
       <Tab.Screen
         name="Chat"
-        component={DiscoverScreen}
+        component={ChatScreen}
         options={{ headerShown: false }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+          },
+        }}
       />
       <Tab.Screen
         name="Profile"

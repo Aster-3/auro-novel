@@ -9,7 +9,7 @@ import {
   Animated,
 } from "react-native";
 import { useModalStore } from "@/store/useModalStore";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const GlobalConfirmModal = () => {
   const { isVisible, config, hideModal } = useModalStore();

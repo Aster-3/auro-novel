@@ -33,6 +33,7 @@ import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
 import { useAppTheme } from "@/hooks/useTheme";
+import { categories } from "@/constants/seed";
 
 const SECTIONS = [
   { key: "summary" },
@@ -100,8 +101,6 @@ const NovelScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={theme.statusbarStyle as any} />
-
       {/* Üst Kısım: Kapak ve Blur Efekti */}
       <View style={styles.headerWrapper}>
         <Image
@@ -123,7 +122,16 @@ const NovelScreen = () => {
         />
 
         <SafeAreaView edges={["top"]} style={styles.headerContainer}>
-          <NovelHeader />
+          <NovelHeader
+            novelData={{
+              id: data.id,
+              title: data.name,
+              author: data.author.nickname,
+              categories: data.categories,
+              synopsis: data.synopsis,
+              cover: data.coverImage,
+            }}
+          />
           <NovelMetaData
             name={data.name}
             author={data.author}
@@ -153,7 +161,7 @@ const NovelScreen = () => {
       </SafeAreaView>
 
       {/* Sabit Navigasyon Kartı (Okumaya Başla vb.) */}
-      <NovelNavCard />
+      <NovelNavCard novelId={id} />
 
       {/* Bölüm Listesi Sheet */}
       <ChapterSheet id={id} ref={bottomSheetRef} />

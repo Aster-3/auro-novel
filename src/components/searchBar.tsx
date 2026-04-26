@@ -1,5 +1,5 @@
 import { Text, TextInput, View, StyleSheet } from "react-native";
-import { SearchIcon } from "./icons/SearchIcon";
+import { SearchIcon2 } from "./icons/SearchIcon2"; // Tasarıma uyum için SearchIcon2
 import React, { useRef } from "react";
 import { useAppTheme } from "../hooks/useTheme";
 
@@ -13,33 +13,34 @@ export const SearchBar = ({
   const inputRef = useRef<TextInput>(null);
   const { theme, isDarkMode } = useAppTheme();
 
+  // Diğer bileşenlerle uyumlu arka plan rengi
+  const buttonBg = isDarkMode ? theme.surface : "#F1F5F9";
+
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: isDarkMode ? theme.surface : "#F0F4FF" },
-      ]}
-    >
+    <View style={styles.container}>
       <TextInput
         ref={inputRef}
         value={value}
         onChangeText={setValue}
-        style={[styles.input, { color: theme.textPrimary }]}
+        style={[
+          styles.input,
+          {
+            backgroundColor: buttonBg,
+            color: theme.textPrimary,
+            // İkonun üzerine yazı gelmemesi için sol boşluk
+            paddingLeft: 40,
+          },
+        ]}
+        placeholder="Search by Title"
+        placeholderTextColor={theme.textSecondary}
         autoFocus={true}
-        // Klavye tarafındaki belirteç rengini de temaya uydurduk
         selectionColor={theme.accent}
         keyboardAppearance={isDarkMode ? "dark" : "light"}
       />
 
-      <View style={styles.placeholderContainer} pointerEvents="none">
-        <SearchIcon color={theme.textSecondary} />
-        {value.length === 0 && (
-          <Text
-            style={[styles.placeholderText, { color: theme.textSecondary }]}
-          >
-            Search by Title
-          </Text>
-        )}
+      {/* Arama İkonu - Input'un üzerinde sabit durur */}
+      <View style={styles.iconContainer} pointerEvents="none">
+        <SearchIcon2 size={16} color={theme.textSecondary} />
       </View>
     </View>
   );
@@ -48,25 +49,21 @@ export const SearchBar = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    borderRadius: 999,
-    height: 40,
     position: "relative",
     justifyContent: "center",
   },
   input: {
     flex: 1,
-    fontSize: 14,
-    paddingHorizontal: 16,
-    paddingLeft: 42,
+    height: 44,
+    borderRadius: 99,
+    justifyContent: "center",
   },
-  placeholderContainer: {
+  iconContainer: {
     position: "absolute",
-    left: 16,
-    flexDirection: "row",
+    left: 12,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
     alignItems: "center",
-    gap: 8,
-  },
-  placeholderText: {
-    fontSize: 14,
   },
 });

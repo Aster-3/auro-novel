@@ -41,17 +41,19 @@ import { getChapterDetail } from "@/services/ChapterService";
 import { LockedContentOverlay } from "@/Features/ChapterReadScreen/LockContentOverlay";
 import { CoinType } from "@/types/wallet";
 import { usePurchaseChapter } from "@/hooks/usePurchaseChapter";
+import { useMutateReadStats } from "@/hooks/useMutateReadStats";
 
 interface RouteParams {
   params: {
     id: string;
+    chapterProgress?: number;
   };
 }
 
 export type SheetType = "SETTINGS" | "TOC" | "MORE" | null;
 
 const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
-  const { id } = route.params;
+  const { id, chapterProgress } = route.params;
   const [selectedId, setId] = useState(id);
   const { data: chapterData, isLoading } = useGetOneChapter(selectedId, true);
   const { mutate: purchaseChapter } = usePurchaseChapter(selectedId);
@@ -76,6 +78,9 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const queryClient = useQueryClient();
+  const { mutate: updateReadingStats } = useMutateReadStats(
+    chapterData?.novelId,
+  );
 
   const colors = useMemo(
     () => ({
@@ -115,6 +120,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
 
     setIsMenuVisible(false);
     bottomSheetRef.current?.close();
+    hasScrolledToInitialProgress.current = false;
   }, [id, contentOpacity, translateX]);
 
   useEffect(() => {
@@ -125,7 +131,6 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     }
   }, [isLoading, chapterData?.content, contentOpacity]);
 
-  // --- PREFETCH MANTIĞI ---
   useEffect(() => {
     const nextId = chapterData?.nextChapterId;
     if (nextId) {
@@ -142,7 +147,6 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const actualLineHeight =
     fontSize * (lineHeight === 3 ? 1.8 : lineHeight === 2 ? 1.5 : 1.2);
 
-  // --- ANIMASYON STİLLERİ ---
   const mainAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
     opacity: interpolate(
@@ -156,7 +160,6 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     opacity: contentOpacity.value,
   }));
 
-  // --- GESTURE TANIMLAMASI ---
   const composedGesture = useMemo(() => {
     const panGesture = Gesture.Pan()
       .activeOffsetX([-20, 20])
@@ -188,7 +191,6 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
           translateX.value = withTiming(0, { duration: 200 });
         }
       });
-    // .runOnJS(true) BURADAN KALDIRILDI -> Çünkü animasyonu bozuyor. Sadece onEnd içinde runOnJS kullanıldı.
 
     const tapGesture = Gesture.Tap()
       .numberOfTaps(1)
@@ -207,7 +209,8 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     toggleMenu,
   ]);
 
-  // RenderHtml çok ağır olduğu için prop'ları kesinlikle useMemo ile sarmalanmalı
+  const hasScrolledToInitialProgress = useRef(false);
+
   const tagsStyles: Record<string, MixedStyleDeclaration> = useMemo(
     () => ({
       p: {
@@ -238,6 +241,49 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const littleTitle = chapterData?.volumeTitle
     ? `${chapterData.volumeTitle}: ${chapterData.title}`
     : `Cilt ${chapterData?.volumeOrder}: ${chapterData?.title}`;
+
+  const startTimeRef = useRef<number>(0);
+  const scrollOffset = useRef<number>(0);
+  const contentHeight = useRef<number>(0);
+
+  useEffect(() => {
+    startTimeRef.current = Date.now();
+
+    return () => {
+      const endTime = Date.now();
+      const elapsedTime = Math.floor((endTime - startTimeRef.current) / 1000);
+
+      const currentProgress =
+        contentHeight.current > 0
+          ? Math.min(scrollOffset.current / contentHeight.current, 1)
+          : 0;
+
+      console.log("ChapterReadScreen Unmounted - Sync Stats:", {
+        id: chapterData?.id,
+        title: chapterData?.title,
+        elapsedTime,
+        progress: parseFloat(currentProgress.toFixed(2)),
+      });
+
+      if (elapsedTime > 15) {
+        updateReadingStats({
+          novelId: chapterData?.novelId!,
+          lastReadChapterId: chapterData?.id!,
+          lastChapterProgress: currentProgress,
+          incrementTime: elapsedTime,
+        });
+      }
+    };
+  }, [chapterData?.id]);
+
+  const handleScroll = (event: any) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+
+    scrollOffset.current = contentOffset.y;
+    contentHeight.current = contentSize.height - layoutMeasurement.height;
+  };
+
+  const windowHeight = useWindowDimensions().height;
 
   return (
     <Screen
@@ -274,6 +320,30 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                 ref={scrollViewRef}
                 scrollEnabled={chapterData?.isLocked ? false : true}
                 style={styles.scrollView}
+                onContentSizeChange={(w, h) => {
+                  if (
+                    chapterProgress &&
+                    !hasScrolledToInitialProgress.current &&
+                    h > 0
+                  ) {
+                    const scrollableHeight = h - windowHeight;
+
+                    const scrollToY = Math.max(
+                      0,
+                      scrollableHeight * chapterProgress + 30,
+                    );
+
+                    setTimeout(() => {
+                      scrollViewRef.current?.scrollTo({
+                        y: scrollToY,
+                        animated: false,
+                      });
+                      hasScrolledToInitialProgress.current = true;
+                    }, 100);
+                  }
+                  contentHeight.current = h;
+                }}
+                onScroll={handleScroll}
                 contentContainerStyle={{
                   flexGrow: 1,
                   paddingHorizontal: actualPadding,

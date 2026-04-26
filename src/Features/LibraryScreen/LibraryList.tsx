@@ -1,95 +1,174 @@
-import React from "react";
+import React, { useCallback, useDeferredValue, useMemo } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
-  Dimensions,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { Image } from "expo-image";
-import { useNovels } from "@/hooks/useNovels";
+import Animated, {
+  Easing,
+  LinearTransition,
+  FadeIn,
+  FadeOut,
+} from "react-native-reanimated";
 import { useAppTheme } from "@/hooks/useTheme";
-import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { LibrarySheetData } from "./CustomLibrarySheet";
+import { useMyLibrary } from "@/hooks/useMyLibrary";
+import { LibraryItem, LibrarySortOption } from "@/types/library";
+import { SkeletonBox } from "@/components/SkeletonBox";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
-
+const { width } = Dimensions.get("window");
 const NUM_COLUMNS = 3;
-const CONTAINER_PADDING = 20;
 const GAP = 12;
-const CARD_WIDTH =
-  (SCREEN_WIDTH - CONTAINER_PADDING * 2 - GAP * (NUM_COLUMNS - 1)) /
-  NUM_COLUMNS;
+const CARD_WIDTH = (width - GAP * (NUM_COLUMNS + 1)) / NUM_COLUMNS;
+
+const CARD_LAYOUT = LinearTransition.duration(250).easing(
+  Easing.out(Easing.cubic),
+);
+
+const FADE_IN = FadeIn.duration(220).easing(Easing.out(Easing.cubic));
+const FADE_OUT = FadeOut.duration(160).easing(Easing.in(Easing.cubic));
+
+const LibraryCard = React.memo(
+  ({
+    item,
+    onPress,
+    theme,
+  }: {
+    item: LibraryItem;
+    onPress: (data: LibrarySheetData) => void;
+    theme: any;
+  }) => (
+    <Animated.View
+      layout={CARD_LAYOUT}
+      entering={FADE_IN}
+      exiting={FADE_OUT}
+      style={[s.card, { width: CARD_WIDTH }]}
+    >
+      <TouchableOpacity
+        activeOpacity={0.8}
+        onPress={() =>
+          onPress({
+            id: item.novelId,
+            title: item.title,
+            coverImageUrl: item.coverImageUrl,
+            authorName: item.authorName,
+          })
+        }
+      >
+        <View style={[s.imageWrapper, { backgroundColor: theme.surface }]}>
+          <Image
+            source={{ uri: item.coverImageUrl }}
+            style={s.image}
+            contentFit="cover"
+            transition={200}
+          />
+        </View>
+        <Text
+          numberOfLines={2}
+          style={[s.nameText, { color: theme.textPrimary }]}
+        >
+          {item.title}
+        </Text>
+      </TouchableOpacity>
+    </Animated.View>
+  ),
+  (prev, next) => prev.item.novelId === next.item.novelId,
+);
+
+const AnimatedFlatList = Animated.createAnimatedComponent(
+  require("react-native").FlatList,
+) as any;
 
 export const LibraryList = ({
+  searchText,
+  orderType,
   openLibrarySheet,
 }: {
+  searchText: string | null;
+  orderType: LibrarySortOption;
   openLibrarySheet: (data: LibrarySheetData) => void;
 }) => {
-  const { data: novels, isLoading, error } = useNovels();
-  const { theme } = useAppTheme();
+  const { data: libraryNovels, isLoading, error } = useMyLibrary(orderType);
+  const { theme, isDarkMode } = useAppTheme();
+  const [debouncedQuery, setDebouncedQuery] = React.useState(searchText);
 
-  if (isLoading) {
-    return (
-      <View style={s.center}>
-        <Text style={{ color: theme.textSecondary }}>Yükleniyor...</Text>
-      </View>
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedQuery(searchText);
+    }, 150);
+
+    return () => clearTimeout(handler);
+  }, [searchText]);
+
+  const filteredData = useMemo(() => {
+    const allItems = libraryNovels?.items || [];
+    if (!debouncedQuery || debouncedQuery.trim() === "") return allItems;
+
+    const query = debouncedQuery.toLowerCase().trim();
+    return allItems.filter((item: any) =>
+      item.title.toLowerCase().includes(query),
     );
-  }
+  }, [debouncedQuery, libraryNovels?.items]);
 
-  if (error) {
+  const renderItem = useCallback(
+    ({ item }: { item: LibraryItem }) => (
+      <LibraryCard item={item} theme={theme} onPress={openLibrarySheet} />
+    ),
+    [theme, openLibrarySheet],
+  );
+
+  if (isLoading && !libraryNovels) {
     return (
-      <View style={s.center}>
-        <Text style={{ color: "#E11D48" }}>{error.message}</Text>
+      <View style={s.listContent}>
+        <View style={s.skeletonRow}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <View key={i} style={[s.card, { width: CARD_WIDTH }]}>
+              <SkeletonBox
+                width="100%"
+                style={{
+                  aspectRatio: 2 / 3,
+                  borderRadius: 16,
+                  backgroundColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "#F1F5F9",
+                }}
+              />
+            </View>
+          ))}
+        </View>
       </View>
     );
   }
 
   return (
-    <FlatList
-      data={novels?.items || []}
-      keyExtractor={(item) => item.id.toString()}
+    <AnimatedFlatList
+      data={filteredData}
+      keyExtractor={(item: LibraryItem) => item.novelId}
       numColumns={NUM_COLUMNS}
-      showsVerticalScrollIndicator={false}
+      itemLayoutAnimation={CARD_LAYOUT} // ← tüm liste için layout animasyonu
       contentContainerStyle={s.listContent}
       columnWrapperStyle={s.columnWrapper}
-      renderItem={({ item }) => (
-        <TouchableOpacity
-          activeOpacity={0.7}
-          style={[s.card, { width: CARD_WIDTH }]}
-          onPress={() =>
-            openLibrarySheet({
-              id: item.id,
-              title: item.name,
-              coverImageUrl: item.coverImage,
-            })
-          }
-        >
-          <View style={[s.imageWrapper, { backgroundColor: theme.surface }]}>
-            <Image
-              source={{ uri: item.coverImage }}
-              style={s.image}
-              contentFit="cover"
-              transition={300}
-            />
+      showsVerticalScrollIndicator={false}
+      renderItem={renderItem}
+      ListEmptyComponent={
+        searchText ? (
+          <View style={s.center}>
+            <Text style={{ color: theme.textSecondary }}>
+              Sonuç bulunamadı.
+            </Text>
           </View>
-          <Text
-            numberOfLines={2}
-            style={[s.nameText, { color: theme.textPrimary }]}
-          >
-            {item.name}
-          </Text>
-        </TouchableOpacity>
-      )}
-    /> // FlatList burada doğru şekilde kapatıldı
+        ) : null
+      }
+    />
   );
-}; // Fonksiyon bloğu burada doğru şekilde kapatıldı
+};
 
 const s = StyleSheet.create({
   listContent: {
-    paddingTop: 24,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   columnWrapper: {
     justifyContent: "flex-start",
@@ -97,14 +176,14 @@ const s = StyleSheet.create({
   },
   card: {
     marginBottom: 20,
-    gap: 8,
-    alignItems: "center",
   },
   imageWrapper: {
     width: "100%",
     aspectRatio: 2 / 3,
-    borderRadius: 12,
+    borderRadius: 16,
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.05)",
   },
   image: {
     width: "100%",
@@ -112,15 +191,19 @@ const s = StyleSheet.create({
   },
   nameText: {
     fontFamily: "Mont-600",
-    fontSize: 12,
-    lineHeight: 16,
+    fontSize: 11,
+    lineHeight: 14,
     textAlign: "center",
-    letterSpacing: -0.4,
-    paddingHorizontal: 2,
+    marginTop: 8,
   },
   center: {
     flex: 1,
-    justifyContent: "center",
+    paddingTop: 50,
     alignItems: "center",
+  },
+  skeletonRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: GAP,
   },
 });

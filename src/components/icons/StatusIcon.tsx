@@ -13,7 +13,7 @@ export const StatusIcon = ({
         d="M10.5 6a4.5 4.5 0 11-1-2.829"
         stroke={color}
         strokeOpacity={1}
-        strokeWidth={1.92}
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
     </G>

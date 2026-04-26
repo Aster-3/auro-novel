@@ -85,7 +85,7 @@ const ReplyScreen = () => {
   }
 
   return (
-    <Screen style={{ paddingHorizontal: 12, gap: 16 }}>
+    <Screen style={{ paddingHorizontal: 12 }}>
       <Header title={`Yanıtlar (${data?.total || 0})`} isAdjacent={false} />
 
       <FlatList

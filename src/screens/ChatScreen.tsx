@@ -3,12 +3,12 @@ import { Screen } from "../components/layout/Screen";
 import { FakeSearchBar } from "../components/fakeSearchBar";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
-const DiscoverScreen = () => {
+const ChatScreen = () => {
   const navigation = useAppNavigation();
   return (
     <Screen>
       <FakeSearchBar />
-      <Text>Placeholder for DiscoverScreen</Text>
+      <Text>Placeholder for ChatScreen</Text>
       <TouchableOpacity
         onPress={() => {
           navigation.navigate("Settings");
@@ -19,4 +19,4 @@ const DiscoverScreen = () => {
     </Screen>
   );
 };
-export default DiscoverScreen;
+export default ChatScreen;

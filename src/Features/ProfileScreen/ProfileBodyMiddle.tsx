@@ -7,6 +7,7 @@ import { BeAuthorIcon } from "@/components/icons/BeAuthorIcon";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useToastStore } from "@/store/useToastStore";
 
 const iconMap = {
   app_theme: ThemeIcon,
@@ -16,17 +17,24 @@ const iconMap = {
 };
 
 const options = [
-  { id: "app_theme", label: "Uygulama Teması", screen: "AppTheme" },
-  { id: "reedem_code", label: "Kupon Kodu Kullan" },
+  {
+    id: "app_theme",
+    label: "Uygulama Teması",
+    screen: "AppTheme",
+    isLocked: false,
+  },
+  { id: "reedem_code", label: "Kupon Kodu Kullan", isLocked: true },
   {
     id: "notification_options",
     label: "Bildirim Ayarları",
     screen: "NotificationSettings",
+    isLocked: true,
   },
   {
     id: "want_to_be_author",
     label: "Yazar Paneli",
     screen: "AuthorPanelScreen",
+    isLocked: true,
   },
 ];
 
@@ -36,10 +44,10 @@ export const ProfileBodyMiddle = () => {
   const { theme, isDarkMode } = useAppTheme(); // Renkleri aldık
 
   const handlePress = (option: any) => {
-    if (option.id === "reedem_code") return;
-
-    if (!isLoggedIn) {
-      Alert.alert("Uyarı", "Bu sayfaya girmek için giriş yapmalısınız.");
+    if (!isLoggedIn && option.isLocked) {
+      useToastStore
+        .getState()
+        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
       return;
     }
 
@@ -78,10 +86,7 @@ export const ProfileBodyMiddle = () => {
               onPress={() => handlePress(option)}
             >
               {IconComponent && (
-                <IconComponent
-                  color={theme.textPrimary} // Statik lacivert yerine dinamik renk
-                  size={18}
-                />
+                <IconComponent color={theme.textPrimary} size={18} />
               )}
               <Text style={[styles.text, { color: theme.textPrimary }]}>
                 {option.label}

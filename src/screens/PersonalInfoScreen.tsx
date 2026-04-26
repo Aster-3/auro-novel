@@ -15,7 +15,6 @@ import { Feather } from "@expo/vector-icons";
 import { Screen } from "@/components/layout/Screen";
 import { UserRegisterIcon } from "@/components/icons/UserRegisterIcon";
 import { LoadingDots } from "@/components/LoadingDots";
-import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { useUpdateProfileMutation } from "@/hooks/useUpdateProfileMutation";
 import { useMeQuery } from "@/hooks/useMeQuery";
 import * as ImagePicker from "expo-image-picker";
@@ -405,7 +404,7 @@ const styles = StyleSheet.create({
   avatarCircle: {
     width: 104,
     height: 104,
-    borderRadius: 52,
+    borderRadius: 44,
     borderWidth: 4,
     alignItems: "center",
     justifyContent: "center",

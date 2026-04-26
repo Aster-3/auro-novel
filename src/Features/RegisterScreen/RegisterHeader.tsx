@@ -1,5 +1,6 @@
 import { BackArrowIcon } from "@/components/icons/BackArrowIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme";
 import React, { useEffect } from "react";
 import {
   Text,
@@ -20,6 +21,16 @@ import Animated, {
 export const RegisterHeader = () => {
   const navigation = useAppNavigation();
   const keyboardProgress = useSharedValue(0);
+
+  const { isDarkMode } = useAppTheme();
+
+  // Temaya göre dinamik renkler
+  const colors = {
+    text: isDarkMode ? "#F9FAFB" : "#111827",
+    subtitle: isDarkMode ? "#9CA3AF" : "#6B7280",
+    divider: isDarkMode ? "#FFFFFF" : "#000000",
+    background: isDarkMode ? "#111827" : "transparent", // Header arka planı gerekirse
+  };
 
   useEffect(() => {
     const showEvent =
@@ -67,27 +78,23 @@ export const RegisterHeader = () => {
   return (
     <View style={styles.headerContainer}>
       <TouchableOpacity
-        onPress={() => {
-          navigation.goBack();
-        }}
+        onPress={() => navigation.goBack()}
         style={styles.backButton}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <View
-          style={{
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
-          <BackArrowIcon color="#111827" size={28} />
+        <View style={styles.iconContainer}>
+          {/* İkon rengi temaya göre değişiyor */}
+          <BackArrowIcon color={colors.text} size={28} />
         </View>
       </TouchableOpacity>
 
       <View style={styles.textWrapper}>
-        <Text style={styles.title}>Hoş Geldiniz</Text>
-        <View style={styles.divider} />
+        <Text style={[styles.title, { color: colors.text }]}>Hoş Geldiniz</Text>
+
+        <View style={[styles.divider, { backgroundColor: colors.divider }]} />
+
         <Animated.View style={animatedStyle}>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.subtitle, { color: colors.subtitle }]}>
             {`“Bölüm kilitlerini açmak, yazarları desteklemek ve kendi hikâyelerini yayınlamak için bir hesap oluştur.”`}
           </Text>
         </Animated.View>
@@ -108,6 +115,10 @@ const styles = StyleSheet.create({
     height: 40,
     justifyContent: "center",
   },
+  iconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
   textWrapper: {
     paddingLeft: 0,
   },
@@ -115,13 +126,11 @@ const styles = StyleSheet.create({
     fontFamily: "Mont-600",
     fontSize: 32,
     fontWeight: "800",
-    color: "#111827",
     letterSpacing: -1,
   },
   divider: {
     width: 30,
     height: 3,
-    backgroundColor: "#000",
     borderRadius: 2,
     marginTop: 8,
     marginBottom: 16,
@@ -129,7 +138,6 @@ const styles = StyleSheet.create({
   subtitle: {
     fontFamily: "Mont-500",
     fontSize: 14,
-    color: "#6B7280",
     lineHeight: 24,
     fontWeight: "400",
   },

@@ -35,6 +35,7 @@ export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
 const s = StyleSheet.create({
   container: {
     paddingVertical: 4,
+    paddingBottom: 12,
   },
   scroll: {
     gap: 16,

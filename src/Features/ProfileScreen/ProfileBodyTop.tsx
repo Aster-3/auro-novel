@@ -10,6 +10,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useNavigation } from "@react-navigation/native";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useQueryClient } from "@tanstack/react-query";
+import { useToastStore } from "@/store/useToastStore";
 
 const iconMap = {
   personal_info: UserIcon,
@@ -19,41 +21,10 @@ const iconMap = {
   logout: LogoutIcon,
 };
 
-const options = [
-  { id: "personal_info", label: "Kişisel Bilgiler", screen: "PersonalInfo" },
-  {
-    id: "privacy_security",
-    label: "Gizlilik ve Güvenlik",
-    screen: "PrivacySecurity",
-  },
-  {
-    id: "purchases_history",
-    label: "Satın Alımlar ve Geçmiş",
-    screen: "PurchaseHistory",
-  },
-  {
-    id: "downloaded_chapters",
-    label: "İndirilen Bölümler",
-    screen: "DownloadedChapters",
-  },
-  {
-    id: "logout",
-    label: "Çıkış Yap",
-    callback: () =>
-      useModalStore.getState().showConfirm({
-        title: "Çıkış Yap",
-        message: "Hesabınızdan çıkış yapmak istediğinize emin misiniz?",
-        onConfirm: () => {
-          TokenStorage.clearTokens();
-          useAuthStore.getState().logout();
-        },
-      }),
-  },
-];
-
 export const ProfileBodyTop = () => {
   const isLoggedIn = !!useAuthStore((state) => state.user);
   const navigation = useNavigation<any>();
+  const queryClient = useQueryClient();
   const { theme, isDarkMode } = useAppTheme();
 
   const handlePress = (option: any) => {
@@ -63,7 +34,9 @@ export const ProfileBodyTop = () => {
     }
 
     if (!isLoggedIn) {
-      Alert.alert("Uyarı", "Bu sayfaya girmek için giriş yapmalısınız.");
+      useToastStore
+        .getState()
+        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
       return;
     }
 
@@ -71,6 +44,39 @@ export const ProfileBodyTop = () => {
       navigation.navigate(option.screen);
     }
   };
+
+  const options = [
+    { id: "personal_info", label: "Kişisel Bilgiler", screen: "PersonalInfo" },
+    // {
+    //   id: "privacy_security",
+    //   label: "Gizlilik ve Güvenlik",
+    //   screen: "PrivacySecurity",
+    // },
+    // {
+    //   id: "purchases_history",
+    //   label: "Satın Alımlar ve Geçmiş",
+    //   screen: "PurchaseHistory",
+    // },
+    {
+      id: "downloaded_chapters",
+      label: "İndirilen Bölümler",
+      screen: "DownloadedChapters",
+    },
+    {
+      id: "logout",
+      label: "Çıkış Yap",
+      callback: () =>
+        useModalStore.getState().showConfirm({
+          title: "Çıkış Yap",
+          message: "Hesabınızdan çıkış yapmak istediğinize emin misiniz?",
+          onConfirm: () => {
+            TokenStorage.clearTokens();
+            useAuthStore.getState().logout();
+            queryClient.clear();
+          },
+        }),
+    },
+  ];
 
   return (
     <View style={styles.wrapper}>

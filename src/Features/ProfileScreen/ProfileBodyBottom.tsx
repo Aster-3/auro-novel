@@ -4,6 +4,7 @@ import { SupportIcon } from "@/components/icons/SupportIcon";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useToastStore } from "@/store/useToastStore";
 
 const iconMap = {
   support_and_feedback: SupportIcon,
@@ -24,7 +25,9 @@ export const ProfileBodyBottom = () => {
 
   const handlePress = (option: any) => {
     if (!isLoggedIn) {
-      Alert.alert("Uyarı", "Bu sayfaya girmek için giriş yapmalısınız.");
+      useToastStore
+        .getState()
+        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
       return;
     }
 

@@ -40,7 +40,7 @@ const styles = StyleSheet.create({
   outerContainer: {
     width: 34,
     height: 34,
-    borderRadius: 17,
+    borderRadius: 15,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 1.5,
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
   innerWrapper: {
     width: 28,
     height: 28,
-    borderRadius: 14,
+    borderRadius: 12,
     overflow: "hidden",
   },
   img: {

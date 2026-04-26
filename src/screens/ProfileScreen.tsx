@@ -23,7 +23,10 @@ const ProfileScreen = () => {
   return (
     <Screen
       backgroundColor={theme.background}
-      style={{ gap: 16, paddingTop: 20 }}
+      style={{
+        gap: 16,
+        paddingTop: 20,
+      }}
     >
       <ProfileHeader openLoginSheet={openLoginSheet} />
       <ScrollView

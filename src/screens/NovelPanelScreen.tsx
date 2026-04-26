@@ -24,14 +24,6 @@ const NovelPanelScreen = () => {
       style={{ flex: 1, paddingHorizontal: 16 }}
     >
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        {/* <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-          <TouchableOpacity onPress={() => navigation.goBack()}>
-            <BackArrowIcon size={22} color={theme.textPrimary} />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>
-            Roman Paneli
-          </Text>
-        </View> */}
         <Header title="Roman Paneli" isAdjacent={true} />
 
         <TouchableOpacity

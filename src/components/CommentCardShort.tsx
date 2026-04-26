@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 32, // Biraz daha belirgin yaptık (Full kartta 38'di)
     height: 32,
-    borderRadius: 12, // Squircle estetiği devam
+    borderRadius: 14, // Squircle estetiği devam
   },
   meta: {
     gap: 0,

@@ -4,7 +4,7 @@ import { MailIcon } from "@/components/icons/MailIcon";
 import { PasswordIcon } from "@/components/icons/PasswordIcon";
 import { UserRegisterIcon } from "@/components/icons/UserRegisterIcon";
 import { registerSchema, RegisterSchemaType } from "@/schemas/auth";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Text,
   TextInput,
@@ -25,9 +25,10 @@ import Animated, {
 } from "react-native-reanimated";
 import { useRegisterMutation } from "@/hooks/useRegisterMutation";
 import { globalNavigate } from "@/navigation/globalNavigate";
-import { useEffect } from "react";
+import { useAppTheme } from "@/hooks/useTheme"; // Kendi hook'un
 
 const Dot = ({ delay }: { delay: number }) => {
+  const { theme } = useAppTheme();
   const translateY = useSharedValue(0);
 
   useEffect(() => {
@@ -41,13 +42,21 @@ const Dot = ({ delay }: { delay: number }) => {
         -1,
       ),
     );
-  }, []);
+  }, [delay, translateY]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  return <Animated.View style={[styles.dot, animatedStyle]} />;
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        { backgroundColor: theme.background }, // Nokta rengi buton metniyle aynı (zıt renk)
+        animatedStyle,
+      ]}
+    />
+  );
 };
 
 const LoadingDots = () => {
@@ -61,7 +70,8 @@ const LoadingDots = () => {
 };
 
 export const RegisterForm = () => {
-  const { mutate, isPending, error } = useRegisterMutation();
+  const { theme } = useAppTheme();
+  const { mutate, isPending } = useRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [isFakeLoading, setIsFakeLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -81,7 +91,6 @@ export const RegisterForm = () => {
 
     if (!result.success) {
       const formattedErrors = result.error.flatten().fieldErrors;
-      console.log("Validation Failed From Zod:", formattedErrors);
       setErrors(formattedErrors);
     } else {
       setIsFakeLoading(true);
@@ -97,8 +106,6 @@ export const RegisterForm = () => {
           },
         });
       }, 1000);
-
-      console.log("Kayıt verileri geçerli:", result.data);
     }
   };
 
@@ -112,26 +119,27 @@ export const RegisterForm = () => {
     }
   };
 
-  const getBorderColor = (error?: string[]) => {
-    return error ? "#EF4444" : "transparent";
-  };
-
   const getIconColor = (error?: string[]) => {
-    return error ? "#EF4444" : "#1C274C";
+    return error ? "#EF4444" : theme.textPrimary;
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.inputs}>
+        {/* Kullanıcı Adı */}
         <View>
           <View
-            style={[styles.inputWrapper, errors.username && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.backgroundSecondary },
+              errors.username && styles.inputError,
+            ]}
           >
             <UserRegisterIcon color={getIconColor(errors.username)} />
             <TextInput
               placeholder="Kullanıcı adı"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               autoCapitalize="none"
               onChangeText={(val) => {
                 setFormData({ ...formData, username: val });
@@ -150,15 +158,20 @@ export const RegisterForm = () => {
           )}
         </View>
 
+        {/* Takma İsim */}
         <View>
           <View
-            style={[styles.inputWrapper, errors.nickname && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.backgroundSecondary },
+              errors.nickname && styles.inputError,
+            ]}
           >
             <UserRegisterIcon color={getIconColor(errors.nickname)} />
             <TextInput
               placeholder="Takma İsim"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               onChangeText={(val) => {
                 setFormData({ ...formData, nickname: val });
                 clearError("nickname");
@@ -176,15 +189,20 @@ export const RegisterForm = () => {
           )}
         </View>
 
+        {/* E-posta */}
         <View>
           <View
-            style={[styles.inputWrapper, errors.email && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.backgroundSecondary },
+              errors.email && styles.inputError,
+            ]}
           >
             <MailIcon color={getIconColor(errors.email)} />
             <TextInput
               placeholder="E-posta adresi"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               keyboardType="email-address"
               autoCapitalize="none"
               onChangeText={(val) => {
@@ -204,15 +222,20 @@ export const RegisterForm = () => {
           )}
         </View>
 
+        {/* Şifre */}
         <View>
           <View
-            style={[styles.inputWrapper, errors.password && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              { backgroundColor: theme.backgroundSecondary },
+              errors.password && styles.inputError,
+            ]}
           >
             <PasswordIcon color={getIconColor(errors.password)} />
             <TextInput
               placeholder="Şifre"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               secureTextEntry={!showPassword}
               onChangeText={(val) => {
                 setFormData({ ...formData, password: val });
@@ -223,7 +246,11 @@ export const RegisterForm = () => {
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
-              {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
+              {showPassword ? (
+                <EyeOpenIcon color={theme.textSecondary} />
+              ) : (
+                <EyeClosedIcon color={theme.textSecondary} />
+              )}
             </TouchableOpacity>
           </View>
           {errors.password && (
@@ -242,6 +269,7 @@ export const RegisterForm = () => {
         <TouchableOpacity
           style={[
             styles.button,
+            { backgroundColor: theme.textPrimary }, // Buton zıt renk
             (isPending || isFakeLoading) && styles.buttonDisabled,
           ]}
           onPress={handleRegister}
@@ -250,18 +278,24 @@ export const RegisterForm = () => {
           {isPending || isFakeLoading ? (
             <LoadingDots />
           ) : (
-            <Text style={styles.buttonText}>Kayıt Ol</Text>
+            <Text style={[styles.buttonText, { color: theme.background }]}>
+              Kayıt Ol
+            </Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Zaten bir hesabın var mı?</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+            Zaten bir hesabın var mı?
+          </Text>
           <TouchableOpacity
             onPress={() =>
               globalNavigate("VerifyUser", { email: formData.email })
             }
           >
-            <Text style={styles.signUp}>Giriş Yap</Text>
+            <Text style={[styles.signUp, { color: theme.textPrimary }]}>
+              Giriş Yap
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -271,19 +305,7 @@ export const RegisterForm = () => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
-  },
-
-  title: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#000",
-    letterSpacing: -0.6,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: "#8E8E93",
-    marginTop: 6,
+    flex: 1,
   },
   inputs: {
     gap: 16,
@@ -291,7 +313,6 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 47,
@@ -300,7 +321,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#000",
   },
   eyeButton: {
     padding: 8,
@@ -311,18 +331,16 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 54,
-    backgroundColor: "#000",
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
+    elevation: 2,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    elevation: 2,
   },
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -333,18 +351,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   footerText: {
-    color: "#8E8E93",
     fontSize: 14,
   },
   signUp: {
-    color: "#000",
     fontWeight: "600",
     fontSize: 14,
   },
   inputError: {
     borderWidth: 1,
     borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
   },
   errorText: {
     color: "#EF4444",
@@ -361,12 +376,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     height: 20,
-    marginTop: 6,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#FFF",
   },
 });

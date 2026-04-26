@@ -1,14 +1,14 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Text,
   TouchableOpacity,
   View,
   StyleSheet,
   Pressable,
+  Platform,
 } from "react-native";
 import { Image } from "expo-image";
 import { RecommendIcon } from "@/components/icons/RecommendIcon";
-import { NotRecommendIcon } from "@/components/icons/NotRecommendIcon";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
@@ -30,156 +30,151 @@ export const ReplyParent = React.memo(
 
     const theme = useMemo(
       () => ({
-        surface: isDarkMode ? "#1B2838" : "#FFFFFF",
-        pageBg: isDarkMode ? "#0F1724" : "#F8FAFC", // Deliklerin iç rengi
-        border: isDarkMode ? "rgba(255, 255, 255, 0.08)" : "#E9EEF4",
-        title: isDarkMode ? "#F0F5FF" : "#1B2838",
-        text: isDarkMode ? "#CBD5E1" : "#475569",
-        subText: isDarkMode
-          ? "rgba(148, 163, 184, 0.5)"
-          : "rgba(100, 116, 139, 0.5)",
-        badge: {
-          pos: {
-            bg: isDarkMode ? "rgba(16, 185, 129, 0.15)" : "#DCFCE7",
-            text: "#10B981",
-          },
-          neg: {
-            bg: isDarkMode ? "rgba(239, 68, 68, 0.15)" : "#FEE2E2",
-            text: "#EF4444",
-          },
+        textPrimary: isDarkMode ? "#F1F5F9" : "#0F172A",
+        textSecondary: isDarkMode ? "#94A3B8" : "#64748B",
+        border: isDarkMode ? "rgba(255,255,255,0.06)" : "#F1F5F9",
+        recommend: {
+          posAccent: "#10B981",
+          posBg: isDarkMode
+            ? "rgba(16, 185, 129, 0.1)"
+            : "rgba(16, 185, 129, 0.08)",
+          negAccent: "#F43F5E",
+          negBg: isDarkMode
+            ? "rgba(244, 63, 94, 0.1)"
+            : "rgba(244, 63, 94, 0.07)",
         },
       }),
       [isDarkMode],
     );
 
-    const ticketCode = `#${String(comment.id).slice(-6).toUpperCase()}`;
-
     return (
       <View style={s.wrapper}>
-        <View style={[s.container, { backgroundColor: theme.surface }]}>
-          {/* HEADER & BODY */}
-          <View style={s.mainSection}>
+        <View style={[s.container, { borderColor: theme.border }]}>
+          {/* Karakter Çizgisi */}
+          <View
+            style={[
+              s.sideLine,
+              {
+                backgroundColor: comment.isRecommend
+                  ? theme.recommend.posAccent
+                  : theme.recommend.negAccent,
+              },
+            ]}
+          />
+
+          <View style={s.main}>
+            {/* Üst Kısım: Kullanıcı ve Rozet */}
             <View style={s.header}>
               <Image
                 source={{ uri: comment.user.profileImageUrl }}
                 style={s.avatar}
+                contentFit="cover"
               />
               <View style={s.meta}>
-                <Text style={[s.userName, { color: theme.title }]}>
+                <Text style={[s.userName, { color: theme.textPrimary }]}>
                   {comment.user.nickname}
                 </Text>
-                <Text style={[s.date, { color: theme.subText }]}>
-                  {formatSmartDate(comment.createdAt)}
+                <Text style={[s.date, { color: theme.textSecondary }]}>
+                  {formatSmartDate(comment.createdAt).toUpperCase()}
                 </Text>
               </View>
+
+              {/* CommentCardFull Stili Rozet */}
               <View
                 style={[
-                  s.badge,
+                  s.miniBadge,
                   {
                     backgroundColor: comment.isRecommend
-                      ? theme.badge.pos.bg
-                      : theme.badge.neg.bg,
+                      ? theme.recommend.posBg
+                      : theme.recommend.negBg,
+                    transform: [
+                      { rotate: comment.isRecommend ? "0deg" : "180deg" },
+                    ],
                   },
                 ]}
               >
-                {comment.isRecommend ? (
-                  <RecommendIcon color={theme.badge.pos.text} size={13} />
-                ) : (
-                  <NotRecommendIcon color={theme.badge.neg.text} size={13} />
-                )}
+                <RecommendIcon
+                  color={
+                    comment.isRecommend
+                      ? theme.recommend.posAccent
+                      : theme.recommend.negAccent
+                  }
+                  size={14}
+                />
               </View>
             </View>
 
-            <View style={[s.divider, { backgroundColor: theme.border }]} />
-
-            <Pressable onPress={() => isTruncated && setExpanded(!expanded)}>
+            {/* Orta Kısım: Küçük Fontlu İçerik */}
+            <Pressable
+              onPress={() => isTruncated && setExpanded(!expanded)}
+              style={s.content}
+            >
               <Text
-                style={[s.contentText, { color: theme.text }]}
-                numberOfLines={!expanded ? 4 : undefined}
-                onTextLayout={(e) =>
-                  !measured &&
-                  e.nativeEvent.lines.length > 4 &&
-                  setIsTruncated(true)
-                }
+                style={[s.contentText, { color: theme.textPrimary }]}
+                numberOfLines={!expanded ? 6 : undefined}
+                onTextLayout={(e) => {
+                  if (!measured) {
+                    if (e.nativeEvent.lines.length > 6) setIsTruncated(true);
+                    setMeasured(true);
+                  }
+                }}
               >
                 {comment.content}
               </Text>
+              {isTruncated && (
+                <Text style={[s.moreText, { color: theme.textSecondary }]}>
+                  {expanded ? "KÜÇÜLT" : "DEVAMINI OKU"}
+                </Text>
+              )}
             </Pressable>
 
-            {isTruncated && (
-              <Text style={[s.moreText, { color: theme.badge.pos.text }]}>
-                {expanded ? "DAHA AZ GÖSTER" : "OKUMAYA DEVAM ET"}
-              </Text>
-            )}
-          </View>
+            {/* Alt Kısım: Yan Yana İstatistikler ve Buton */}
+            <View style={[s.footer, { borderTopColor: theme.border }]}>
+              <View style={s.stats}>
+                <View style={s.statRow}>
+                  <Text style={[s.statNum, { color: theme.textPrimary }]}>
+                    {comment.likeCount}
+                  </Text>
+                  <Text style={[s.statLabel, { color: theme.textSecondary }]}>
+                    BEĞENİ
+                  </Text>
+                </View>
+                <View style={s.statRow}>
+                  <Text style={[s.statNum, { color: theme.textPrimary }]}>
+                    {comment.replyCount}
+                  </Text>
+                  <Text style={[s.statLabel, { color: theme.textSecondary }]}>
+                    YANIT
+                  </Text>
+                </View>
+              </View>
 
-          {/* PERFORATION (BILET DELIKLERI) */}
-          <View style={s.perforation}>
-            <View
-              style={[
-                s.notch,
-                s.leftNotch,
-                { backgroundColor: theme.pageBg, borderColor: theme.border },
-              ]}
-            />
-            <View style={s.dashRow}>
-              {Array.from({ length: 20 }).map((_, i) => (
-                <View
-                  key={i}
-                  style={[s.dash, { backgroundColor: theme.border }]}
+              <TouchableOpacity
+                style={[
+                  s.replyBtn,
+                  {
+                    backgroundColor: isDarkMode
+                      ? "rgba(255,255,255,0.03)"
+                      : "#F8FAFC",
+                  },
+                ]}
+                activeOpacity={0.8}
+                onPress={() => openReplySheet(null)}
+              >
+                <ReplyIcon
+                  color={isDarkMode ? "#F1F5F9" : "#64748B"}
+                  size={11}
                 />
-              ))}
+                <Text
+                  style={[
+                    s.replyBtnText,
+                    { color: isDarkMode ? "#F1F5F9" : "#64748B" },
+                  ]}
+                >
+                  YANITLA
+                </Text>
+              </TouchableOpacity>
             </View>
-            <View
-              style={[
-                s.notch,
-                s.rightNotch,
-                { backgroundColor: theme.pageBg, borderColor: theme.border },
-              ]}
-            />
-          </View>
-
-          {/* FOOTER (STUB) */}
-          <View style={s.stub}>
-            <View style={s.stat}>
-              <Text style={[s.statNum, { color: theme.title }]}>
-                {comment.likeCount}
-              </Text>
-              <Text style={[s.statLabel, { color: theme.subText }]}>
-                BEĞENİ
-              </Text>
-            </View>
-            <View style={[s.dot, { backgroundColor: theme.subText }]} />
-            <View style={s.stat}>
-              <Text style={[s.statNum, { color: theme.title }]}>
-                {comment.replyCount}
-              </Text>
-              <Text style={[s.statLabel, { color: theme.subText }]}>YANIT</Text>
-            </View>
-
-            <View style={{ flex: 1 }} />
-
-            <TouchableOpacity
-              style={[
-                s.replyBtn,
-                {
-                  backgroundColor: isDarkMode
-                    ? "rgba(255,255,255,0.05)"
-                    : "#F1F5F9",
-                },
-              ]}
-              onPress={() => openReplySheet(null)}
-            >
-              <ReplyIcon color={theme.subText} size={10} />
-              <Text style={[s.replyBtnText, { color: theme.subText }]}>
-                YANITLA
-              </Text>
-            </TouchableOpacity>
-
-            <View style={[s.stubDivider, { backgroundColor: theme.border }]} />
-            <Text style={[s.ticketCode, { color: theme.subText }]}>
-              {ticketCode}
-            </Text>
           </View>
         </View>
       </View>
@@ -187,77 +182,108 @@ export const ReplyParent = React.memo(
   },
 );
 
-const NOTCH_SIZE = 14;
 const s = StyleSheet.create({
-  wrapper: { marginHorizontal: 4, marginVertical: 8 },
-  container: { borderRadius: 16, overflow: "hidden" },
-  mainSection: { padding: 14, gap: 10 },
-  header: { flexDirection: "row", alignItems: "center" },
-  avatar: { width: 34, height: 34, borderRadius: 10, marginRight: 10 },
-  meta: { flex: 1 },
-  userName: { fontSize: 13, fontFamily: "Mont-700" },
-  date: {
-    fontSize: 9,
-    fontFamily: "Mont-600",
-    textTransform: "uppercase",
-    marginTop: 1,
+  wrapper: {
+    paddingVertical: 8,
   },
-  badge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
+  container: {
+    borderRadius: 16,
+    borderWidth: 1,
+    flexDirection: "row",
+    overflow: "hidden",
+    backgroundColor: "transparent",
+  },
+  sideLine: {
+    width: 3.5,
+    height: "100%",
+    opacity: 0.8,
+  },
+  main: {
+    flex: 1,
+    padding: 14,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 14,
+  },
+  meta: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  userName: {
+    fontSize: 13,
+    fontFamily: "Mont-700",
+    letterSpacing: -0.2,
+  },
+  date: {
+    fontSize: 8.5,
+    fontFamily: "Mont-800",
+    marginTop: 1,
+    opacity: 0.5,
+  },
+  miniBadge: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  divider: { height: 1, opacity: 0.6 },
-  contentText: { fontSize: 12, lineHeight: 19, fontFamily: "Mont-500" },
+  content: {
+    marginBottom: 16,
+  },
+  contentText: {
+    fontSize: 12, // Daha küçük font
+    lineHeight: 18,
+    fontFamily: "Mont-500",
+  },
   moreText: {
     fontSize: 9,
     fontFamily: "Mont-800",
-    marginTop: 4,
-    letterSpacing: 0.5,
+    marginTop: 6,
+    textTransform: "uppercase",
   },
-  perforation: {
+  footer: {
     flexDirection: "row",
     alignItems: "center",
-    height: NOTCH_SIZE,
-  },
-  notch: {
-    width: NOTCH_SIZE,
-    height: NOTCH_SIZE,
-    borderRadius: NOTCH_SIZE / 2,
-    borderWidth: 1,
-    position: "absolute",
-  },
-  leftNotch: { left: -(NOTCH_SIZE / 2) },
-  rightNotch: { right: -(NOTCH_SIZE / 2) },
-  dashRow: {
-    flex: 1,
-    flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 12,
+    paddingTop: 14,
+    borderTopWidth: 1,
   },
-  dash: { width: 3, height: 1, borderRadius: 1 },
-  stub: {
+  stats: {
     flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    gap: 8,
+    gap: 12,
   },
-  stat: { flexDirection: "row", alignItems: "baseline", gap: 3 },
-  statNum: { fontSize: 11, fontFamily: "Mont-700" },
-  statLabel: { fontSize: 8, fontFamily: "Mont-600" },
-  dot: { width: 2, height: 2, borderRadius: 1, opacity: 0.4 },
+  statRow: {
+    flexDirection: "row", // Sayı ve yazı yan yana
+    alignItems: "center",
+    gap: 4,
+  },
+  statNum: {
+    fontSize: 11,
+    fontFamily: "Mont-700",
+  },
+  statLabel: {
+    fontSize: 8,
+    fontFamily: "Mont-800",
+    opacity: 0.6,
+  },
   replyBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
-  replyBtnText: { fontSize: 9, fontFamily: "Mont-700" },
-  stubDivider: { width: 1, height: 10, marginHorizontal: 4 },
-  ticketCode: { fontSize: 8, fontFamily: "Mont-800", letterSpacing: 0.5 },
+  replyBtnText: {
+    fontSize: 9,
+    fontFamily: "Mont-800",
+    letterSpacing: 0.5,
+  },
 });

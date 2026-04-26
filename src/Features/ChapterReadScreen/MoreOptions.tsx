@@ -2,7 +2,7 @@ import React from "react";
 import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { useReaderStore } from "@/store/useReaderStore";
 import { ShareIcon } from "@/components/icons/ShareIcon";
-import { BookmarkIcon } from "@/components/icons/BookmarkIcon";
+// import { BookmarkIcon } from "@/components/icons/BookmarkIcon";
 import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
 import { AboutBookIcon } from "@/components/icons/AboutBookIcon";
 import { FlagIcon } from "@/components/icons/FlagIcon";
@@ -59,7 +59,7 @@ export const MoreOptions = ({
 
   const iconMap: { [key: string]: React.ReactNode } = {
     share: <ShareIcon color={colors.iconColor} size={16} />,
-    bookmark: <BookmarkIcon color={colors.iconColor} size={16} />,
+    bookmark: <ShareIcon color={colors.iconColor} size={16} />,
     download: <DownloadedsIcon color={colors.iconColor} size={16} />,
     info: <AboutBookIcon color={colors.iconColor} size={16} />,
     flag: <FlagIcon color={colors.iconColor} size={16} />,

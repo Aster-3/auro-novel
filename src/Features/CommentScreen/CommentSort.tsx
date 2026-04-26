@@ -1,29 +1,19 @@
 import React, { useState, useRef, useMemo } from "react";
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  Animated,
-  Dimensions,
-} from "react-native";
+import { View, Text, Pressable, StyleSheet, Animated } from "react-native";
 import { useAppTheme } from "@/hooks/useTheme";
 
-const { width: screenWidth } = Dimensions.get("window");
-const CONTAINER_PADDING = 24;
-const CARD_WIDTH = screenWidth - CONTAINER_PADDING * 2;
-const BUTTON_PADDING = 3;
-const TAB_WIDTH = (CARD_WIDTH - BUTTON_PADDING * 2) / 3;
-
 type SortType = "newest" | "popular" | "oldest";
+
+const BUTTON_PADDING = 3;
 
 export const CommentSort = () => {
   const [selected, setSelected] = useState<SortType>("newest");
   const { theme, isDarkMode } = useAppTheme();
 
+  // Genişliği dinamik olarak takip edeceğiz
+  const [containerWidth, setContainerWidth] = useState(0);
   const translateX = useRef(new Animated.Value(0)).current;
 
-  // constants.ts ile tam senkronize renkler
   const activeTheme = useMemo(
     () => ({
       background: isDarkMode ? "rgba(255,255,255,0.04)" : "#F1F5F9",
@@ -38,35 +28,47 @@ export const CommentSort = () => {
     setSelected(type);
     Animated.spring(translateX, {
       toValue: index,
-      useNativeDriver: true,
-      damping: 25, // Daha tok bir yaylanma
+      useNativeDriver: true, // Artık piksellerle çalıştığımız için sorunsuz kayar
+      damping: 25,
       stiffness: 250,
       mass: 1,
     }).start();
   };
 
+  // Dinamik pixel hesaplama
+  // (Toplam Genişlik - İç Boşluklar) / 3
+  const tabWidth = containerWidth
+    ? (containerWidth - BUTTON_PADDING * 2) / 3
+    : 0;
+
   const movingValue = translateX.interpolate({
     inputRange: [0, 1, 2],
-    outputRange: [0, TAB_WIDTH, TAB_WIDTH * 2],
+    outputRange: [0, tabWidth, tabWidth * 2], // Native driver'ın sevdiği sayısal değerler
   });
 
   return (
     <View style={styles.container}>
-      <View style={[styles.card, { backgroundColor: activeTheme.background }]}>
-        <Animated.View
-          style={[
-            styles.animatedIndicator,
-            {
-              backgroundColor: activeTheme.indicator,
-              transform: [{ translateX: movingValue }],
-              // Karanlık modda indicator'ın hafif belli olması için ince border
-              borderColor: isDarkMode
-                ? "rgba(255,255,255,0.05)"
-                : "transparent",
-              borderWidth: isDarkMode ? 1 : 0,
-            },
-          ]}
-        />
+      <View
+        style={[styles.card, { backgroundColor: activeTheme.background }]}
+        onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)} // Burası parent neyse o genişliği yakalar
+      >
+        {/* Genişlik henüz ölçülmediyse indicator'ı çizmiyoruz ki zıplama yapmasın */}
+        {containerWidth > 0 && (
+          <Animated.View
+            style={[
+              styles.animatedIndicator,
+              {
+                width: tabWidth,
+                backgroundColor: activeTheme.indicator,
+                transform: [{ translateX: movingValue }],
+                borderColor: isDarkMode
+                  ? "rgba(255,255,255,0.05)"
+                  : "transparent",
+                borderWidth: isDarkMode ? 1 : 0,
+              },
+            ]}
+          />
+        )}
 
         <SortButton
           label="EN YENİ"
@@ -110,23 +112,21 @@ const SortButton = ({ label, isActive, onPress, theme }: any) => (
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
-    paddingHorizontal: CONTAINER_PADDING,
+    width: "100%", // Dış dünyadan ne gelirse onu kapla
     paddingVertical: 12,
   },
   card: {
     flexDirection: "row",
-    borderRadius: 14, // Biraz daha yumuşattık
+    borderRadius: 14,
     padding: BUTTON_PADDING,
-    height: 40, // 38'den 40'a - daha pro bir duruş
+    height: 40,
     alignItems: "center",
-    width: CARD_WIDTH,
     position: "relative",
+    width: "100%", // Parent genişliğine zorla
   },
   animatedIndicator: {
     position: "absolute",
     height: 34,
-    width: TAB_WIDTH,
     left: BUTTON_PADDING,
     top: BUTTON_PADDING,
     borderRadius: 11,
@@ -137,15 +137,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   button: {
-    flex: 1,
+    flex: 1, // Butonlar her zaman eşit pay alır
     height: "100%",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 1,
   },
   text: {
-    fontSize: 10, // Mikro-tipografi kuralı
-    fontFamily: "Mont-700", // Biraz daha güçlü bir ağırlık
-    letterSpacing: 0.6, // Geniş harf aralığı
+    fontSize: 10,
+    fontFamily: "Mont-700",
+    letterSpacing: 0.6,
   },
 });

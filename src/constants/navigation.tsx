@@ -7,7 +7,6 @@ import { LibraryIcon } from "../components/icons/LibraryIcon";
 import { NotificationIcon } from "../components/icons/NotificationIcon";
 import { Category } from "@/types/category";
 import { Tag } from "@/types/tag";
-import { SeriesStatus } from "@/types/novel";
 
 export type RootStackParamList = {
   Main: undefined;
@@ -55,6 +54,10 @@ export type RootStackParamList = {
   };
   ChapterRead: {
     id: string;
+    chapterProgress?: number;
+  };
+  UserProfile: {
+    userId: string;
   };
 };
 

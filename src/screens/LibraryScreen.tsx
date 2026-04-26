@@ -1,33 +1,46 @@
+import { useState } from "react";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import { Screen } from "../components/layout/Screen";
-import { LibraryList } from "@/Features/LibraryScreen/LibraryList";
-import { useCallback, useRef, useState } from "react";
 import { LibraryHeader } from "@/Features/LibraryScreen/LibraryHeader";
-import { Button } from "react-native";
-import {
-  CustomLibrarySheet,
-  LibrarySheetData,
-} from "@/Features/LibraryScreen/CustomLibrarySheet";
+import { useAppTheme } from "@/hooks/useTheme";
+import { LibraryView } from "@/Features/LibraryScreen/LibraryView";
+
+const Tab = createMaterialTopTabNavigator();
 
 const LibraryScreen = () => {
   const [activeTab, setActiveTab] = useState("library");
-  const [sheetIsVisible, setSheetIsVisible] = useState(false);
-  const [data, setData] = useState<LibrarySheetData | null>(null);
 
-  const handleOpenLibrarySheet = useCallback((sheetData: LibrarySheetData) => {
-    setData(sheetData);
-    setSheetIsVisible(true);
-  }, []);
+  const { theme } = useAppTheme();
 
   return (
-    <Screen style={{ paddingHorizontal: 16, paddingTop: 20 }}>
+    <Screen style={{ paddingTop: 8 }}>
       <LibraryHeader activeTab={activeTab} setActiveTab={setActiveTab} />
-      <LibraryList openLibrarySheet={handleOpenLibrarySheet} />
-      <CustomLibrarySheet
-        isVisible={sheetIsVisible}
-        data={data}
-        onClose={() => setSheetIsVisible(false)}
-      />
+
+      <Tab.Navigator
+        tabBar={() => null}
+        overScrollMode="never"
+        screenOptions={{
+          swipeEnabled: true, // İstersen kaydırmayı kapatabilirsin (false)
+          sceneStyle: { backgroundColor: theme.background },
+        }}
+        screenListeners={{
+          state: (e) => {
+            const routeName = e.data.state.routeNames[e.data.state.index];
+            setActiveTab(routeName);
+          },
+        }}
+      >
+        <Tab.Screen name="library">{() => <LibraryView />}</Tab.Screen>
+        {/* <Tab.Screen name="readlist">
+          {() => (
+            <View style={{ flex: 1 }}>
+              <Text>Read List Tab Content</Text>
+            </View>
+          )}
+        </Tab.Screen> */}
+      </Tab.Navigator>
     </Screen>
   );
 };
+
 export default LibraryScreen;

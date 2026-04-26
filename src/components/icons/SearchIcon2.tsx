@@ -7,14 +7,13 @@ export const SearchIcon2 = ({
   color?: string;
   size?: number;
 }) => (
-  <Svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+  <Svg width={size} height={size} viewBox="0 0 30 30" fill="none">
     <Path
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M3.333 9.167a5.833 5.833 0 1111.667 0 5.833 5.833 0 01-11.667 0zm5.834-7.5a7.5 7.5 0 104.681 13.36l3.063 3.062a.833.833 0 001.178-1.178l-3.062-3.063a7.5 7.5 0 00-5.86-12.181z"
-      fill={color}
+      d="M25 25l-5.246-5.246S17.5 22.5 13.125 22.5a9.375 9.375 0 119.188-7.5"
       stroke={color}
-      strokeWidth={0.00064}
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
     />
   </Svg>
 );

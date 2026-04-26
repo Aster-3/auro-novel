@@ -3,11 +3,11 @@ import { BackArrowIcon } from "./icons/BackArrowIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const BackButton = ({
-  size,
-  color,
+  size = 26,
+  color = "#FFFFFF",
 }: {
-  size: number;
-  color: string;
+  size?: number;
+  color?: string;
 }) => {
   const navigation = useAppNavigation();
   return (

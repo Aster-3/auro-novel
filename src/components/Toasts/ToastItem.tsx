@@ -13,26 +13,38 @@ import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 export const ToastItem = ({ toast }: { toast: any }) => {
   const { theme, isDarkMode } = useAppTheme();
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(-20);
-  const scale = useSharedValue(0.9);
+  const translateY = useSharedValue(-60);
+  const scale = useSharedValue(0.96); // Çok hafif küçük başla, fark edilmesi zor ama hissedilir olsun
 
   useEffect(() => {
-    // Giriş Animasyonu (Tok ve hızlı)
-    opacity.value = withTiming(1, { duration: 300 });
-    translateY.value = withSpring(0, {
-      damping: 18,
-      stiffness: 150,
-      mass: 0.8,
+    // GİRİŞ: Tok, net ve hacimli
+    opacity.value = withTiming(1, {
+      duration: 300,
+      easing: Easing.out(Easing.quad),
     });
-    scale.value = withSpring(1, { damping: 18, stiffness: 150 });
+
+    translateY.value = withTiming(0, {
+      duration: 350,
+      easing: Easing.out(Easing.quad), // Back(0) ile quad zaten yakındır, quad daha temiz durur
+    });
+
+    scale.value = withTiming(1, {
+      duration: 350,
+      easing: Easing.out(Easing.quad),
+    });
 
     const exitDelay = setTimeout(() => {
-      // Çıkış Animasyonu (Yukarı süzülerek)
-      translateY.value = withTiming(-40, {
-        duration: 500,
-        easing: Easing.out(Easing.back(1.5)),
+      opacity.value = withTiming(0, { duration: 250 });
+
+      translateY.value = withTiming(-60, {
+        duration: 300,
+        easing: Easing.in(Easing.quad),
       });
-      opacity.value = withTiming(0, { duration: 400 });
+
+      scale.value = withTiming(0.96, {
+        duration: 300,
+        easing: Easing.in(Easing.quad),
+      });
     }, 3000);
 
     return () => clearTimeout(exitDelay);
@@ -41,7 +53,6 @@ export const ToastItem = ({ toast }: { toast: any }) => {
   const animatedStyle = useAnimatedStyle(() => ({
     opacity: opacity.value,
     transform: [{ translateY: translateY.value }, { scale: scale.value }],
-    shadowOpacity: isDarkMode ? 0 : 0.05 * opacity.value,
   }));
 
   const themeColor = getThemeColor(toast.type, isDarkMode);
@@ -68,7 +79,7 @@ export const ToastItem = ({ toast }: { toast: any }) => {
         />
         <View style={styles.textContainer}>
           <Text style={[styles.title, { color: theme.textPrimary }]}>
-            {(toast.type || "Bitti").toUpperCase()}
+            {(toast.type || "Bitti").toLocaleUpperCase("tr-TR")}
           </Text>
           {toast.message && (
             <Text style={[styles.message, { color: theme.textSecondary }]}>

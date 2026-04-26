@@ -1,7 +1,6 @@
 import { ScrollView, Text, View } from "react-native";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
-import { useNovels } from "@/hooks/useNovels";
 import { useWeeklyTrendNovels } from "@/hooks/useWeeklyTrendNovels";
 
 export const WeeklyPopular = () => {

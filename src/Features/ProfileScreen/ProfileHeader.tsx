@@ -1,18 +1,12 @@
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
-import {
-  Text,
-  View,
-  StyleSheet,
-  Image,
-  Pressable,
-  Platform,
-} from "react-native";
+import { Text, View, StyleSheet, Image, Pressable } from "react-native";
 import logo from "@assets/lost-ghost.jpg";
 import { useAuthStore } from "@/store/useAuthStore";
 import { PlusIcon } from "@/components/icons/PlusIcon";
 import { NightShardIcon } from "@/components/icons/NightShardIcon";
 import { useWalletQuery } from "@/hooks/useWalletQuery";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const ProfileHeader = ({
   openLoginSheet,
@@ -22,6 +16,15 @@ export const ProfileHeader = ({
   const user = useAuthStore((state) => state.user);
   const { data: wallet } = useWalletQuery();
   const { theme, isDarkMode } = useAppTheme();
+  const navigation = useAppNavigation();
+
+  const navigateProfile = () => {
+    if (user) {
+      navigation.navigate("UserProfile", { userId: user.id });
+    } else {
+      openLoginSheet();
+    }
+  };
 
   return (
     <View
@@ -29,13 +32,17 @@ export const ProfileHeader = ({
         styles.card,
         {
           backgroundColor: isDarkMode ? theme.backgroundSecondary : "#FFF",
-          shadowColor: isDarkMode ? "#000" : "#000",
-          shadowOpacity: isDarkMode ? 0.3 : 0.1,
+          borderColor: isDarkMode
+            ? "rgba(255,255,255,0.05)"
+            : "rgba(0,0,0,0.03)",
+          borderWidth: 1,
+          shadowColor: "#000",
+          shadowOpacity: isDarkMode ? 0.4 : 0.08,
         },
       ]}
     >
       <View style={styles.mainRow}>
-        <View style={styles.userInfo}>
+        <Pressable onPress={navigateProfile} style={styles.userInfo}>
           <View style={styles.avatarContainer}>
             <Image
               source={
@@ -45,7 +52,7 @@ export const ProfileHeader = ({
                 styles.avatar,
                 {
                   backgroundColor: isDarkMode ? theme.background : "#F2F2F7",
-                  borderColor: isDarkMode ? theme.surface : "#FFF",
+                  borderColor: isDarkMode ? "rgba(255,255,255,0.1)" : "#FFF",
                 },
               ]}
             />
@@ -65,62 +72,57 @@ export const ProfileHeader = ({
                 : "Keşfetmeye başla"}
             </Text>
           </View>
-        </View>
+        </Pressable>
 
-        <View>
+        <View style={styles.actionSection}>
           {!user ? (
             <Pressable
               onPress={openLoginSheet}
+              // hitSlop ekleyerek dokunma alanını görünmez şekilde büyüttük
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={({ pressed }) => [
                 styles.loginButton,
                 {
                   backgroundColor: isDarkMode
-                    ? "rgba(255,255,255,0.05)"
-                    : "#F2F2F7",
-                  opacity: pressed ? 0.7 : 1,
+                    ? "rgba(255,255,255,0.08)"
+                    : "#111",
+                  opacity: pressed ? 0.8 : 1,
+                  // Scale animasyonunu çok hafiflettik (Oynaklığı ve tıklama kaybını önler)
+                  transform: [{ scale: pressed ? 0.99 : 1 }],
                 },
               ]}
             >
-              <Text style={[styles.loginText, { color: theme.textPrimary }]}>
-                Giriş Yap
-              </Text>
-              <RightChevronIcon
-                size={14}
-                color={isDarkMode ? theme.textPrimary : "#007AFF"}
-              />
+              <Text style={[styles.loginText, { color: "#FFF" }]}>Giriş</Text>
+              <RightChevronIcon size={14} color="#FFF" />
             </Pressable>
           ) : (
-            <View style={styles.currencyStack}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.currencyChip,
-                  {
-                    opacity: pressed ? 0.7 : 1,
-                    transform: [{ scale: pressed ? 0.96 : 1 }],
-                  },
+            <Pressable
+              style={({ pressed }) => [
+                styles.currencyChip,
+                {
+                  borderColor: isDarkMode
+                    ? "rgba(255,255,255,0.05)"
+                    : "rgba(0,0,0,0.05)",
+                  opacity: pressed ? 0.8 : 1,
+                  transform: [{ scale: pressed ? 0.96 : 1 }],
+                },
+              ]}
+            >
+              <View style={styles.shardWrapper}>
+                <NightShardIcon size={22} />
+              </View>
+              <Text style={[styles.currencyText, { color: theme.textPrimary }]}>
+                {wallet?.moonCoins || 0}
+              </Text>
+              <View
+                style={[
+                  styles.plusIconWrapper,
+                  { backgroundColor: theme.textPrimary },
                 ]}
               >
-                <NightShardIcon size={26} />
-                <View style={styles.currencyContent}>
-                  <Text
-                    style={[styles.currencyText, { color: theme.textPrimary }]}
-                  >
-                    {wallet?.moonCoins}
-                  </Text>
-                  <View
-                    style={[
-                      styles.plusIconWrapper,
-                      {
-                        backgroundColor: theme.accent,
-                        shadowColor: theme.accent,
-                      },
-                    ]}
-                  >
-                    <PlusIcon size={10} color={isDarkMode ? "#000" : "#FFF"} />
-                  </View>
-                </View>
-              </Pressable>
-            </View>
+                <PlusIcon size={8} color={isDarkMode ? "#000" : "#FFF"} />
+              </View>
+            </Pressable>
           )}
         </View>
       </View>
@@ -130,12 +132,12 @@ export const ProfileHeader = ({
 
 const styles = StyleSheet.create({
   card: {
-    paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderRadius: 24,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 12,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 8 },
+    shadowRadius: 16,
+    elevation: 1,
   },
   mainRow: {
     flexDirection: "row",
@@ -146,73 +148,74 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    marginRight: 12,
   },
   avatarContainer: {
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
   },
   avatar: {
-    width: 45,
-    height: 45,
-    borderRadius: 16,
-    borderWidth: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 18,
   },
   textContainer: {
-    marginLeft: 12,
+    marginLeft: 14,
   },
   username: {
     fontFamily: "Mont-700",
     fontSize: 15,
-    letterSpacing: -0.4,
+    letterSpacing: -0.5,
   },
   userSubtitle: {
     fontFamily: "Mont-500",
     fontSize: 11,
-    letterSpacing: -0.3,
+    opacity: 0.6,
   },
-  currencyStack: {
+  actionSection: {
     alignItems: "flex-end",
-  },
-  currencyChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 4,
-    gap: 8,
-  },
-  currencyContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  currencyText: {
-    fontFamily: "Mont-700",
-    fontSize: 13,
-    letterSpacing: -0.5,
-  },
-  plusIconWrapper: {
-    width: 14,
-    height: 14,
-    marginBottom: 2,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  loginText: {
-    fontFamily: "Mont-600",
-    fontSize: 14,
   },
   loginButton: {
     flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 18, // Biraz genişlettik
     borderRadius: 100,
     gap: 4,
+  },
+  loginText: {
+    fontFamily: "Mont-600",
+    fontSize: 12,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
+  },
+  currencyChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 14,
+    borderWidth: 1,
+    gap: 6,
+  },
+  shardWrapper: {
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  currencyText: {
+    fontFamily: "Mont-800",
+    fontSize: 13,
+    letterSpacing: -0.5,
+  },
+  plusIconWrapper: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 2,
   },
 });
