@@ -33,6 +33,7 @@ import { NovelSkeleton } from "@/Features/NovelScreen/NovelSkeleton";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useOfflineChapterDownloads } from "@/hooks/useOfflineChapterDownloads";
 import { categories } from "@/constants/seed";
 
 const SECTIONS = [
@@ -48,6 +49,7 @@ const NovelScreen = () => {
   const [isReady, setIsReady] = React.useState(false);
   const { data, isLoading, error } = useNovelDetail(id);
   const { mutate: incrementViewCount } = useIncrementNovelView(id);
+  const offlineDownloads = useOfflineChapterDownloads(id);
 
   // Tema Renkleri
   const { theme } = useAppTheme();
@@ -69,7 +71,13 @@ const NovelScreen = () => {
       if (!data) return null;
       switch (item.key) {
         case "summary":
-          return <NovelSummary tags={data.tags} summary={data.synopsis} />;
+          return (
+            <NovelSummary
+              tags={data.tags}
+              summary={data.synopsis}
+              isAdultContent={data.isAdultContent}
+            />
+          );
         case "chapters":
           return (
             <NovelChapters
@@ -82,7 +90,7 @@ const NovelScreen = () => {
         case "comments":
           return <NovelComments novelId={id} />;
         case "similar":
-          return <SimilarNovels />;
+          return <SimilarNovels novelId={id} />;
         default:
           return null;
       }
@@ -104,7 +112,7 @@ const NovelScreen = () => {
       {/* Üst Kısım: Kapak ve Blur Efekti */}
       <View style={styles.headerWrapper}>
         <Image
-          source={data.coverImage}
+          source={data.coverImage ?? undefined}
           style={StyleSheet.absoluteFillObject}
           blurRadius={12} // Bir tık artırıldı daha yumuşak geçiş için
           contentFit="cover"
@@ -122,16 +130,7 @@ const NovelScreen = () => {
         />
 
         <SafeAreaView edges={["top"]} style={styles.headerContainer}>
-          <NovelHeader
-            novelData={{
-              id: data.id,
-              title: data.name,
-              author: data.author.nickname,
-              categories: data.categories,
-              synopsis: data.synopsis,
-              cover: data.coverImage,
-            }}
-          />
+          <NovelHeader novelData={data} />
           <NovelMetaData
             name={data.name}
             author={data.author}
@@ -161,10 +160,13 @@ const NovelScreen = () => {
       </SafeAreaView>
 
       {/* Sabit Navigasyon Kartı (Okumaya Başla vb.) */}
-      <NovelNavCard novelId={id} />
+      <NovelNavCard
+        novelId={id}
+        firstPublishedChapterId={data.firstPublishedChapterId}
+      />
 
       {/* Bölüm Listesi Sheet */}
-      <ChapterSheet id={id} ref={bottomSheetRef} />
+      <ChapterSheet id={id} ref={bottomSheetRef} offlineDownloads={offlineDownloads} />
     </View>
   );
 };

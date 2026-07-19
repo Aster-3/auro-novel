@@ -1,15 +1,12 @@
-import { FilterIcon } from "@/components/icons/FilterIcon";
-import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
-import { SearchIcon } from "@/components/icons/SearchIcon";
 import { SearchIcon2 } from "@/components/icons/SearchIcon2";
+import { SortIcon } from "@/components/icons/SortIcon";
+import { XIcon } from "@/components/icons/XIcon";
 import { useAppTheme } from "@/hooks/useTheme";
-import { useRef, useState } from "react";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { TextInput } from "react-native-gesture-handler";
+import { useRef } from "react";
+import { Pressable, StyleSheet, TextInput, View } from "react-native";
 import { LibraryFilterSheet } from "./LibraryFilterSheet";
 import BottomSheet from "@gorhom/bottom-sheet";
 import { LibrarySortOption } from "@/types/library";
-import { SortIcon } from "@/components/icons/SortIcon";
 
 export const LibrarySearch = ({
   searchText,
@@ -23,56 +20,70 @@ export const LibrarySearch = ({
   setOrder: (order: LibrarySortOption) => void;
 }) => {
   const { theme, isDarkMode } = useAppTheme();
-
-  const buttonBg = isDarkMode ? theme.surface : "#F1F5F9";
-
   const filterRef = useRef<BottomSheet>(null);
+
+  const value = searchText || "";
+  const controlBg = isDarkMode ? theme.surface : "#F8FAFC";
+  const borderColor = isDarkMode ? "rgba(255,255,255,0.08)" : "#E5E7EB";
 
   return (
     <View style={styles.container}>
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          position: "relative",
-        }}
-      >
+      <View style={styles.inputWrap}>
         <TextInput
           style={[
-            styles.sortButton,
+            styles.input,
             {
-              backgroundColor: buttonBg,
+              backgroundColor: controlBg,
+              borderColor,
               color: theme.textPrimary,
-              paddingLeft: 40,
+              paddingRight: value ? 42 : 16,
             },
           ]}
-          placeholder="Kütüphanende Ara"
+          placeholder="Kütüphanende ara"
           placeholderTextColor={theme.textSecondary}
-          value={searchText || ""}
+          value={value}
           onChangeText={(text) => setSearchText(text)}
+          selectionColor={theme.accent}
+          keyboardAppearance={isDarkMode ? "dark" : "light"}
         />
 
-        <View
-          style={{
-            position: "absolute",
-            left: 12,
-            top: 0,
-            bottom: 0,
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-          pointerEvents="none"
-        >
+        <View style={styles.searchIcon} pointerEvents="none">
           <SearchIcon2 size={16} color={theme.textSecondary} />
         </View>
+
+        {value ? (
+          <Pressable
+            onPress={() => setSearchText(null)}
+            hitSlop={10}
+            style={({ pressed }) => [
+              styles.clearButton,
+              {
+                backgroundColor: isDarkMode
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(15,23,42,0.06)",
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <XIcon size={10} color={theme.textSecondary} />
+          </Pressable>
+        ) : null}
       </View>
 
-      <TouchableOpacity
-        style={[styles.filterButton, { backgroundColor: buttonBg }]}
+      <Pressable
+        style={({ pressed }) => [
+          styles.sortButton,
+          {
+            backgroundColor: controlBg,
+            borderColor,
+            opacity: pressed ? 0.72 : 1,
+          },
+        ]}
         onPress={() => filterRef.current?.expand()}
       >
-        <SortIcon size={16} color={theme.textPrimary} />
-      </TouchableOpacity>
+        <SortIcon size={17} color={theme.textPrimary} />
+      </Pressable>
+
       <LibraryFilterSheet ref={filterRef} order={order} setOrder={setOrder} />
     </View>
   );
@@ -81,26 +92,43 @@ export const LibrarySearch = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
-    gap: 8,
+    marginBottom: 18,
+    gap: 10,
+  },
+  inputWrap: {
+    flex: 1,
+    justifyContent: "center",
+    position: "relative",
+  },
+  input: {
+    height: 40,
+    borderRadius: 12,
+    paddingLeft: 40,
+    paddingVertical: 0,
+    fontFamily: "Mont-500",
+    fontSize: 12,
+  },
+  searchIcon: {
+    position: "absolute",
+    left: 13,
+    top: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  clearButton: {
+    position: "absolute",
+    right: 10,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
   sortButton: {
-    // flexDirection ve justifyContent: space-between artık gerekmiyor çünkü absolute ikon kullanıyoruz
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    fontFamily: "Mont-500",
-    borderRadius: 12,
-    fontSize: 13, // Okunabilirlik için eklendi
-  },
-  sortText: {
-    fontSize: 12,
-    fontFamily: "Mont-600",
-  },
-  filterButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",

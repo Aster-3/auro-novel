@@ -1,6 +1,5 @@
 import {
   getGlobalNotifications,
-  getMyNotifications,
 } from "@/services/NotificationService";
 import { useInfiniteQuery } from "@tanstack/react-query";
 

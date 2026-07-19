@@ -1,10 +1,11 @@
-import React, { useCallback, useDeferredValue, useMemo } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import Animated, {
@@ -18,6 +19,7 @@ import { LibrarySheetData } from "./CustomLibrarySheet";
 import { useMyLibrary } from "@/hooks/useMyLibrary";
 import { LibraryItem, LibrarySortOption } from "@/types/library";
 import { SkeletonBox } from "@/components/SkeletonBox";
+import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
 
 const { width } = Dimensions.get("window");
 const NUM_COLUMNS = 3;
@@ -36,10 +38,12 @@ const LibraryCard = React.memo(
     item,
     onPress,
     theme,
+    isDarkMode,
   }: {
     item: LibraryItem;
     onPress: (data: LibrarySheetData) => void;
     theme: any;
+    isDarkMode: boolean;
   }) => (
     <Animated.View
       layout={CARD_LAYOUT}
@@ -58,7 +62,17 @@ const LibraryCard = React.memo(
           })
         }
       >
-        <View style={[s.imageWrapper, { backgroundColor: theme.surface }]}>
+        <View
+          style={[
+            s.imageWrapper,
+            {
+              backgroundColor: theme.surface,
+              borderColor: isDarkMode
+                ? "rgba(255,255,255,0.07)"
+                : "#E5E7EB",
+            },
+          ]}
+        >
           <Image
             source={{ uri: item.coverImageUrl }}
             style={s.image}
@@ -75,7 +89,11 @@ const LibraryCard = React.memo(
       </TouchableOpacity>
     </Animated.View>
   ),
-  (prev, next) => prev.item.novelId === next.item.novelId,
+  (prev, next) =>
+    prev.item.novelId === next.item.novelId &&
+    prev.theme.textPrimary === next.theme.textPrimary &&
+    prev.theme.surface === next.theme.surface &&
+    prev.isDarkMode === next.isDarkMode,
 );
 
 const AnimatedFlatList = Animated.createAnimatedComponent(
@@ -91,38 +109,52 @@ export const LibraryList = ({
   orderType: LibrarySortOption;
   openLibrarySheet: (data: LibrarySheetData) => void;
 }) => {
-  const { data: libraryNovels, isLoading, error } = useMyLibrary(orderType);
-  const { theme, isDarkMode } = useAppTheme();
   const [debouncedQuery, setDebouncedQuery] = React.useState(searchText);
 
   React.useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedQuery(searchText);
-    }, 150);
+    }, 500);
 
     return () => clearTimeout(handler);
   }, [searchText]);
 
-  const filteredData = useMemo(() => {
-    const allItems = libraryNovels?.items || [];
-    if (!debouncedQuery || debouncedQuery.trim() === "") return allItems;
+  const normalizedSearch = debouncedQuery?.trim() ?? "";
+  const apiSearchText =
+    normalizedSearch.length >= 2 ? normalizedSearch : null;
 
-    const query = debouncedQuery.toLowerCase().trim();
-    return allItems.filter((item: any) =>
-      item.title.toLowerCase().includes(query),
-    );
-  }, [debouncedQuery, libraryNovels?.items]);
+  const {
+    data: libraryNovels,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useMyLibrary(orderType, apiSearchText);
+  const { theme, isDarkMode } = useAppTheme();
+  const tabBarBottomPadding = useTabBarBottomPadding();
+  const data = libraryNovels?.items || [];
 
   const renderItem = useCallback(
     ({ item }: { item: LibraryItem }) => (
-      <LibraryCard item={item} theme={theme} onPress={openLibrarySheet} />
+      <LibraryCard
+        item={item}
+        theme={theme}
+        isDarkMode={isDarkMode}
+        onPress={openLibrarySheet}
+      />
     ),
-    [theme, openLibrarySheet],
+    [theme, isDarkMode, openLibrarySheet],
   );
+
+  const handleLoadMore = useCallback(() => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   if (isLoading && !libraryNovels) {
     return (
-      <View style={s.listContent}>
+      <View style={[s.listContent, { paddingBottom: tabBarBottomPadding }]}>
         <View style={s.skeletonRow}>
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <View key={i} style={[s.card, { width: CARD_WIDTH }]}>
@@ -145,19 +177,34 @@ export const LibraryList = ({
 
   return (
     <AnimatedFlatList
-      data={filteredData}
+      data={data}
       keyExtractor={(item: LibraryItem) => item.novelId}
       numColumns={NUM_COLUMNS}
       itemLayoutAnimation={CARD_LAYOUT} // ← tüm liste için layout animasyonu
-      contentContainerStyle={s.listContent}
+      contentContainerStyle={[
+        s.listContent,
+        { paddingBottom: tabBarBottomPadding },
+      ]}
       columnWrapperStyle={s.columnWrapper}
       showsVerticalScrollIndicator={false}
       renderItem={renderItem}
+      onEndReached={handleLoadMore}
+      onEndReachedThreshold={0.35}
+      ListFooterComponent={
+        isFetchingNextPage ? (
+          <View style={s.footerLoader}>
+            <ActivityIndicator color={theme.textPrimary} />
+          </View>
+        ) : null
+      }
       ListEmptyComponent={
-        searchText ? (
+        normalizedSearch.length >= 2 ? (
           <View style={s.center}>
-            <Text style={{ color: theme.textSecondary }}>
-              Sonuç bulunamadı.
+            <Text style={[s.emptyTitle, { color: theme.textPrimary }]}>
+              Sonuç bulunamadı
+            </Text>
+            <Text style={[s.emptyText, { color: theme.textSecondary }]}>
+              {searchText}
             </Text>
           </View>
         ) : null
@@ -168,7 +215,7 @@ export const LibraryList = ({
 
 const s = StyleSheet.create({
   listContent: {
-    paddingBottom: 100,
+    paddingBottom: 0,
   },
   columnWrapper: {
     justifyContent: "flex-start",
@@ -183,7 +230,6 @@ const s = StyleSheet.create({
     borderRadius: 16,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.05)",
   },
   image: {
     width: "100%",
@@ -198,12 +244,26 @@ const s = StyleSheet.create({
   },
   center: {
     flex: 1,
-    paddingTop: 50,
+    paddingTop: 72,
     alignItems: "center",
+  },
+  emptyTitle: {
+    fontFamily: "Mont-700",
+    fontSize: 15,
+    marginBottom: 6,
+  },
+  emptyText: {
+    fontFamily: "Mont-500",
+    fontSize: 12,
   },
   skeletonRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     gap: GAP,
+  },
+  footerLoader: {
+    minHeight: 56,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

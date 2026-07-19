@@ -9,7 +9,6 @@ import { useInfiniteTags } from "@/hooks/useInfiniteTags";
 import { useNovelMutation } from "@/hooks/useNovelMutation";
 import { useModalStore } from "@/store/useModalStore";
 import { useToastStore } from "@/store/useToastStore";
-import { LanguageType } from "@/types/novel";
 import { useDebounce } from "@/utils/useDebounce";
 import { useEffect, useMemo, useState } from "react";
 import { StyleSheet } from "react-native";
@@ -34,7 +33,7 @@ const UpdateTagCategoryScreen = ({ route }: { route: any }) => {
   const isCategoryMode = mode === "category";
 
   const { data: categories } = useInfiniteCategories(
-    { lang: LanguageType.TR, search: debouncedSearchValue.trimEnd() },
+    { search: debouncedSearchValue.trimEnd() },
     isCategoryMode,
   );
 

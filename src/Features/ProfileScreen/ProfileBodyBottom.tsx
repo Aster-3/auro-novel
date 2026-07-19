@@ -1,16 +1,56 @@
-import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
+import { Text, View, StyleSheet, Pressable } from "react-native";
 import { ProfileHeaderText } from "./ProfileHeaderText";
 import { SupportIcon } from "@/components/icons/SupportIcon";
+import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
 import { useNavigation } from "@react-navigation/native";
-import { useAuthStore } from "@/store/useAuthStore";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
-import { useToastStore } from "@/store/useToastStore";
+import { useAppTheme } from "@/hooks/useTheme";
+import Svg, { Circle, Path, Rect } from "react-native-svg";
+
+const SubscriptionIcon = ({ color, size }: { color: string; size: number }) => (
+  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <Rect
+      x="3.8"
+      y="6"
+      width="16.4"
+      height="12"
+      rx="3"
+      stroke={color}
+      strokeWidth="1.7"
+    />
+    <Path
+      d="M8 10H14.8"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+    <Path
+      d="M8 14H11.8"
+      stroke={color}
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+    <Circle cx="5.8" cy="12" r="1" fill={color} />
+    <Circle cx="18.2" cy="12" r="1" fill={color} />
+  </Svg>
+);
 
 const iconMap = {
+  downloaded_chapters: DownloadedsIcon,
   support_and_feedback: SupportIcon,
+  subscription_plan: SubscriptionIcon,
 };
 
 const options = [
+  {
+    id: "downloaded_chapters",
+    label: "İndirilen Bölümler",
+    screen: "DownloadedChapters",
+  },
+  {
+    id: "subscription_plan",
+    label: "Auro Pass",
+    screen: "SubscriptionPlan",
+  },
   {
     id: "support_and_feedback",
     label: "Destek ve Geri Bildirim",
@@ -20,17 +60,9 @@ const options = [
 
 export const ProfileBodyBottom = () => {
   const navigation = useNavigation<any>();
-  const isLoggedIn = !!useAuthStore((state) => state.user);
   const { theme, isDarkMode } = useAppTheme();
 
   const handlePress = (option: any) => {
-    if (!isLoggedIn) {
-      useToastStore
-        .getState()
-        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
-      return;
-    }
-
     if (option.screen) {
       navigation.navigate(option.screen);
     }

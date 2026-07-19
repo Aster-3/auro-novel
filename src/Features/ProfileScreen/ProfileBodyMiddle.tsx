@@ -1,17 +1,20 @@
-import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
+import { Text, View, StyleSheet, Pressable } from "react-native";
 import { ProfileHeaderText } from "./ProfileHeaderText";
 import { ThemeIcon } from "@/components/icons/ThemeIcon";
-import { TicketIcon } from "@/components/icons/TicketIcon";
 import { NotificationSettingsIcon } from "@/components/icons/NotificationSettingsIcon";
 import { BeAuthorIcon } from "@/components/icons/BeAuthorIcon";
 import { useNavigation } from "@react-navigation/native";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
 import { useToastStore } from "@/store/useToastStore";
+import {
+  useAuthorMeQuery,
+  useCreateAuthorMutation,
+} from "@/hooks/useAuthorMeQuery";
+import { useModalStore } from "@/store/useModalStore";
 
 const iconMap = {
   app_theme: ThemeIcon,
-  reedem_code: TicketIcon,
   notification_options: NotificationSettingsIcon,
   want_to_be_author: BeAuthorIcon,
 };
@@ -21,33 +24,71 @@ const options = [
     id: "app_theme",
     label: "Uygulama Teması",
     screen: "AppTheme",
-    isLocked: false,
+    requiresAuth: false,
   },
-  { id: "reedem_code", label: "Kupon Kodu Kullan", isLocked: true },
-  {
-    id: "notification_options",
-    label: "Bildirim Ayarları",
-    screen: "NotificationSettings",
-    isLocked: true,
-  },
+  // {
+  //   id: "notification_options",
+  //   label: "Bildirim Ayarları",
+  //   screen: "NotificationSettings",
+  //   requiresAuth: true,
+  // },
   {
     id: "want_to_be_author",
     label: "Yazar Paneli",
     screen: "AuthorPanelScreen",
-    isLocked: true,
+    requiresAuth: true,
   },
 ];
 
 export const ProfileBodyMiddle = () => {
   const navigation = useNavigation<any>();
   const isLoggedIn = !!useAuthStore((state) => state.user);
-  const { theme, isDarkMode } = useAppTheme(); // Renkleri aldık
+  const { theme, isDarkMode } = useAppTheme();
+  const showConfirm = useModalStore((state) => state.showConfirm);
+  const authorMeQuery = useAuthorMeQuery({ enabled: isLoggedIn });
+  const createAuthorMutation = useCreateAuthorMutation();
 
-  const handlePress = (option: any) => {
-    if (!isLoggedIn && option.isLocked) {
-      useToastStore
-        .getState()
-        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
+  const showLoginToast = () => {
+    useToastStore
+      .getState()
+      .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
+  };
+
+  const handleAuthorPanelPress = async () => {
+    if (!isLoggedIn) {
+      showLoginToast();
+      return;
+    }
+
+    const authorMe = authorMeQuery.data ?? (await authorMeQuery.refetch()).data;
+
+    if (authorMe?.isAuthor) {
+      navigation.navigate("AuthorPanelScreen");
+      return;
+    }
+
+    showConfirm({
+      title: "Yazar olmak ister misin?",
+      message:
+        "Yazar paneline erişmek için bir yazar hesabı oluşturman gerekiyor.",
+      confirmText: "Yazar Ol",
+      cancelText: "Vazgeç",
+      onConfirm: () => {
+        createAuthorMutation.mutate(undefined, {
+          onSuccess: () => navigation.navigate("AuthorPanelScreen"),
+        });
+      },
+    });
+  };
+
+  const handlePress = async (option: (typeof options)[number]) => {
+    if (!isLoggedIn && option.requiresAuth) {
+      showLoginToast();
+      return;
+    }
+
+    if (option.id === "want_to_be_author") {
+      await handleAuthorPanelPress();
       return;
     }
 

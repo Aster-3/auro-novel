@@ -9,7 +9,7 @@ import {
   PublishChapterRequest,
   UpdateChapterRequest,
 } from "@/types/chapter";
-import { CoinType } from "@/types/wallet";
+import { OfflineChapterPayload } from "@/types/offline";
 
 export const getChapters = async (
   query: GetChaptersRequest,
@@ -33,6 +33,13 @@ export const getDraftChapters = async (query: {
 
 export const getChapterDetail = async (id: string): Promise<ChapterDetail> => {
   const { data } = await api.get(`/chapters/${id}`);
+  return data;
+};
+
+export const getOfflineChapter = async (
+  id: string,
+): Promise<OfflineChapterPayload> => {
+  const { data } = await api.get(`/chapters/${id}/offline`);
   return data;
 };
 
@@ -77,15 +84,5 @@ export const changeChapterPublicationStatus = async (
       publicationStatus,
     },
   );
-  return data;
-};
-
-export const purchaseChapter = async (
-  chapterId: string,
-  coinType: CoinType,
-) => {
-  const { data } = await api.post(`/chapters/${chapterId}/purchase`, {
-    coinType,
-  });
   return data;
 };

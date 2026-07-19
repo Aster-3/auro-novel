@@ -1,10 +1,6 @@
-import { LanguageType } from "./novel";
-
 export interface Category {
   id: number;
-  enName: string;
-  trName: string;
-  coverUrl: string;
+  title: string;
 }
 
 export interface GetCategoriesResponse {
@@ -17,7 +13,6 @@ export interface GetCategoriesResponse {
 
 export interface GetCategoriesRequest {
   search?: string;
-  lang: LanguageType;
   limit?: number;
   page?: number;
 }

@@ -1,33 +1,30 @@
-import React, { useCallback, useMemo, useRef, useState } from "react";
-import { FlatList, Text, View, ActivityIndicator } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
-import BottomSheet from "@gorhom/bottom-sheet";
+import React, { useCallback, useMemo } from "react";
+import { ActivityIndicator, FlatList, Text, View } from "react-native";
+import { RouteProp, useRoute } from "@react-navigation/native";
 
+import { Header } from "@/components/Header";
 import { Screen } from "@/components/layout/Screen";
 import { RootStackParamList } from "@/constants/navigation";
-import { ReplyHeader } from "@/Features/ReplyScreen/ReplyHeader";
 import { ReplyItem } from "@/Features/ReplyScreen/ReplyItem";
 import { ReplyParent } from "@/Features/ReplyScreen/ReplyParent";
-import { WriteReply } from "@/Features/ReplyScreen/WriteReply";
-import { useDeleteReplyMutation } from "@/hooks/useDeleteReplyMutation copy";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useDeleteReplyMutation } from "@/hooks/useDeleteReplyMutation";
 import { useInfiniteReplies } from "@/hooks/useInfiniteReplies";
 import { useOneCommentQuery } from "@/hooks/useOneCommentQuery";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Reply } from "@/types/reply";
-import { Header } from "@/components/Header";
 
 const ReplyScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Reply">>();
+  const navigation = useAppNavigation();
   const user = useAuthStore((state) => state.user);
-
-  // Parametreleri al (Navigation'dan sadece ID'leri çekmek en sağlıklısıdır)
+  const { requireAuth } = useRequireAuthAction();
   const { commentId, novelId } = route.params;
 
-  // 1. Ana Yorum Verisini Çek (Cache'den veya API'den)
   const { data: comment, isLoading: isCommentLoading } =
     useOneCommentQuery(commentId);
 
-  // 2. Yanıtlar Listesini Çek (enabled: !!comment ile comment gelene kadar beklemesini sağlıyoruz)
   const {
     data,
     hasNextPage,
@@ -35,17 +32,28 @@ const ReplyScreen = () => {
     isFetchingNextPage,
     isLoading: isRepliesLoading,
   } = useInfiniteReplies({
-    commentId: commentId,
+    commentId,
   });
 
   const { mutate } = useDeleteReplyMutation(commentId, novelId);
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const [selectedReply, setSelectedReply] = useState<Reply | null>(null);
 
-  const openReplySheet = useCallback((replyData: Reply | null) => {
-    setSelectedReply(replyData);
-    bottomSheetRef.current?.expand();
-  }, []);
+  const openReplySheet = useCallback(
+    (replyData: Reply | null) => {
+      requireAuth(
+        () =>
+          navigation.navigate("WriteReply", {
+            commentId,
+            novelId,
+            parentReplyId: replyData?.id ?? null,
+            replyToNickname:
+              replyData?.user.nickname ?? comment?.user.nickname ?? null,
+            replyPreview: replyData?.content ?? comment?.content ?? null,
+          }),
+        "Yanıt yazmak için giriş yapmalısın.",
+      );
+    },
+    [comment?.content, comment?.user.nickname, commentId, navigation, novelId, requireAuth],
+  );
 
   const handleDeleteReply = useCallback(
     (replyId: number) => {
@@ -105,7 +113,7 @@ const ReplyScreen = () => {
         ListHeaderComponent={memoizedHeader}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
-          paddingBottom: 100, // Klavye ve input payı için artırıldı
+          paddingBottom: 100,
           borderRadius: 24,
           gap: 8,
         }}
@@ -122,13 +130,6 @@ const ReplyScreen = () => {
             </Text>
           </View>
         }
-      />
-
-      <WriteReply
-        novelId={novelId}
-        ref={bottomSheetRef}
-        commentId={commentId}
-        selectedReply={selectedReply}
       />
     </Screen>
   );

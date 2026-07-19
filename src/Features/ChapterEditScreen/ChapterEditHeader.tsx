@@ -2,8 +2,8 @@ import { BackArrowIcon } from "@/components/icons/BackArrowIcon";
 import { CircleEditIcon } from "@/components/icons/CircleEditIcon";
 import { LoadingDots } from "@/components/LoadingDots";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı çektik
 
 export const ChapterEditHeader = ({
   isCreating,
@@ -23,8 +23,9 @@ export const ChapterEditHeader = ({
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
+          style={styles.backButton}
         >
-          <BackArrowIcon size={24} color={theme.textPrimary} />
+          <BackArrowIcon size={20} color={theme.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>
           {isCreating ? "Yeni Bölüm" : "Bölüm Düzenle"}
@@ -35,22 +36,22 @@ export const ChapterEditHeader = ({
         style={[
           styles.saveButton,
           {
-            backgroundColor: theme.surface,
-            shadowColor: "#000",
-            shadowOpacity: isDarkMode ? 0.3 : 0.08,
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.045)"
+              : "rgba(15,23,42,0.035)",
           },
           isPending && { opacity: 0.7 },
         ]}
         onPress={handleSubmit}
         disabled={isPending}
-        activeOpacity={0.8}
+        activeOpacity={0.75}
       >
         <CircleEditIcon size={14} color={theme.textPrimary} />
         {isPending ? (
           <LoadingDots />
         ) : (
           <Text style={[styles.saveButtonText, { color: theme.textPrimary }]}>
-            {isCreating ? "OLUŞTUR" : "KAYDET"}
+            {isCreating ? "Oluştur" : "Kaydet"}
           </Text>
         )}
       </TouchableOpacity>
@@ -63,33 +64,40 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 10,
+    marginTop: 8,
     paddingHorizontal: 16,
     gap: 8,
   },
   containerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10, // Biraz daha ferahlık
+    gap: 8,
+    flex: 1,
+    minWidth: 0,
+  },
+  backButton: {
+    width: 30,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
   },
   headerTitle: {
-    fontFamily: "Mont-700", // Daha belirgin başlık
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: "Mont-600",
+    letterSpacing: -0.3,
   },
   saveButton: {
+    minHeight: 34,
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    elevation: 4,
+    paddingVertical: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    gap: 5,
+    borderRadius: 9,
   },
   saveButtonText: {
-    fontFamily: "Mont-700",
-    fontSize: 10,
-    letterSpacing: 0.5,
+    fontFamily: "Mont-500",
+    fontSize: 11,
   },
 });

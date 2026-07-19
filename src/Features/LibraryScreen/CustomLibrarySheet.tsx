@@ -26,6 +26,9 @@ import { useAppTheme } from "@/hooks/useTheme";
 import { useNovelReadingStats } from "@/hooks/useNovelReadingStats";
 import { formatRelativeTime } from "@/utils/formatRelativeTime";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useInfiniteChapters } from "@/hooks/useInfiniteChapters";
+import { SortType } from "@/types/constants";
+import { LibrarySortOption } from "@/types/library";
 
 export interface LibrarySheetData {
   id: string;
@@ -36,15 +39,23 @@ export interface LibrarySheetData {
 
 interface Props {
   data: LibrarySheetData | null;
+  orderType: LibrarySortOption;
 }
 
 export const CustomLibrarySheet = forwardRef<BottomSheet, Props>(
-  ({ data }, ref) => {
+  ({ data, orderType }, ref) => {
     const insets = useSafeAreaInsets();
     const { theme, isDarkMode } = useAppTheme();
-    const { mutate: toggleLibrary } = useToggleLibrary(data?.id || "");
-    const { data: readingstats } = useNovelReadingStats(data?.id || "");
+    const novelId = data?.id ?? "";
+    const { mutate: toggleLibrary } = useToggleLibrary(novelId, orderType);
+    const { data: readingstats } = useNovelReadingStats(novelId);
+    const { data: firstChapterData } = useInfiniteChapters(
+      { id: novelId, limit: 1, sort: SortType.ASC },
+      !!novelId,
+    );
     const navigation = useAppNavigation();
+    const firstChapter = firstChapterData?.items[0];
+    const hasReadingProgress = Boolean(readingstats?.lastReadChapterId);
 
     const animationConfigs = useBottomSheetSpringConfigs({
       damping: 80,
@@ -57,6 +68,31 @@ export const CustomLibrarySheet = forwardRef<BottomSheet, Props>(
         ref.current.close();
       }
     }, [ref]);
+
+    const handleContinueReading = useCallback(() => {
+      closeSheet();
+      setTimeout(() => {
+        if (readingstats?.lastReadChapterId) {
+          navigation.navigate("ChapterRead", {
+            id: readingstats.lastReadChapterId,
+            chapterProgress: readingstats.lastChapterProgress || 0,
+          });
+          return;
+        }
+
+        if (firstChapter?.id) {
+          navigation.navigate("ChapterRead", {
+            id: firstChapter.id,
+            chapterProgress: 0,
+          });
+          return;
+        }
+
+        if (novelId) {
+          navigation.navigate("Novel", { id: novelId });
+        }
+      }, 200);
+    }, [closeSheet, firstChapter?.id, navigation, novelId, readingstats]);
 
     const renderBackdrop = useCallback(
       (props: any) => (
@@ -155,18 +191,8 @@ export const CustomLibrarySheet = forwardRef<BottomSheet, Props>(
                     color={isDarkMode ? "rgb(13, 4, 36)" : "#FFF"}
                   />
                 }
-                label="Okumaya Devam Et"
-                onPress={() => {
-                  closeSheet();
-                  setTimeout(
-                    () =>
-                      navigation.navigate("ChapterRead", {
-                        id: readingstats?.lastReadChapterId!,
-                        chapterProgress: readingstats?.lastChapterProgress || 0,
-                      }),
-                    200,
-                  );
-                }}
+                label={hasReadingProgress ? "Okumaya Devam Et" : "Okumaya Başla"}
+                onPress={handleContinueReading}
                 primary
                 theme={theme}
                 isDarkMode={isDarkMode}

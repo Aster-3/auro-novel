@@ -1,8 +1,9 @@
 import { Image } from "expo-image";
-import { View, ImageSourcePropType, StyleSheet } from "react-native";
-import logo from "@assets/lost-ghost.jpg";
+import { ImageSourcePropType, StyleSheet, View } from "react-native";
+
+import { useAppTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { getProfileImageSource } from "@/utils/profileImage";
 
 interface ProfileIconProps {
   imgUrl?: ImageSourcePropType;
@@ -12,14 +13,11 @@ interface ProfileIconProps {
 export const ProfileIcon = ({ isFocused }: ProfileIconProps) => {
   const { theme, isDarkMode } = useAppTheme();
   const avatar = useAuthStore((state) => state.user?.profileImageUrl);
-  const imageSource = avatar ? { uri: avatar } : logo;
+  const imageSource = getProfileImageSource(avatar);
 
   return (
     <View
-      style={[
-        styles.outerContainer,
-        isFocused && { borderColor: theme.textPrimary }, // Statik #000 yerine dinamik çerçeve
-      ]}
+      style={[styles.outerContainer, isFocused && { borderColor: theme.textPrimary }]}
     >
       <View
         style={[
@@ -57,6 +55,6 @@ const styles = StyleSheet.create({
     height: "100%",
   },
   activeImg: {
-    opacity: 0.9, // Önceki 5 değeri hatalıydı (maks 1), 0.9 olarak revize ettim
+    opacity: 0.9,
   },
 });

@@ -1,4 +1,9 @@
-import { LoginSchemaType, RegisterSchemaType } from "@/schemas/auth";
+import {
+  ForgotPasswordSchemaType,
+  LoginSchemaType,
+  RegisterSchemaType,
+  ResetPasswordSchemaType,
+} from "@/schemas/auth";
 import api from "../api/axiosInstance";
 
 export const register = async (data: RegisterSchemaType) => {
@@ -23,6 +28,26 @@ export const verifyUser = async (email: string, code: string) => {
 export const login = async (dto: LoginSchemaType) => {
   try {
     const { data } = await api.post("/auth/login", dto);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const forgotPassword = async (dto: ForgotPasswordSchemaType) => {
+  try {
+    const { data } = await api.post("/auth/forgot-password", dto);
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const resetPassword = async (
+  dto: ResetPasswordSchemaType & { email: string },
+) => {
+  try {
+    const { data } = await api.post("/auth/reset-password", dto);
     return data;
   } catch (error) {
     throw error;

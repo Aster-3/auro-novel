@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const uppercaseLetterRegex = /\p{Lu}/u;
+
 export const registerSchema = z.object({
   username: z
     .string()
@@ -21,7 +23,7 @@ export const registerSchema = z.object({
   password: z
     .string()
     .min(6, "Şifre en az 6 karakter olmalıdır")
-    .regex(/[A-Z]/, "Şifre en az bir büyük harf içermelidir")
+    .regex(uppercaseLetterRegex, "Şifre en az bir büyük harf içermelidir")
     .regex(/[0-9]/, "Şifre en az bir rakam içermelidir"),
 });
 
@@ -35,6 +37,25 @@ export const loginSchema = z.object({
 export type RegisterSchemaType = z.infer<typeof registerSchema>;
 
 export type LoginSchemaType = z.infer<typeof loginSchema>;
+
+export const forgotPasswordSchema = z.object({
+  email: z.email("Geçerli bir e-posta adresi giriniz"),
+});
+
+export const resetPasswordSchema = z.object({
+  code: z
+    .string("Kod alanı zorunludur")
+    .regex(/^\d{6}$/, "6 haneli kodu giriniz"),
+  newPassword: z
+    .string("Şifre alanı zorunludur")
+    .min(8, "Şifre en az 8 karakter olmalıdır")
+    .regex(uppercaseLetterRegex, "Şifre en az bir büyük harf içermelidir")
+    .regex(/[0-9]/, "Şifre en az bir rakam içermelidir"),
+});
+
+export type ForgotPasswordSchemaType = z.infer<typeof forgotPasswordSchema>;
+
+export type ResetPasswordSchemaType = z.infer<typeof resetPasswordSchema>;
 
 export const updateProfileSchema = z.object({
   nickname: z
@@ -50,8 +71,9 @@ export const updateProfileSchema = z.object({
   profileBackgroundImageUrl: z.any().optional(),
   description: z
     .string()
-    .max(500, "Açıklama en fazla 500 karakter olabilir")
+    .max(100, "Açıklama en fazla 100 karakter olabilir")
     .optional(),
+  gender: z.enum(["male", "female", "null"]).optional(),
 });
 
 export type UpdateProfileSchemaType = z.infer<typeof updateProfileSchema>;

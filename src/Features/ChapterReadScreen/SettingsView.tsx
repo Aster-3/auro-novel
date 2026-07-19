@@ -29,7 +29,7 @@ export const SettingsView = React.memo(() => {
   return (
     <View style={[styles.container, { opacity: isMounted ? 1 : 0 }]}>
       <View style={styles.progressWrapper}>
-        <Text
+        {/* <Text
           style={[
             styles.progressText,
             { color: isDarkMode ? "#fcf3e6" : "#1A1A1A" },
@@ -43,7 +43,7 @@ export const SettingsView = React.memo(() => {
           onSlidingComplete={handleProgressFinal}
           onNext={() => console.log("Sonraki Bölüm")}
           onPrev={() => console.log("Önceki Bölüm")}
-        />
+        /> */}
       </View>
 
       <FontSettingsControl />

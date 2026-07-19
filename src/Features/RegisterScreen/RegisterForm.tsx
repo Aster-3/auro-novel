@@ -26,6 +26,8 @@ import Animated, {
 import { useRegisterMutation } from "@/hooks/useRegisterMutation";
 import { globalNavigate } from "@/navigation/globalNavigate";
 import { useAppTheme } from "@/hooks/useTheme"; // Kendi hook'un
+import { CommonActions } from "@react-navigation/native";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 const Dot = ({ delay }: { delay: number }) => {
   const { theme } = useAppTheme();
@@ -71,6 +73,7 @@ const LoadingDots = () => {
 
 export const RegisterForm = () => {
   const { theme } = useAppTheme();
+  const navigation = useAppNavigation();
   const { mutate, isPending } = useRegisterMutation();
   const [showPassword, setShowPassword] = useState(false);
   const [isFakeLoading, setIsFakeLoading] = useState(false);
@@ -123,6 +126,26 @@ export const RegisterForm = () => {
     return error ? "#EF4444" : theme.textPrimary;
   };
 
+  const navigateToLogin = () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: "Main",
+            params: {
+              screen: "Profile",
+              params: {
+                screen: "Main",
+                params: { openLogin: true },
+              },
+            },
+          },
+        ],
+      }),
+    );
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.inputs}>
@@ -141,8 +164,9 @@ export const RegisterForm = () => {
               placeholderTextColor={theme.textSecondary}
               style={[styles.input, { color: theme.textPrimary }]}
               autoCapitalize="none"
+              value={formData.username}
               onChangeText={(val) => {
-                setFormData({ ...formData, username: val });
+                setFormData({ ...formData, username: val.toLowerCase() });
                 clearError("username");
               }}
             />
@@ -288,11 +312,7 @@ export const RegisterForm = () => {
           <Text style={[styles.footerText, { color: theme.textSecondary }]}>
             Zaten bir hesabın var mı?
           </Text>
-          <TouchableOpacity
-            onPress={() =>
-              globalNavigate("VerifyUser", { email: formData.email })
-            }
-          >
+          <TouchableOpacity onPress={navigateToLogin}>
             <Text style={[styles.signUp, { color: theme.textPrimary }]}>
               Giriş Yap
             </Text>

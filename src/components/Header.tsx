@@ -22,7 +22,7 @@ export const Header = ({
       ]}
     >
       {/* BackButton rengini de temadan alıyoruz */}
-      <BackButton color={theme.textPrimary} size={22} />
+      <BackButton color={theme.textPrimary} size={20} />
 
       <View style={styles.titleWrapper}>
         <Text
@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     flexShrink: 1, // Uzun başlıkların taşmasını önler
   },
   title: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: "Mont-600",
     letterSpacing: -0.3,
     includeFontPadding: false,

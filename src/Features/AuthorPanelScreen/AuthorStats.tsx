@@ -1,5 +1,5 @@
 import { StatCard } from "@/components/StatCard";
-import { GetDashboardStats, TrendState } from "@/types/dashboard";
+import { GetDashboardStats } from "@/types/dashboard";
 import { View } from "react-native";
 
 export const AuthorStats = ({
@@ -28,8 +28,8 @@ export const AuthorStats = ({
 
       <View style={{ gap: 8, flexDirection: "row" }}>
         <StatCard
-          label="Satılan Bölümler"
-          stat={stats?.totalSoldChapters ?? null}
+          label="Kitaplığa Eklenme"
+          stat={stats?.totalLibraryCount ?? null}
           isDark={true}
           isLoading={isLoading}
         />

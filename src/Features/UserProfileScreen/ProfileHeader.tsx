@@ -1,109 +1,116 @@
-import React, { useEffect, useState } from "react";
+import { BackButton } from "@/components/BackButton";
 import { useAppTheme } from "@/hooks/useTheme";
+import { getProfileImageSource } from "@/utils/profileImage";
+import React, { useMemo, useState } from "react";
 import {
   Image,
-  View,
-  StyleSheet,
-  TouchableOpacity,
   Modal,
   Pressable,
-  Dimensions,
+  StatusBar,
+  StyleSheet,
+  View,
 } from "react-native";
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from "@gorhom/bottom-sheet";
-import { BackButton } from "@/components/BackButton";
+import defaultProfileBackground from "@assets/defaultProfileBackground.jpg";
+import { PROFILE_HEADER } from "@/constants/profileLayout";
 
-export const ProfileHeader = ({
-  coverImage,
-  profileImage,
-}: {
-  coverImage?: string;
-  profileImage?: string;
-}) => {
-  const { theme } = useAppTheme();
-  Dimensions.get("window");
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [aspectRatio, setAspectRatio] = useState(1);
+export const ProfileHeader = React.memo(
+  ({
+    coverImage,
+    profileImage,
+  }: {
+    coverImage?: string | null;
+    profileImage?: string | null;
+  }) => {
+    const { theme } = useAppTheme();
+    const [isProfileImageOpen, setIsProfileImageOpen] = useState(false);
+    const profileImageSource = useMemo(
+      () => getProfileImageSource(profileImage),
+      [profileImage],
+    );
 
-  useEffect(() => {
-    if (selectedImage) {
-      Image.getSize(
-        selectedImage,
-        (width, height) => {
-          setAspectRatio(width / height);
-        },
-        (error) => {
-          console.error("Resim boyutu alınamadı:", error);
-        },
-      );
-    }
-  }, [selectedImage]);
-
-  return (
-    <View style={styles.container}>
-      {/* --- COVER IMAGE --- */}
-      <TouchableOpacity
-        activeOpacity={1}
-        onPress={() => setSelectedImage(coverImage || null)}
-        style={styles.coverContainer}
-      >
-        <View style={{ position: "absolute", top: 16, left: 16, zIndex: 10 }}>
-          <BackButton />
-        </View>
-        <Image
-          source={{ uri: coverImage }}
-          style={styles.coverImage}
-          resizeMode="cover"
-        />
-        <View style={styles.overlay} />
-      </TouchableOpacity>
-
-      <View style={styles.profileImageWrapper}>
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setSelectedImage(profileImage || null)}
-        >
-          <Image
-            source={{ uri: profileImage }}
-            style={[styles.profileImage, { borderColor: theme.background }]}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <Modal
-        visible={!!selectedImage}
-        transparent={true}
-        animationType="fade"
-        onRequestClose={() => setSelectedImage(null)}
-        statusBarTranslucent={true}
-      >
-        <Pressable
-          style={styles.modalBackground}
-          onPress={() => setSelectedImage(null)}
-        >
-          <View style={[styles.dynamicWrapper, { aspectRatio: aspectRatio }]}>
+    return (
+      <View style={styles.container} pointerEvents="box-none">
+        <View style={styles.coverContainer} pointerEvents="box-none">
+          <View style={styles.backButton}>
+            <BackButton />
+          </View>
+          {coverImage ? (
             <Image
-              source={{ uri: selectedImage || "" }}
-              style={styles.fullImage}
+              source={{ uri: coverImage }}
+              style={styles.coverImage}
               resizeMode="cover"
             />
-          </View>
+          ) : (
+            <Image
+              source={defaultProfileBackground}
+              style={styles.coverImage}
+              resizeMode="cover"
+            />
+          )}
+          <View style={styles.overlay} pointerEvents="none" />
+        </View>
+
+        <Pressable
+          style={styles.profileImageWrapper}
+          onPress={() => setIsProfileImageOpen(true)}
+        >
+          <Image
+            source={profileImageSource}
+            style={[styles.profileImage, { borderColor: theme.background }]}
+          />
         </Pressable>
-      </Modal>
-    </View>
-  );
-};
+
+        <Modal
+          visible={isProfileImageOpen}
+          transparent
+          animationType="fade"
+          statusBarTranslucent
+          navigationBarTranslucent
+          onRequestClose={() => setIsProfileImageOpen(false)}
+        >
+          <StatusBar
+            translucent
+            backgroundColor="rgba(0,0,0,0.9)"
+            barStyle="light-content"
+          />
+          <Pressable
+            style={styles.modalBackground}
+            onPress={() => setIsProfileImageOpen(false)}
+          >
+            <Pressable
+              style={styles.fullProfileImageContainer}
+              onPress={(event) => event.stopPropagation()}
+            >
+              <Image
+                source={profileImageSource}
+                style={styles.fullProfileImage}
+                resizeMode="cover"
+              />
+            </Pressable>
+          </Pressable>
+        </Modal>
+      </View>
+    );
+  },
+);
 
 const styles = StyleSheet.create({
   container: {
     alignItems: "center",
     width: "100%",
-    marginBottom: 60,
+    marginBottom: PROFILE_HEADER.containerBottomGap,
   },
   coverContainer: {
     width: "100%",
-    height: 180,
-    borderRadius: 20,
+    aspectRatio: PROFILE_HEADER.coverAspectRatio,
+    borderRadius: PROFILE_HEADER.coverRadius,
     overflow: "hidden",
+  },
+  backButton: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    zIndex: 10,
   },
   coverImage: {
     width: "100%",
@@ -111,35 +118,32 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    backgroundColor: "rgba(0, 0, 0, 0.16)",
   },
   profileImageWrapper: {
     position: "absolute",
-    bottom: -50,
+    bottom: -PROFILE_HEADER.avatarOverlap,
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 40,
-    borderWidth: 2,
-    elevation: 4,
+    width: PROFILE_HEADER.avatarSize,
+    height: PROFILE_HEADER.avatarSize,
+    borderRadius: PROFILE_HEADER.avatarRadius,
+    borderWidth: PROFILE_HEADER.avatarBorderWidth,
   },
-
   modalBackground: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.95)",
-    justifyContent: "center",
     alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.9)",
   },
-  dynamicWrapper: {
-    width: SCREEN_WIDTH * 0.95,
-    maxWidth: SCREEN_WIDTH,
-    maxHeight: SCREEN_HEIGHT * 0.8,
-    borderRadius: 24,
+  fullProfileImageContainer: {
+    width: "85%",
+    maxWidth: 360,
+    aspectRatio: 1,
+    borderRadius: 32,
     overflow: "hidden",
-    backgroundColor: "#222",
   },
-  fullImage: {
+  fullProfileImage: {
     width: "100%",
     height: "100%",
   },

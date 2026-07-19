@@ -4,7 +4,7 @@
     "slug": "auro-novel",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/logo3.jpg",
+    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -18,16 +18,29 @@
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundImage": "./assets/android-icon-background.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.anonymous.auronovel"
+      "usesCleartextTraffic": false,
+      "googleServicesFile": "./google-services.json",
+      "package": "com.auroinitiative.novel",
+      "permissions": ["com.android.vending.BILLING"]
     },
     "web": {
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-font", "expo-secure-store"]
+    "plugins": [
+      "expo-font",
+      "expo-secure-store",
+      "expo-notifications",
+      "expo-sqlite"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a4f1b318-0c91-4303-ae43-e1c160e5b711"
+      }
+    },
+    "owner": "onyx99"
   }
 }

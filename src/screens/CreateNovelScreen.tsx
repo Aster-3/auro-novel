@@ -1,6 +1,5 @@
 import { Header } from "@/components/Header";
 import { Screen } from "@/components/layout/Screen";
-import { ProfileSettingsHeader } from "@/components/ProfileSettingsHeader";
 import { CNStepOne } from "@/Features/CreateNovelScreen/CNStepOne";
 import { NextButton } from "@/Features/CreateNovelScreen/NextButton";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
@@ -38,43 +37,41 @@ const CreateNovelScreen = () => {
 
   const handleSubmit = () => {
     const result = createNovelSchemaStepOne.safeParse(formData);
-    console.log("Validation result:", result);
+
     if (!result.success) {
       const fieldErrors: CreateNovelErrors = {};
-      result.error.flatten().fieldErrors &&
-        Object.entries(result.error.flatten().fieldErrors).forEach(
-          ([field, messages]) => {
-            if (messages && messages.length > 0) {
-              fieldErrors[field as keyof CreateNovelScreenProps] = messages[0];
-            }
-          },
-        );
+      Object.entries(result.error.flatten().fieldErrors).forEach(
+        ([field, messages]) => {
+          if (messages && messages.length > 0) {
+            fieldErrors[field as keyof CreateNovelScreenProps] = messages[0];
+          }
+        },
+      );
       setErrors(fieldErrors);
-    } else {
-      setTimeout(() => {
-        const data = createNovelMapper(formData);
-        mutate(data, {
-          onSuccess: () => {
-            console.log("Başarılı!");
-            onsuccess();
-          },
-          onError: (error: any) => {
-            if (error.errors?.slug) {
-              setErrors({
-                slug: "Bu slug zaten kullanılıyor. Lütfen benzersiz bir slug girin.",
-              });
-            } else {
-              useToastStore.getState().showToast({
-                type: "Hata",
-                message:
-                  error.response?.data?.message ||
-                  "Kitap oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.",
-              });
-            }
-          },
-        });
-      }, 500);
+      return;
     }
+
+    setTimeout(() => {
+      const data = createNovelMapper(formData);
+      mutate(data, {
+        onSuccess: onsuccess,
+        onError: (error: any) => {
+          if (error.errors?.slug) {
+            setErrors({
+              slug: "Bu slug zaten kullanılıyor. Lütfen benzersiz bir slug girin.",
+            });
+            return;
+          }
+
+          useToastStore.getState().showToast({
+            type: "Hata",
+            message:
+              error.response?.data?.message ||
+              "Kitap oluşturulurken bir hata oluştu. Lütfen tekrar deneyin.",
+          });
+        },
+      });
+    }, 500);
   };
 
   const onsuccess = () => {
@@ -89,6 +86,7 @@ const CreateNovelScreen = () => {
     });
     navigation.goBack();
   };
+
   return (
     <Screen>
       <Header title="Yeni Kitap Oluştur" isAdjacent={false} />

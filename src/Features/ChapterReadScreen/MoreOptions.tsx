@@ -1,15 +1,20 @@
-import React from "react";
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
-import { useReaderStore } from "@/store/useReaderStore";
-import { ShareIcon } from "@/components/icons/ShareIcon";
-// import { BookmarkIcon } from "@/components/icons/BookmarkIcon";
-import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
+import React, { useState } from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+
 import { AboutBookIcon } from "@/components/icons/AboutBookIcon";
+import { AddArchiveIcon } from "@/components/icons/AddArchiveIcon";
 import { FlagIcon } from "@/components/icons/FlagIcon";
-import {
-  globalNavigate,
-  navigateToNovelSafe,
-} from "@/navigation/globalNavigate";
+import { InArchiveIcon } from "@/components/icons/InArchiveIcon";
+import { ShareIcon } from "@/components/icons/ShareIcon";
+import { useLibraryCheck } from "@/hooks/useLibraryCheck";
+import { useNovelDetail } from "@/hooks/useNovelDetail";
+import { useToggleLibrary } from "@/hooks/useToggleLibrary";
+import { globalNavigate, navigateToNovelSafe } from "@/navigation/globalNavigate";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useReaderStore } from "@/store/useReaderStore";
+import { useToastStore } from "@/store/useToastStore";
+import NovelShareModal from "@/utils/NovelShareModal";
+
 export const MoreOptions = ({
   novelId,
   chapterId,
@@ -20,6 +25,13 @@ export const MoreOptions = ({
   chapterId: string;
 }) => {
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const user = useAuthStore((state) => state.user);
+  const [isShareModalVisible, setShareModalVisible] = useState(false);
+  const { data: novelData } = useNovelDetail(novelId);
+  const { data: isNovelInLibrary, isLoading: isLibraryLoading } =
+    useLibraryCheck(novelId);
+  const { mutate: toggleLibrary, isPending: isToggleLibraryPending } =
+    useToggleLibrary(novelId);
 
   const colors = {
     text: isDarkMode ? "#E0E0E0" : "#1A1D23",
@@ -28,19 +40,68 @@ export const MoreOptions = ({
     iconColor: isDarkMode ? "#B0B3B8" : "#374151",
   };
 
+  const handleSharePress = () => {
+    if (!novelData) {
+      return;
+    }
+
+    closeSheet();
+    setTimeout(() => {
+      setShareModalVisible(true);
+    }, 150);
+  };
+
+  const handleLibraryPress = () => {
+    if (!user) {
+      useToastStore.getState().showToast({
+        type: "Bilgi",
+        message: "Romanı kütüphanene eklemek için giriş yapmalısın.",
+      });
+      return;
+    }
+
+    toggleLibrary();
+  };
+
+  const handleReportPress = () => {
+    const novelName = novelData?.name || novelId;
+
+    closeSheet();
+    setTimeout(() => {
+      globalNavigate(
+        "SupportFeedback",
+        {
+          initialType: "report",
+          initialSubject: `${novelName}: ${chapterId}`,
+        },
+        "push",
+      );
+    }, 150);
+  };
+
   const options = [
-    { id: "share", label: "Paylaş", icon: "share", onClick: () => {} },
     {
-      id: "bookmark",
-      label: "Yer İşareti",
-      icon: "bookmark",
-      onClick: () => {},
+      id: "share",
+      label: "Paylaş",
+      icon: <ShareIcon color={colors.iconColor} size={16} />,
+      onClick: handleSharePress,
+      disabled: !novelData,
     },
-    // { id: "download", label: "İndir", icon: "download" },
+    {
+      id: "library",
+      label: isNovelInLibrary ? "Kütüphanede" : "Kütüphaneye ekle",
+      icon: isNovelInLibrary ? (
+        <InArchiveIcon color={colors.iconColor} size={16} />
+      ) : (
+        <AddArchiveIcon color={colors.iconColor} size={16} />
+      ),
+      onClick: handleLibraryPress,
+      disabled: isLibraryLoading || isToggleLibraryPending,
+    },
     {
       id: "about",
       label: "Bu Kitap Hakkında",
-      icon: "info",
+      icon: <AboutBookIcon color={colors.iconColor} size={16} />,
       onClick: () => {
         closeSheet();
         setTimeout(() => {
@@ -51,33 +112,27 @@ export const MoreOptions = ({
     {
       id: "report",
       label: "Şikayet Et",
-      icon: "flag",
+      icon: <FlagIcon color={colors.iconColor} size={16} />,
       isDestructive: true,
-      onClick: () => {},
+      onClick: handleReportPress,
     },
   ];
-
-  const iconMap: { [key: string]: React.ReactNode } = {
-    share: <ShareIcon color={colors.iconColor} size={16} />,
-    bookmark: <ShareIcon color={colors.iconColor} size={16} />,
-    download: <DownloadedsIcon color={colors.iconColor} size={16} />,
-    info: <AboutBookIcon color={colors.iconColor} size={16} />,
-    flag: <FlagIcon color={colors.iconColor} size={16} />,
-  };
 
   const renderOption = (item: (typeof options)[0], index: number) => (
     <TouchableOpacity
       key={item.id}
       onPress={item.onClick}
       activeOpacity={0.5}
+      disabled={item.disabled}
       style={[
         styles.optionRow,
         { borderBottomColor: colors.border },
+        item.disabled && styles.disabledOption,
         index === options.length - 1 && { borderBottomWidth: 0 },
       ]}
     >
       <View style={styles.leftContent}>
-        <View style={styles.iconPlaceholder}>{iconMap[item.icon]}</View>
+        <View style={styles.iconPlaceholder}>{item.icon}</View>
         <Text
           style={[
             styles.label,
@@ -88,7 +143,7 @@ export const MoreOptions = ({
         </Text>
       </View>
 
-      <Text style={[styles.arrow, { color: colors.subText }]}></Text>
+      <Text style={[styles.arrow, { color: colors.subText }]}>›</Text>
     </TouchableOpacity>
   );
 
@@ -100,6 +155,14 @@ export const MoreOptions = ({
       <View style={styles.listContainer}>
         {options.map((opt, i) => renderOption(opt, i))}
       </View>
+
+      {novelData ? (
+        <NovelShareModal
+          isVisible={isShareModalVisible}
+          onClose={() => setShareModalVisible(false)}
+          novel={novelData}
+        />
+      ) : null}
     </View>
   );
 };
@@ -127,6 +190,9 @@ const styles = StyleSheet.create({
     paddingVertical: 18,
     borderBottomWidth: 0.4,
   },
+  disabledOption: {
+    opacity: 0.55,
+  },
   leftContent: {
     flexDirection: "row",
     alignItems: "center",
@@ -146,11 +212,5 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "200",
     opacity: 0.5,
-  },
-  thinIcon: {
-    width: 16,
-    height: 16,
-    borderWidth: 1,
-    borderRadius: 4,
   },
 });

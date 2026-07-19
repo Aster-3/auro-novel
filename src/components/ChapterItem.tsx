@@ -1,17 +1,26 @@
 import { Fragment, memo } from "react";
 import {
+  ActivityIndicator,
   Pressable,
   Text,
-  TouchableOpacity,
   View,
   StyleSheet,
 } from "react-native";
-import { LockIcon } from "./icons/LockIcon";
-import { DownloadedsIcon } from "./icons/DownloadedsIcon";
 import { useAppTheme } from "@/hooks/useTheme";
+import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
+import { CheckIcon } from "@/components/icons/CheckIcon";
+
+type DownloadStatus = "idle" | "downloading" | "downloaded";
 
 export const ChapterItem = memo(
-  ({ chapter, index, showVolumeHeader, onNavigate }: any) => {
+  ({
+    chapter,
+    index,
+    showVolumeHeader,
+    onNavigate,
+    onDownload,
+    downloadStatus = "idle",
+  }: any & { downloadStatus?: DownloadStatus }) => {
     // Profesyonel lige geçiş: Artık manuel renk tanımlama yok!
     const { theme, isDarkMode } = useAppTheme();
 
@@ -64,27 +73,34 @@ export const ChapterItem = memo(
             </Text>
           </View>
 
-          <View style={styles.rightContent}>
-            {chapter.isLocked ? (
-              <View style={styles.lockWrapper}>
-                <LockIcon size={17} color={theme.textSecondary} />
-              </View>
-            ) : (
-              <TouchableOpacity
-                activeOpacity={0.6}
-                style={[
-                  styles.downloadButton,
-                  {
-                    backgroundColor: isDarkMode
-                      ? "rgba(255, 255, 255, 0.05)"
-                      : "#F1F5F9",
-                  },
-                ]}
-              >
-                <DownloadedsIcon size={16} color={theme.accent} />
-              </TouchableOpacity>
-            )}
-          </View>
+          {onDownload && (
+            <Pressable
+              hitSlop={10}
+              disabled={downloadStatus !== "idle"}
+              onPress={(event) => {
+                event.stopPropagation();
+                onDownload(chapter);
+              }}
+              style={({ pressed }) => [
+                styles.downloadButton,
+                {
+                  backgroundColor: pressed
+                    ? isDarkMode
+                      ? "rgba(255,255,255,0.08)"
+                      : "rgba(0,0,0,0.05)"
+                    : "transparent",
+                },
+              ]}
+            >
+              {downloadStatus === "downloading" ? (
+                <ActivityIndicator color={theme.textSecondary} size="small" />
+              ) : downloadStatus === "downloaded" ? (
+                <CheckIcon color={theme.accent} size={18} />
+              ) : (
+                <DownloadedsIcon color={theme.textSecondary} size={18} />
+              )}
+            </Pressable>
+          )}
         </Pressable>
       </Fragment>
     );
@@ -122,6 +138,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     gap: 14,
+    minWidth: 0,
   },
   indexText: {
     fontFamily: "Mont-500",
@@ -130,25 +147,17 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   chapterTitle: {
+    flex: 1,
     fontFamily: "Mont-500",
     fontSize: 13.5, // Bir tık büyütüldü, okunaklılık arttı
     letterSpacing: -0.2,
   },
-  rightContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  lockWrapper: {
+  downloadButton: {
     width: 36,
     height: 36,
-    justifyContent: "center",
+    borderRadius: 12,
     alignItems: "center",
-  },
-  downloadButton: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
     justifyContent: "center",
-    alignItems: "center",
+    marginLeft: 12,
   },
 });

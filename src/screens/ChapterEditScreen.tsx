@@ -1,35 +1,29 @@
-import React, { useState, useEffect, useMemo } from "react";
-import {
-  View,
-  TextInput,
-  StyleSheet,
-  ActivityIndicator,
-  StatusBar,
-} from "react-native";
-import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { ChapterEditHeader } from "@/Features/ChapterEditScreen/ChapterEditHeader";
 import {
-  RichText,
-  useEditorBridge,
-  TenTapStartKit,
-  CoreBridge,
-} from "@10play/tentap-editor";
-import {
-  getCustomCSS,
   CustomToolbar,
+  getCustomCSS,
 } from "@/Features/ChapterEditScreen/CustomToolbar";
 import { RootStackParamList } from "@/constants/navigation";
-import { RouteProp, useRoute } from "@react-navigation/native";
-import { useGetOneChapter } from "@/hooks/useGetOneChapter";
-import { useChapterMutation } from "@/hooks/useChapterMutation";
-import { useToastStore } from "@/store/useToastStore";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme";
+import { useChapterMutation } from "@/hooks/useChapterMutation";
 import { useCreateChapter } from "@/hooks/useCreateChapter";
-import { updateCreateChapterSchema } from "@/schemas/chapter";
+import { useGetOneChapter } from "@/hooks/useGetOneChapter";
 import { useGetOneDraftChapter } from "@/hooks/useGetOneDraftChapter";
+import { updateCreateChapterSchema } from "@/schemas/chapter";
+import { useToastStore } from "@/store/useToastStore";
 import { wordCounter } from "@/utils/wordCounter";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı çektik
+import { RouteProp, useRoute } from "@react-navigation/native";
+import {
+  CoreBridge,
+  RichText,
+  TenTapStartKit,
+  useEditorBridge,
+} from "@10play/tentap-editor";
+import React, { useEffect, useMemo, useState } from "react";
+import { ActivityIndicator, StyleSheet, TextInput, View } from "react-native";
+import { KeyboardAvoidingView } from "react-native-keyboard-controller";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ChapterEditScreen = () => {
   const { theme, isDarkMode } = useAppTheme();
@@ -37,6 +31,7 @@ const ChapterEditScreen = () => {
   const { chapterId, novelId, isDraft } = route.params;
   const navigation = useAppNavigation();
 
+  const [title, setTitle] = useState("");
   const [wordCount, setWordCount] = useState(0);
 
   const { data: publishChapter, isLoading: isPublishLoading } =
@@ -57,8 +52,6 @@ const ChapterEditScreen = () => {
   );
   const { mutate: createChapter } = useCreateChapter(novelId);
 
-  const [title, setTitle] = useState("");
-
   const editor = useEditorBridge({
     autofocus: true,
     avoidIosKeyboard: true,
@@ -78,13 +71,18 @@ const ChapterEditScreen = () => {
   });
 
   useEffect(() => {
-    if (data) {
-      if (data.title) setTitle(data.title);
-      if (data.content) {
-        editor.setContent(data.content);
-      }
+    if (!data) {
+      return;
     }
-  }, [data]);
+
+    if (data.title) {
+      setTitle(data.title);
+    }
+
+    if (data.content) {
+      editor.setContent(data.content);
+    }
+  }, [data, editor]);
 
   const handleSubmit = async () => {
     const currentContent = await editor.getHTML();
@@ -112,9 +110,10 @@ const ChapterEditScreen = () => {
         { id: chapterId, ...payload },
         {
           onSuccess: () => {
-            useToastStore
-              .getState()
-              .showToast({ type: "Başarılı", message: "Bölüm güncellendi." });
+            useToastStore.getState().showToast({
+              type: "Başarılı",
+              message: "Bölüm güncellendi.",
+            });
             navigation.goBack();
           },
         },
@@ -124,9 +123,10 @@ const ChapterEditScreen = () => {
         { novelId, ...payload },
         {
           onSuccess: () => {
-            useToastStore
-              .getState()
-              .showToast({ type: "Başarılı", message: "Bölüm oluşturuldu." });
+            useToastStore.getState().showToast({
+              type: "Başarılı",
+              message: "Bölüm oluşturuldu.",
+            });
             navigation.goBack();
           },
         },
@@ -158,29 +158,32 @@ const ChapterEditScreen = () => {
       </SafeAreaView>
 
       <KeyboardAvoidingView behavior="padding" style={styles.flex}>
-        <View style={[styles.editorCard, { backgroundColor: theme.surface }]}>
+        <View
+          style={[styles.editorArea, { backgroundColor: theme.background }]}
+        >
           <TextInput
             value={title}
             onChangeText={setTitle}
             style={[styles.titleInput, { color: theme.textPrimary }]}
-            placeholder={chapterId ? "Bölüm Başlığı" : "Yeni Bölüm Başlığı"}
+            placeholder={chapterId ? "Bölüm başlığı" : "Yeni bölüm başlığı"}
             placeholderTextColor={theme.textSecondary}
             multiline
           />
+
           <View
             style={[
               styles.divider,
               {
                 backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.05)"
-                  : "#F1F5F9",
+                  ? "rgba(255,255,255,0.035)"
+                  : "rgba(15, 23, 42, 0.19)",
               },
             ]}
           />
 
           <RichText
             editor={editor}
-            style={[styles.richText, { backgroundColor: theme.surface }]}
+            style={[styles.richText, { backgroundColor: theme.background }]}
             showsVerticalScrollIndicator={false}
           />
         </View>
@@ -194,34 +197,35 @@ const ChapterEditScreen = () => {
 export default ChapterEditScreen;
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, gap: 16 },
+  screen: {
+    flex: 1,
+  },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  flex: { flex: 1 },
-  editorCard: {
+  flex: {
     flex: 1,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    paddingHorizontal: 24,
-    paddingTop: 24,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
+  },
+  editorArea: {
+    flex: 1,
+    paddingHorizontal: 16,
+    marginTop: 14,
   },
   titleInput: {
     fontSize: 18,
+    lineHeight: 26,
     fontFamily: "Mont-700",
-    paddingBottom: 10,
+    paddingTop: 2,
+    paddingBottom: 12,
   },
   divider: {
-    height: 1,
+    height: StyleSheet.hairlineWidth,
     width: "100%",
-    marginBottom: 16,
+    borderRadius: 10,
   },
-  richText: { flex: 1 },
+  richText: {
+    flex: 1,
+  },
 });

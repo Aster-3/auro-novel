@@ -1,6 +1,6 @@
 import { getChapterDetail } from "@/services/ChapterService";
 import { keepPreviousData } from "@tanstack/react-query";
-import { useQuery } from "node_modules/@tanstack/react-query/build/modern/useQuery";
+import { useQuery } from "@tanstack/react-query";
 
 export const useGetOneChapter = (id: string | undefined, enabled: boolean) => {
   return useQuery({

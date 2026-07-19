@@ -37,26 +37,62 @@ import Animated, {
   interpolate,
 } from "react-native-reanimated";
 import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { getChapterDetail } from "@/services/ChapterService";
-import { LockedContentOverlay } from "@/Features/ChapterReadScreen/LockContentOverlay";
-import { CoinType } from "@/types/wallet";
-import { usePurchaseChapter } from "@/hooks/usePurchaseChapter";
 import { useMutateReadStats } from "@/hooks/useMutateReadStats";
+import { isPremiumActive, useAuthStore } from "@/store/useAuthStore";
+import {
+  getAdjacentDownloadedChapterIds,
+  getDownloadedChapterById,
+} from "@/db/offlineChaptersDb";
 
 interface RouteParams {
   params: {
     id: string;
     chapterProgress?: number;
+    isOffline?: boolean;
   };
 }
 
 export type SheetType = "SETTINGS" | "TOC" | "MORE" | null;
 
 const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
-  const { id, chapterProgress } = route.params;
+  const { id, chapterProgress, isOffline } = route.params;
   const [selectedId, setId] = useState(id);
-  const { data: chapterData, isLoading } = useGetOneChapter(selectedId, true);
-  const { mutate: purchaseChapter } = usePurchaseChapter(selectedId);
+  const user = useAuthStore((state) => state.user);
+  const isPremium = useAuthStore((state) => state.isPremium);
+  const premiumUntil = useAuthStore((state) => state.premiumUntil);
+  const canReadOffline = !!user?.id && isPremiumActive(isPremium, premiumUntil);
+  const { data: onlineChapterData, isLoading: isOnlineLoading } =
+    useGetOneChapter(selectedId, !isOffline);
+  const { data: offlineChapterData, isLoading: isOfflineLoading } = useQuery({
+    queryKey: ["downloadedChapter", selectedId],
+    queryFn: async () => {
+      if (!user?.id || !canReadOffline) return null;
+
+      const [chapter, adjacent] = await Promise.all([
+        getDownloadedChapterById(user.id, selectedId),
+        getAdjacentDownloadedChapterIds(user.id, selectedId),
+      ]);
+
+      if (!chapter) return null;
+
+      return {
+        id: chapter.id,
+        title: chapter.title,
+        content: chapter.content,
+        novelId: chapter.novelId,
+        volumeOrder: chapter.volumeOrder,
+        volumeTitle: chapter.volumeName,
+        nextChapterId: adjacent.nextChapterId,
+        previousChapterId: adjacent.previousChapterId,
+        novelStatus: undefined,
+      };
+    },
+    enabled: !!isOffline && canReadOffline,
+  });
+  const chapterData = isOffline ? offlineChapterData : onlineChapterData;
+  const isLoading = isOffline ? isOfflineLoading : isOnlineLoading;
 
   const { width } = useWindowDimensions();
   const navigation = useAppNavigation();
@@ -79,7 +115,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const bottomSheetRef = useRef<BottomSheet>(null);
   const queryClient = useQueryClient();
   const { mutate: updateReadingStats } = useMutateReadStats(
-    chapterData?.novelId,
+    chapterData?.novelId ?? "",
   );
 
   const colors = useMemo(
@@ -105,13 +141,6 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     setActiveSheet(type);
     bottomSheetRef.current?.expand();
   }, []);
-
-  const handleUnlockChapter = useCallback(
-    (coinType: CoinType) => {
-      purchaseChapter(coinType);
-    },
-    [purchaseChapter],
-  );
 
   useEffect(() => {
     contentOpacity.value = 0;
@@ -143,7 +172,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   }, [chapterData?.nextChapterId, queryClient]);
 
   const actualPadding =
-    paddingHorizontal === 3 ? 20 : paddingHorizontal === 2 ? 16 : 12;
+    paddingHorizontal === 3 ? 16 : paddingHorizontal === 2 ? 12 : 8;
   const actualLineHeight =
     fontSize * (lineHeight === 3 ? 1.8 : lineHeight === 2 ? 1.5 : 1.2);
 
@@ -181,11 +210,17 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
 
         if (event.translationX > threshold && prevId) {
           translateX.value = withTiming(width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", { id: prevId });
+            runOnJS(navigation.replace)("ChapterRead", {
+              id: prevId,
+              isOffline,
+            });
           });
         } else if (event.translationX < -threshold && nextId) {
           translateX.value = withTiming(-width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", { id: nextId });
+            runOnJS(navigation.replace)("ChapterRead", {
+              id: nextId,
+              isOffline,
+            });
           });
         } else {
           translateX.value = withTiming(0, { duration: 200 });
@@ -265,16 +300,22 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
         progress: parseFloat(currentProgress.toFixed(2)),
       });
 
-      if (elapsedTime > 15) {
+      if (
+        !isOffline &&
+        elapsedTime > 15 &&
+        user &&
+        chapterData?.novelId &&
+        chapterData?.id
+      ) {
         updateReadingStats({
-          novelId: chapterData?.novelId!,
-          lastReadChapterId: chapterData?.id!,
+          novelId: chapterData.novelId,
+          lastReadChapterId: chapterData.id,
           lastChapterProgress: currentProgress,
           incrementTime: elapsedTime,
         });
       }
     };
-  }, [chapterData?.id]);
+  }, [chapterData?.id, chapterData?.novelId, updateReadingStats, user]);
 
   const handleScroll = (event: any) => {
     const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
@@ -284,6 +325,26 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   };
 
   const windowHeight = useWindowDimensions().height;
+
+  if (isOffline && !canReadOffline) {
+    return (
+      <Screen
+        style={
+          [styles.container, { backgroundColor: colors.background }] as any
+        }
+      >
+        <View style={styles.lockedOfflineContainer}>
+          <Text style={[styles.lockedOfflineTitle, { color: colors.title }]}>
+            Offline okuma kilitli
+          </Text>
+          <Text style={[styles.lockedOfflineText, { color: colors.text }]}>
+            İndirilen bölümleri okumak için aktif Auro Pass hesabıyla giriş
+            yapmalısın.
+          </Text>
+        </View>
+      </Screen>
+    );
+  }
 
   return (
     <Screen
@@ -318,7 +379,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
             <Animated.View style={[{ flex: 1 }, contentFadeStyle]}>
               <ScrollView
                 ref={scrollViewRef}
-                scrollEnabled={chapterData?.isLocked ? false : true}
+                scrollEnabled={true}
                 style={styles.scrollView}
                 onContentSizeChange={(w, h) => {
                   if (
@@ -368,7 +429,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                   tagsStyles={tagsStyles}
                   systemFonts={systemFonts}
                 />
-                {!chapterData?.isLocked && (
+                {!isOffline && (
                   <SlideForNextChapter
                     novelStatus={chapterData?.novelStatus}
                     lastChapterAvailable={!!chapterData?.nextChapterId}
@@ -380,30 +441,22 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
         </Animated.View>
       </GestureDetector>
 
-      {chapterData?.isLocked && (
-        <LockedContentOverlay
-          onUnlock={handleUnlockChapter}
-          premiumPrice={chapterData.premiumPrice}
-          freemiumPrice={chapterData.freemiumPrice}
-          isDiscountActive={chapterData.isDiscountActive}
-          discountRate={chapterData.discountRate}
-          discountedEndDate={chapterData.discountedEndDate}
-          discountedPremiumPrice={chapterData.discountedPremiumPrice}
-          translateX={translateX}
-        />
+      {!isOffline && (
+        <>
+          <BottomMenu
+            isMenuVisible={isMenuVisible}
+            handleOpenSheet={handleOpenSheet}
+            chapterId={chapterData?.id ?? selectedId}
+          />
+          <ChapterBottomSheet
+            chapterId={chapterData?.id!}
+            novelId={chapterData?.novelId!}
+            activeSheet={activeSheet}
+            ref={bottomSheetRef}
+            selectChapter={selectChapter}
+          />
+        </>
       )}
-
-      <BottomMenu
-        isMenuVisible={isMenuVisible}
-        handleOpenSheet={handleOpenSheet}
-      />
-      <ChapterBottomSheet
-        chapterId={chapterData?.id!}
-        novelId={chapterData?.novelId!}
-        activeSheet={activeSheet}
-        ref={bottomSheetRef}
-        selectChapter={selectChapter}
-      />
     </Screen>
   );
 };
@@ -427,5 +480,23 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
     fontFamily: "Lato",
     paddingHorizontal: 14,
+  },
+  lockedOfflineContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 28,
+    gap: 10,
+  },
+  lockedOfflineTitle: {
+    fontFamily: "Mont-700",
+    fontSize: 18,
+    textAlign: "center",
+  },
+  lockedOfflineText: {
+    fontFamily: "Mont-500",
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: "center",
   },
 });

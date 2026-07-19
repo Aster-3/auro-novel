@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: "Mont-700",
     fontSize: 10, // Mikro-tipografi: Küçük ama güçlü başlık
-    letterSpacing: 2, // Geniş harf aralığı ile premium duruş
+    letterSpacing: 2,
     textAlign: "center",
     marginTop: 20,
     textTransform: "uppercase",

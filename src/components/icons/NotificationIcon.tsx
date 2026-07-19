@@ -1,4 +1,3 @@
-import { useMyNotificationCount } from "@/hooks/useMyNotificationCount";
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import Svg, { Path } from "react-native-svg";
@@ -6,11 +5,14 @@ import Svg, { Path } from "react-native-svg";
 type Props = {
   color?: string;
   size?: number;
+  hasUnread?: boolean;
 };
 
-export const NotificationIcon = ({ color = "#030937", size = 24 }: Props) => {
-  const { data: notificationCounts } = useMyNotificationCount();
-
+export const NotificationIcon = ({
+  color = "#030937",
+  size = 24,
+  hasUnread = false,
+}: Props) => {
   return (
     <View style={{ width: size, height: size }}>
       <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -30,9 +32,7 @@ export const NotificationIcon = ({ color = "#030937", size = 24 }: Props) => {
         />
       </Svg>
 
-      {(notificationCounts?.personalUnreadCount ?? 0) > 0 && (
-        <View style={styles.notificationDot} />
-      )}
+      {hasUnread && <View style={styles.notificationDot} />}
     </View>
   );
 };

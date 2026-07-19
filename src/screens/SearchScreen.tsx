@@ -1,23 +1,18 @@
-import { Text, View, StyleSheet, TouchableOpacity } from "react-native";
 import { Screen } from "../components/layout/Screen";
 import { useState } from "react";
 import { SearchHeader } from "../Features/SearchScreen/SearchHeader";
+import { SearchResults } from "@/Features/SearchScreen/SearchResults";
+import { useDebounce } from "@/utils/useDebounce";
+
 const SearchScreen = () => {
   const [value, setValue] = useState<string>("");
+  const debouncedValue = useDebounce(value, 250);
 
   return (
     <Screen>
       <SearchHeader value={value} setValue={setValue} />
-      <View>
-        <Text style={styles.text1}>Placeholder for SearchScreen</Text>
-      </View>
+      <SearchResults query={debouncedValue} />
     </Screen>
   );
 };
 export default SearchScreen;
-
-const styles = StyleSheet.create({
-  text1: {
-    color: "red",
-  },
-});

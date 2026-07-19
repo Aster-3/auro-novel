@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SeriesCardHorizontal } from "@/components/SeriesCardHorizontal";
 import { chunkData } from "@/utils/chunkData";
@@ -14,23 +14,20 @@ export const UpdatedSeries = () => {
   const groupedData = chunkData(data, 3);
 
   return (
-    <View style={{ display: "flex", gap: 12 }}>
+    <View style={styles.container}>
       <SectionHeader headerName="En Son Güncellenen Seriler" />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 40 }}
-        style={{ width: "100%" }}
+        contentContainerStyle={styles.scrollContent}
+        style={styles.scroll}
         overScrollMode="never"
         decelerationRate={0.9}
       >
         {groupedData.map((column, columnIndex) => (
           <View
             key={columnIndex}
-            style={{
-              flexDirection: "column",
-              gap: 24,
-            }}
+            style={styles.column}
           >
             {column.map((item: GetLastUpdatedNovel) => (
               <SeriesCardHorizontal key={item.id} novel={item} />
@@ -41,3 +38,20 @@ export const UpdatedSeries = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    rowGap: 12,
+  },
+  scroll: {
+    width: "100%",
+  },
+  scrollContent: {
+    columnGap: 28,
+    paddingRight: 4,
+  },
+  column: {
+    flexDirection: "column",
+    rowGap: 18,
+  },
+});

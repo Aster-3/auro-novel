@@ -9,6 +9,7 @@ import {
 import { useEffect, useState } from "react";
 
 import { useLoginMutation } from "@/hooks/useLoginMutation";
+import { useResendVerificationCodeMutation } from "@/hooks/useResendVerificationCodeMutation";
 
 import { MailIcon } from "@/components/icons/MailIcon";
 import { PasswordIcon } from "@/components/icons/PasswordIcon";
@@ -26,6 +27,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import { useModalStore } from "@/store/useModalStore";
+import { useAppTheme } from "@/hooks/useTheme";
 
 const Dot = ({ delay }: { delay: number }) => {
   const translateY = useSharedValue(0);
@@ -63,16 +65,19 @@ const LoadingDots = () => {
 export const LoginBody = ({
   navigateToRegister,
   navigateToVerify,
+  navigateToForgotPassword,
   onLoginSuccess,
 }: {
   navigateToRegister: () => void;
   navigateToVerify: (email: string) => void;
+  navigateToForgotPassword: () => void;
   onLoginSuccess: (
     data: any,
     accessToken: string,
     refreshToken: string,
   ) => void;
 }) => {
+  const { theme, isDarkMode } = useAppTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [isFakeLoading, setIsFakeLoading] = useState(false);
   const showConfirm = useModalStore((state) => state.showConfirm);
@@ -85,7 +90,9 @@ export const LoginBody = ({
     password: "",
   });
 
-  const { mutate, isPending, error } = useLoginMutation();
+  const { mutate: loginMutate, isPending } = useLoginMutation();
+  const { mutate: resendVerificationCode } =
+    useResendVerificationCodeMutation();
 
   const handleLogin = () => {
     if (isPending || isFakeLoading) return;
@@ -101,7 +108,7 @@ export const LoginBody = ({
 
       setTimeout(() => {
         setIsFakeLoading(false);
-        mutate(result.data, {
+        loginMutate(result.data, {
           onSuccess: (data) => {
             onLoginSuccess(data, data.accessToken, data.refreshToken);
           },
@@ -110,10 +117,22 @@ export const LoginBody = ({
               showConfirm({
                 title: "Hesap Doğrulaması Gerekli",
                 message:
-                  "E posta adresiniz doğrulanmamış. Doğrulama sayfasına gitmek ister misiniz?",
-                confirmText: "Evet, Git",
+                  "E-posta adresiniz doğrulanmamış. Yeni bir doğrulama kodu gönderelim mi?",
+                confirmText: "Kod Gönder",
                 onConfirm: () => {
-                  navigateToVerify(formData.email);
+                  resendVerificationCode(formData.email, {
+                    onSuccess: () => {
+                      navigateToVerify(formData.email);
+                    },
+                    onError: (resendError: any) => {
+                      setErrors({
+                        email: [
+                          resendError?.message ||
+                            "Doğrulama kodu gönderilemedi. Lütfen daha sonra tekrar deneyin.",
+                        ],
+                      });
+                    },
+                  });
                 },
               });
               return;
@@ -132,7 +151,16 @@ export const LoginBody = ({
   };
 
   const getIconColor = (error?: string[]) => {
-    return error ? "#EF4444" : "#1C274C";
+    if (isDarkMode) return "#FFFFFF";
+    return error ? "#EF4444" : theme.textPrimary;
+  };
+
+  const getInputBackground = (error?: string[]) => {
+    if (error) {
+      return isDarkMode ? "rgba(239,68,68,0.12)" : "#FEF2F2";
+    }
+
+    return isDarkMode ? theme.background : "#F2F2F7";
   };
 
   const clearError = (field: keyof LoginSchemaType) => {
@@ -148,8 +176,10 @@ export const LoginBody = ({
   return (
     <BottomSheetView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Tekrar Hoşgeldiniz</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>
+          Tekrar Hoşgeldiniz
+        </Text>
+        <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
           Devam etmek için lütfen giriş yapın.
         </Text>
       </View>
@@ -157,16 +187,24 @@ export const LoginBody = ({
       <View style={styles.inputs}>
         <View>
           <View
-            style={[styles.inputWrapper, errors.email && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              {
+                backgroundColor: getInputBackground(errors.email),
+                borderColor: errors.email ? "#EF4444" : "transparent",
+              },
+              errors.email && styles.inputError,
+            ]}
           >
             <MailIcon color={getIconColor(errors.email)} />
 
             <TextInput
               placeholder="E-posta adresi"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               keyboardType="email-address"
               autoCapitalize="none"
+              value={formData.email}
               onChangeText={(val) => {
                 setFormData({ ...formData, email: val });
                 clearError("email");
@@ -186,15 +224,23 @@ export const LoginBody = ({
 
         <View>
           <View
-            style={[styles.inputWrapper, errors.password && styles.inputError]}
+            style={[
+              styles.inputWrapper,
+              {
+                backgroundColor: getInputBackground(errors.password),
+                borderColor: errors.password ? "#EF4444" : "transparent",
+              },
+              errors.password && styles.inputError,
+            ]}
           >
             <PasswordIcon color={getIconColor(errors.password)} />
 
             <TextInput
               placeholder="Şifre"
-              placeholderTextColor="#9A9A9A"
-              style={styles.input}
+              placeholderTextColor={theme.textSecondary}
+              style={[styles.input, { color: theme.textPrimary }]}
               secureTextEntry={!showPassword}
+              value={formData.password}
               onChangeText={(val) => {
                 setFormData({ ...formData, password: val });
                 clearError("password");
@@ -205,7 +251,11 @@ export const LoginBody = ({
               onPress={() => setShowPassword(!showPassword)}
               style={styles.eyeButton}
             >
-              {showPassword ? <EyeOpenIcon /> : <EyeClosedIcon />}
+              {showPassword ? (
+                <EyeOpenIcon color={theme.textSecondary} />
+              ) : (
+                <EyeClosedIcon color={theme.textSecondary} />
+              )}
             </TouchableOpacity>
           </View>
           {errors.password && (
@@ -219,7 +269,10 @@ export const LoginBody = ({
           )}
         </View>
 
-        <TouchableOpacity style={styles.forgot}>
+        <TouchableOpacity
+          style={styles.forgot}
+          onPress={navigateToForgotPassword}
+        >
           <Text style={styles.forgotText}>Şifrenizi mi unuttunuz?</Text>
         </TouchableOpacity>
       </View>
@@ -228,6 +281,7 @@ export const LoginBody = ({
         <TouchableOpacity
           style={[
             styles.button,
+            { backgroundColor: theme.textPrimary },
             (isPending || isFakeLoading) && styles.buttonDisabled,
           ]}
           activeOpacity={0.85}
@@ -237,14 +291,20 @@ export const LoginBody = ({
           {isPending || isFakeLoading ? (
             <LoadingDots />
           ) : (
-            <Text style={styles.buttonText}>Giriş Yap</Text>
+            <Text style={[styles.buttonText, { color: theme.background }]}>
+              Giriş Yap
+            </Text>
           )}
         </TouchableOpacity>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Hesabınız yok mu?</Text>
+          <Text style={[styles.footerText, { color: theme.textSecondary }]}>
+            Hesabınız yok mu?
+          </Text>
           <TouchableOpacity onPress={navigateToRegister}>
-            <Text style={styles.signUp}>Kayıt Ol</Text>
+            <Text style={[styles.signUp, { color: theme.textPrimary }]}>
+              Kayıt Ol
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -267,13 +327,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#000",
     letterSpacing: -0.6,
   },
 
   subtitle: {
     fontSize: 15,
-    color: "#8E8E93",
     marginTop: 6,
   },
 
@@ -284,7 +342,6 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F2F2F7",
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 50,
@@ -294,7 +351,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 16,
-    color: "#000",
   },
 
   eyeButton: {
@@ -318,14 +374,12 @@ const styles = StyleSheet.create({
 
   button: {
     height: 52,
-    backgroundColor: "#000",
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
 
   buttonText: {
-    color: "#fff",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -338,12 +392,10 @@ const styles = StyleSheet.create({
   },
 
   footerText: {
-    color: "#8E8E93",
     fontSize: 14,
   },
 
   signUp: {
-    color: "#000",
     fontWeight: "600",
     fontSize: 14,
   },
@@ -366,8 +418,6 @@ const styles = StyleSheet.create({
   },
   inputError: {
     borderWidth: 1,
-    borderColor: "#EF4444",
-    backgroundColor: "#FEF2F2",
   },
   errorText: {
     color: "#EF4444",

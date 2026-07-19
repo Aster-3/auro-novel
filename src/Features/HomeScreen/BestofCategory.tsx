@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ScrollView, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { CategorySelect } from "@/components/CategorySelecy";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
@@ -27,8 +27,8 @@ export const BestofCategory = () => {
   if (tagsLoading) return null;
 
   return (
-    <View style={{ gap: 8 }}>
-      <SectionHeader headerName="Kategorisinin En Çok Önerilenleri" />
+    <View style={styles.container}>
+      <SectionHeader headerName="Rastgele Etiketler" />
 
       <CategorySelect
         categories={tags || []}
@@ -36,13 +36,13 @@ export const BestofCategory = () => {
         setSelectedCategory={setSelectedCategory}
       />
 
-      <View style={{ minHeight: 180 }}>
+      <View style={styles.listFrame}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
           decelerationRate={0.9}
           overScrollMode="never"
-          contentContainerStyle={{ gap: 16, paddingHorizontal: 4 }}
+          contentContainerStyle={styles.scrollContent}
         >
           {novelsLoading || !novelsByTag
             ? skeletonCount.map((i) => (
@@ -72,3 +72,16 @@ export const BestofCategory = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    rowGap: 10,
+  },
+  listFrame: {
+    minHeight: 178,
+  },
+  scrollContent: {
+    columnGap: 14,
+    paddingRight: 4,
+  },
+});

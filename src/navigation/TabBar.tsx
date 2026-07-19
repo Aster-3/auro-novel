@@ -2,10 +2,17 @@ import { View, TouchableOpacity, StyleSheet, Platform } from "react-native";
 import { TAB_ICONS, DefaultIcon } from "../constants/navigation";
 import { useDynamicBottom } from "@/utils/useDynamicBottom";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useMyNotificationCount } from "@/hooks/useMyNotificationCount";
+import { useAuthStore } from "@/store/useAuthStore";
+import { useToastStore } from "@/store/useToastStore";
 
 export function TabBar({ state, navigation }: any) {
   const dynamicBottom = useDynamicBottom();
   const { theme, isDarkMode } = useAppTheme();
+  const isLoggedIn = useAuthStore((store) => store.user !== null);
+  const { data: notificationCounts } = useMyNotificationCount(isLoggedIn);
+  const hasUnreadNotifications =
+    (notificationCounts?.totalUnreadCount ?? 0) > 0;
 
   return (
     <View style={[styles.wrapper, { bottom: dynamicBottom }]}>
@@ -27,7 +34,15 @@ export function TabBar({ state, navigation }: any) {
           const isChat = route.name === "Chat";
 
           const onPress = () => {
-            if (!isFocused && !isChat) {
+            if (isChat) {
+              useToastStore.getState().showToast({
+                type: "Bilgi",
+                message: "Sohbet Odaları özelliği yakında aktif olacaktır.",
+              });
+              return;
+            }
+
+            if (!isFocused) {
               navigation.navigate(route.name);
             }
           };
@@ -46,6 +61,12 @@ export function TabBar({ state, navigation }: any) {
               )}
               {route.name === "Profile" ? (
                 <IconComponent isFocused={isFocused} size={18} color={color} />
+              ) : route.name === "Notification" ? (
+                <IconComponent
+                  color={color}
+                  size={18}
+                  hasUnread={hasUnreadNotifications}
+                />
               ) : (
                 <IconComponent color={color} size={18} />
               )}

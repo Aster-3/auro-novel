@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -13,9 +13,18 @@ import { useAppTheme } from "@/hooks/useTheme";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import Animated, { FadeInRight } from "react-native-reanimated";
 import { useGlobalNotification } from "@/hooks/useGlobalNotification";
+import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
+import { useMarkGlobalNotificationsLastSeen } from "@/hooks/useNotificationMutations";
+import { getGlobalNotificationDetail } from "@/services/NotificationService";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const GlobalNotifications = () => {
   const { theme, isDarkMode } = useAppTheme();
+  const tabBarBottomPadding = useTabBarBottomPadding();
+  const { mutate: markLastSeen } = useMarkGlobalNotificationsLastSeen();
+  const navigation = useAppNavigation();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const mountedAtRef = useRef(Date.now());
 
   const {
     data: notifications,
@@ -26,10 +35,31 @@ export const GlobalNotifications = () => {
     refetch,
   } = useGlobalNotification();
 
+  useEffect(() => {
+    mountedAtRef.current = Date.now();
+
+    return () => {
+      const visibleDuration = Date.now() - mountedAtRef.current;
+
+      if (visibleDuration > 300) {
+        markLastSeen();
+      }
+    };
+  }, [markLastSeen]);
+
   // Global bildirimler genellikle "Sistem" bazlı olduğu için basit bir badge mantığı
   const getBadgeConfig = () => {
     return { label: "SİSTEM", color: theme.accent };
   };
+
+  const openGlobalNotification = useCallback(async (item: GlobalNotification) => {
+    const detail: GlobalNotification = await getGlobalNotificationDetail(item.id);
+
+    navigation.navigate("GlobalNotificationDetail", {
+      notificationId: item.id,
+      initialNotification: detail,
+    });
+  }, [navigation]);
 
   const renderItem = useCallback(
     ({ item, index }: { item: GlobalNotification; index: number }) => {
@@ -45,13 +75,16 @@ export const GlobalNotifications = () => {
               s.card,
               {
                 backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.03)"
-                  : "#F8FAFC",
+                  ? "rgba(255,255,255,0.025)"
+                  : "#FBFCFE",
+                borderColor: isDarkMode
+                  ? "rgba(255,255,255,0.06)"
+                  : "rgba(3,9,55,0.06)",
                 opacity: pressed ? 0.7 : 1,
               },
             ]}
             onPress={() => {
-              console.log("Navigating to:", item.data?.screen, item.data?.id);
+              void openGlobalNotification(item);
             }}
           >
             {/* Sol kenardaki renkli bar: isNew ise gösterilir */}
@@ -67,7 +100,7 @@ export const GlobalNotifications = () => {
                   </Text>
                   <View style={s.dot} />
                   <Text style={[s.date, { color: theme.textSecondary }]}>
-                    {formatSmartDate(item.createdAt)}
+                    {formatSmartDate(item.publishedAt ?? item.createdAt)}
                   </Text>
                 </View>
 
@@ -82,7 +115,7 @@ export const GlobalNotifications = () => {
                   style={[s.body, { color: theme.textSecondary }]}
                   numberOfLines={1}
                 >
-                  {item.body}
+                  {item.summary}
                 </Text>
               </View>
 
@@ -103,7 +136,7 @@ export const GlobalNotifications = () => {
         </Animated.View>
       );
     },
-    [isDarkMode, theme],
+    [isDarkMode, openGlobalNotification, theme],
   );
 
   const loadMore = () => {
@@ -111,6 +144,15 @@ export const GlobalNotifications = () => {
       fetchNextPage();
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [refetch]);
 
   if (isLoading) {
     return (
@@ -126,13 +168,16 @@ export const GlobalNotifications = () => {
       data={notifications?.items || []}
       keyExtractor={(item) => item.id}
       renderItem={renderItem}
-      contentContainerStyle={s.container}
+      contentContainerStyle={[
+        s.container,
+        { paddingBottom: tabBarBottomPadding },
+      ]}
       showsVerticalScrollIndicator={false}
       onEndReached={loadMore}
       onEndReachedThreshold={0.5}
       // Refreshing kontrolü (isLoading yerine loading durumu için data check de yapılabilir)
-      refreshing={isLoading}
-      onRefresh={refetch}
+      refreshing={isRefreshing}
+      onRefresh={handleRefresh}
       ListFooterComponent={
         isFetchingNextPage ? (
           <ActivityIndicator
@@ -156,7 +201,7 @@ export const GlobalNotifications = () => {
 
 const s = StyleSheet.create({
   container: {
-    paddingBottom: 104,
+    paddingBottom: 0,
   },
   center: {
     flex: 1,
@@ -164,19 +209,21 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   card: {
-    height: 90,
-    borderRadius: 20,
-    marginBottom: 10,
-    paddingHorizontal: 20,
+    minHeight: 72,
+    borderRadius: 12,
+    marginBottom: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
     justifyContent: "center",
     overflow: "hidden",
+    borderWidth: StyleSheet.hairlineWidth,
   },
   unreadBar: {
     position: "absolute",
     left: 0,
-    top: "30%",
-    bottom: "30%",
-    width: 3,
+    top: 18,
+    bottom: 18,
+    width: 2,
     borderTopRightRadius: 4,
     borderBottomRightRadius: 4,
   },
@@ -187,12 +234,12 @@ const s = StyleSheet.create({
   },
   infoSide: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
   topLine: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 3,
   },
   badgeText: {
     fontSize: 7,
@@ -207,25 +254,25 @@ const s = StyleSheet.create({
     marginHorizontal: 8,
   },
   date: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: "Mont-600",
-    opacity: 0.4,
+    opacity: 0.45,
   },
   title: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: "Mont-600",
-    letterSpacing: -0.2,
+    letterSpacing: 0,
   },
   body: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: "Mont-500",
-    opacity: 0.6,
+    opacity: 0.58,
   },
   glowDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginLeft: 12,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    marginLeft: 10,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 4,

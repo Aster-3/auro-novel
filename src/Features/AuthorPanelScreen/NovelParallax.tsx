@@ -6,19 +6,26 @@ import {
   Pressable,
   InteractionManager,
 } from "react-native";
-import { useNovels } from "@/hooks/useNovels";
 import Carousel from "react-native-reanimated-carousel";
 import { Image } from "expo-image";
 import { useEffect, useRef, useCallback, useState } from "react";
 import { globalNavigate } from "@/navigation/globalNavigate";
 import { useFocusEffect } from "@react-navigation/native";
+import { AuthorNovelListItem } from "@/types/novel";
+import { useAppTheme } from "@/hooks/useTheme";
+import { useMyAuthorNovelsQuery } from "@/hooks/useAuthorMeQuery";
 
 export const NovelParallax = ({
+  isResolvingAuthor = false,
   onNovelSelect,
 }: {
+  isResolvingAuthor?: boolean;
   onNovelSelect: (index: string | null) => void;
 }) => {
-  const { data, isLoading } = useNovels();
+  const { data, isLoading } = useMyAuthorNovelsQuery({
+    enabled: !isResolvingAuthor,
+  });
+  const { theme } = useAppTheme();
   const { width } = useWindowDimensions();
   const carouselRef = useRef<any>(null);
 
@@ -36,18 +43,23 @@ export const NovelParallax = ({
     }, []),
   );
 
-  // useEffect bir hook'tur, erken return'den ÖNCE gelmeli
   useEffect(() => {
     if (!isLoading && data?.items && data.items.length > 0) {
       onNovelSelect(data.items[0].id);
+      return;
     }
-  }, [isLoading, data]); // Bağımlılıkları eklemek daha güvenlidir
 
-  // 2. ERKEN RETURN'LER (KOŞULLAR) HOOK'LARDAN SONRA GELMELİ
-  if (isLoading) {
+    if (!isLoading) {
+      onNovelSelect(null);
+    }
+  }, [isLoading, data, onNovelSelect]);
+
+  if (isResolvingAuthor || isLoading) {
     return (
       <View style={styles.itemContainer}>
-        <Text>Loading...</Text>
+        <Text style={[styles.stateText, { color: theme.textSecondary }]}>
+          Yükleniyor...
+        </Text>
       </View>
     );
   }
@@ -55,27 +67,41 @@ export const NovelParallax = ({
   if (!data || data.items.length === 0) {
     return (
       <View style={styles.itemContainer}>
-        <Text>No novels found.</Text>
+        <Text style={[styles.stateText, { color: theme.textSecondary }]}>
+          Henüz roman bulunmuyor.
+        </Text>
       </View>
     );
   }
 
-  // 3. ASIL RENDER MANTIĞI
-  const handleSnap = (newIndex: number) => {
-    const realIndex = carouselRef.current?.getCurrentIndex();
+  const items = data.items;
+  const hasMultipleItems = items.length > 1;
+  const defaultIndex = Math.min(savedIndex.current, items.length - 1);
+
+  const handleSnap = () => {
+    const currentIndex = carouselRef.current?.getCurrentIndex();
+    if (currentIndex === undefined) return;
+
+    const realIndex = Math.max(0, Math.min(currentIndex, items.length - 1));
+    const selectedNovel = items[realIndex];
+    if (!selectedNovel) return;
+
     savedIndex.current = realIndex;
-    onNovelSelect(data.items[realIndex].id);
+    onNovelSelect(selectedNovel.id);
   };
-  const renderNovelItem = ({ item }: { item: any }) => {
+
+  const renderNovelItem = ({ item }: { item: AuthorNovelListItem }) => {
     return (
       <Pressable
         style={[styles.itemContainer, { marginHorizontal: GAP / 2 }]}
         onPress={() => globalNavigate("NovelPanel", { id: item.id })}
       >
-        <Image
-          source={item.coverImage}
-          style={{ width: "100%", height: "100%" }}
-        />
+        {item.coverImage ? (
+          <Image
+            source={{ uri: item.coverImage }}
+            style={{ width: "100%", height: "100%" }}
+          />
+        ) : null}
       </Pressable>
     );
   };
@@ -86,11 +112,11 @@ export const NovelParallax = ({
         ref={carouselRef}
         pagingEnabled
         style={{ width: width, justifyContent: "center" }}
-        data={data.items}
+        data={items}
         key={`carousel-refresh-${refreshKey}`}
-        defaultIndex={savedIndex.current}
+        defaultIndex={defaultIndex}
         width={width * 0.45}
-        loop={true}
+        loop={hasMultipleItems}
         height={240}
         mode="parallax"
         modeConfig={{
@@ -111,9 +137,14 @@ const styles = StyleSheet.create({
   },
   itemContainer: {
     flex: 1,
+    minHeight: 120,
     justifyContent: "center",
     alignItems: "center",
     borderRadius: 20,
     overflow: "hidden",
+  },
+  stateText: {
+    fontFamily: "Mont-500",
+    fontSize: 13,
   },
 });

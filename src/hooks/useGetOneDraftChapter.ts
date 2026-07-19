@@ -1,5 +1,5 @@
 import { getDraftChapterDetail } from "@/services/ChapterService";
-import { useQuery } from "node_modules/@tanstack/react-query/build/modern/useQuery";
+import { useQuery } from "@tanstack/react-query";
 
 export const useGetOneDraftChapter = (id?: string, enabled?: boolean) => {
   return useQuery({

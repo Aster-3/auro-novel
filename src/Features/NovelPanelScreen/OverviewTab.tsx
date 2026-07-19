@@ -1,12 +1,15 @@
 import { useNovelDetail } from "@/hooks/useNovelDetail";
-import { ScrollView, View, StyleSheet } from "react-native";
+import { ScrollView, View, StyleSheet, Text } from "react-native";
 import { OverviewOptions } from "./OverviewOptions";
 import { OverviewImageEdit } from "./OverviewImageEdit";
 import { SeriesStatus } from "@/types/novel";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const OverviewTab = ({ route }: { route: any }) => {
   const { id } = route.params;
   const { data } = useNovelDetail(id);
+  const { isDarkMode } = useAppTheme();
+  const isDraft = data?.status === SeriesStatus.DRAFT;
 
   return (
     <ScrollView
@@ -19,6 +22,17 @@ export const OverviewTab = ({ route }: { route: any }) => {
       <OverviewImageEdit novelId={id} coverImage={data?.coverImage || ""} />
 
       <View style={styles.body}>
+        {isDraft && (
+          <Text
+            style={[
+              styles.draftNoticeText,
+              { color: isDarkMode ? "#FCA5A5" : "#DC2626" },
+            ]}
+          >
+            *Hazırlık aşamasında, ana sayfada görünmez.
+          </Text>
+        )}
+
         <OverviewOptions
           id={data?.id || ""}
           tags={data?.tags || []}
@@ -51,5 +65,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
 
-  body: { paddingHorizontal: 4, gap: 40, width: "100%" },
+  body: { paddingHorizontal: 4, gap: 12, width: "100%" },
+  draftNoticeText: {
+    alignSelf: "flex-start",
+    fontFamily: "Mont-500",
+    fontSize: 11,
+    lineHeight: 15,
+    paddingHorizontal: 4,
+  },
 });

@@ -28,11 +28,43 @@ export enum sourceType {
 export interface SearchNovel {
   id: string;
   name: string;
-  coverImage: string;
+  coverImage: string | null;
+  status: SeriesStatus | string;
+  chapterCount: number;
+  viewCount: number;
+  recommendationRate: number | null;
 }
 
 export interface SearchNovelResult {
   items: SearchNovel[];
+  total: number;
+  nextPage: number | null;
+  currentPage: number;
+  lastPage: number;
+}
+
+export interface SimilarNovel {
+  id: string;
+  name: string;
+  coverImage: string | null;
+}
+
+export interface SimilarNovelsResponse {
+  items: SimilarNovel[];
+}
+
+export interface AuthorNovelListItem {
+  id: string;
+  name: string;
+  coverImage: string | null;
+  status: SeriesStatus | string;
+  chapterCount: number;
+  viewCount: number;
+  recommendationRate: number | null;
+}
+
+export interface AuthorNovelListResponse {
+  items: AuthorNovelListItem[];
   total: number;
   nextPage: number | null;
   currentPage: number;
@@ -63,26 +95,30 @@ export enum SourceType {
 
 export interface Author {
   id: string;
-  nickname: string | null;
-  user: {
-    id: string;
-    nickname: string;
-  } | null;
+  authorName: string;
+  isRegisteredUser: boolean;
+  isVerified: boolean;
 }
 
 export interface Novel {
   id: string;
   name: string;
-  coverImage: string;
-  synopsis: string;
+  coverImage: string | null;
+  synopsis: string | null;
   status: SeriesStatus;
   author: Author;
   viewCount: number;
   positiveReviewsCount: number;
   totalReviewsCount: number;
+  totalLibraryCount: number;
+  rankingScore: number;
+  sourceType: string;
+  format: string;
+  isAdultContent: boolean;
   recommendationRate: number | null;
   chapterCount: number;
-  lastChapterDate: string;
+  lastChapterDate: string | null;
+  firstPublishedChapterId: string | null;
   categories: Category[];
   tags: Tag[];
 }

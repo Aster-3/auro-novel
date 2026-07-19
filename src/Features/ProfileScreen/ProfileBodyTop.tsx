@@ -1,8 +1,7 @@
-import { Text, View, StyleSheet, Pressable, Alert } from "react-native";
+import { Text, View, StyleSheet, Pressable } from "react-native";
 import { ProfileHeaderText } from "./ProfileHeaderText";
 import { UserIcon } from "@/components/icons/UserIcon";
 import { ShieldIcon } from "@/components/icons/ShieldIcon";
-import { CreditCardIcon } from "@/components/icons/CreditCardIcon";
 import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
 import { LogoutIcon } from "@/components/icons/LogoutIcon";
 import { useModalStore } from "@/store/useModalStore";
@@ -12,17 +11,19 @@ import { useNavigation } from "@react-navigation/native";
 import { useAppTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToastStore } from "@/store/useToastStore";
+import { unregisterStoredPushToken } from "@/hooks/usePushNotifications";
+import { deleteDownloadedDataForUser } from "@/db/offlineChaptersDb";
 
 const iconMap = {
   personal_info: UserIcon,
   privacy_security: ShieldIcon,
-  purchases_history: CreditCardIcon,
   downloaded_chapters: DownloadedsIcon,
   logout: LogoutIcon,
 };
 
 export const ProfileBodyTop = () => {
   const isLoggedIn = !!useAuthStore((state) => state.user);
+  const user = useAuthStore((state) => state.user);
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
   const { theme, isDarkMode } = useAppTheme();
@@ -52,16 +53,7 @@ export const ProfileBodyTop = () => {
     //   label: "Gizlilik ve Güvenlik",
     //   screen: "PrivacySecurity",
     // },
-    // {
-    //   id: "purchases_history",
-    //   label: "Satın Alımlar ve Geçmiş",
-    //   screen: "PurchaseHistory",
-    // },
-    {
-      id: "downloaded_chapters",
-      label: "İndirilen Bölümler",
-      screen: "DownloadedChapters",
-    },
+
     {
       id: "logout",
       label: "Çıkış Yap",
@@ -69,8 +61,12 @@ export const ProfileBodyTop = () => {
         useModalStore.getState().showConfirm({
           title: "Çıkış Yap",
           message: "Hesabınızdan çıkış yapmak istediğinize emin misiniz?",
-          onConfirm: () => {
-            TokenStorage.clearTokens();
+          onConfirm: async () => {
+            if (user?.id) {
+              await deleteDownloadedDataForUser(user.id);
+            }
+            await unregisterStoredPushToken();
+            await TokenStorage.clearTokens();
             useAuthStore.getState().logout();
             queryClient.clear();
           },

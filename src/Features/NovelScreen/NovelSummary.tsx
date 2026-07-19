@@ -24,9 +24,11 @@ if (
 export const NovelSummary = ({
   summary,
   tags,
+  isAdultContent,
 }: {
-  summary: string;
+  summary: string | null;
   tags: Tag[];
+  isAdultContent: boolean;
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -41,7 +43,7 @@ export const NovelSummary = ({
     <View style={styles.container}>
       <Text style={[styles.title, { color: theme.textPrimary }]}>Özet</Text>
 
-      <NovelTags tags={tags} />
+      <NovelTags tags={tags} isAdultContent={isAdultContent} />
 
       <View
         style={[styles.contentBlock, { borderLeftColor: theme.textPrimary }]}

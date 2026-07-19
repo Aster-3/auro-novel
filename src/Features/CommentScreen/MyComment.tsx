@@ -19,10 +19,11 @@ import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import { useCommentLikeMutation } from "@/hooks/useCommentLikeMutation";
 import { useDeleteCommentMutation } from "@/hooks/useDeleteCommentMutation";
-import { useAuthStore } from "@/store/useAuthStore";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useModalStore } from "@/store/useModalStore";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 if (
   Platform.OS === "android" &&
@@ -40,7 +41,7 @@ export const MyComment = ({
 }) => {
   const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
-  const user = useAuthStore((state) => state.user);
+  const { requireAuth } = useRequireAuthAction();
 
   const { mutate: toggleLikeMutate } = useCommentLikeMutation(novelId);
   const { mutate: deleteComment } = useDeleteCommentMutation(
@@ -89,7 +90,7 @@ export const MyComment = ({
         activeOpacity={0.8}
       >
         <Image
-          source={{ uri: comment.user.profileImageUrl }}
+          source={getProfileImageSource(comment.user.profileImageUrl)}
           style={s.avatar}
           contentFit="cover"
         />
@@ -172,7 +173,12 @@ export const MyComment = ({
             <View style={s.actionRow}>
               <TouchableOpacity
                 style={[s.action, { backgroundColor: badgeBg }]}
-                onPress={() => user && toggleLikeMutate(comment.id)}
+                onPress={() =>
+                  requireAuth(
+                    () => toggleLikeMutate(comment.id),
+                    "Beğenmek için giriş yapmalısın.",
+                  )
+                }
               >
                 <CommentLikeIcon
                   isLiked={comment.viewerHasLiked}
@@ -200,10 +206,14 @@ export const MyComment = ({
               <TouchableOpacity
                 style={[s.action, { backgroundColor: badgeBg }]}
                 onPress={() =>
-                  navigation.navigate("Reply", {
-                    commentId: comment.id,
-                    novelId,
-                  })
+                  requireAuth(
+                    () =>
+                      navigation.navigate("Reply", {
+                        commentId: comment.id,
+                        novelId,
+                      }),
+                    "Yanıt yazmak için giriş yapmalısın.",
+                  )
                 }
               >
                 <ReplyIcon color={theme.commentCard.textSecondary} size={14} />

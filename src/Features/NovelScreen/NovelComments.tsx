@@ -7,15 +7,20 @@ import { EmptyCommentState } from "./EmptyCommentState";
 import { useCommentPreviews } from "@/hooks/getCommentPreview";
 import { GoComment } from "./GoComment";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 
 export const NovelComments = ({ novelId }: { novelId: string }) => {
   const navigation = useAppNavigation();
+  const { requireAuth } = useRequireAuthAction();
   const { data, error } = useCommentPreviews(novelId);
 
   const { theme } = useAppTheme();
 
   const onPressWrite = () => {
-    navigation.navigate("Comment", { id: novelId, isCommentTextOpen: true });
+    requireAuth(
+      () => navigation.navigate("WriteReview", { novelId }),
+      "Yorum yazmak için giriş yapmalısın.",
+    );
   };
 
   if (error) {

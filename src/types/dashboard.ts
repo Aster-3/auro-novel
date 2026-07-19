@@ -13,6 +13,6 @@ export enum TrendState {
 export interface GetDashboardStats {
   totalViews: DashboardStats;
   totalReviews: DashboardStats;
-  totalSoldChapters: DashboardStats;
+  totalLibraryCount: DashboardStats;
   totalRecommendations: DashboardStats;
 }

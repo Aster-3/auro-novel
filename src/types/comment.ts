@@ -2,8 +2,10 @@ export interface GetCommentsRequest {
   novelId: string;
   limit?: number;
   page?: number;
-  sort?: "newest" | "oldest" | "mostLiked";
+  sort?: CommentSortType;
 }
+
+export type CommentSortType = "newest" | "oldest" | "popular";
 
 export interface Comment {
   id: number;
@@ -12,7 +14,8 @@ export interface Comment {
   user: {
     id: string;
     nickname: string;
-    profileImageUrl?: string;
+    profileImageUrl: string | null;
+    reviewCount: number;
   };
   createdAt: string;
   updatedAt: string;

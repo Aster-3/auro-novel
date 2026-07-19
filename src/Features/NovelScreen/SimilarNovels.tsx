@@ -1,11 +1,17 @@
 import { ScrollView, Text, View, StyleSheet } from "react-native";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
-import { useNovels } from "@/hooks/useNovels";
+import { useSimilarNovels } from "@/hooks/useSimilarNovels";
 import { useAppTheme } from "@/hooks/useTheme";
 
-export const SimilarNovels = () => {
-  const { data, isLoading } = useNovels();
+type SimilarNovelsProps = {
+  novelId: string;
+};
+
+export const SimilarNovels = ({ novelId }: SimilarNovelsProps) => {
+  const { data } = useSimilarNovels(novelId, 10);
   const { theme } = useAppTheme();
+
+  if (!data?.items.length) return null;
 
   return (
     <View style={styles.container}>

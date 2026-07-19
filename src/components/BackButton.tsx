@@ -3,7 +3,7 @@ import { BackArrowIcon } from "./icons/BackArrowIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const BackButton = ({
-  size = 26,
+  size = 24,
   color = "#FFFFFF",
 }: {
   size?: number;

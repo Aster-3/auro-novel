@@ -18,7 +18,7 @@ export const ViewIcon = ({
     />
     <Path
       d="M8 10a2 2 0 100-4 2 2 0 000 4z"
-      stroke="#fff"
+      stroke={color}
       strokeOpacity={0.9}
       strokeWidth={1.5}
       strokeLinecap="round"

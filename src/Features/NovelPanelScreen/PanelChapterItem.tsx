@@ -1,11 +1,11 @@
+import { DownChevronIcon } from "@/components/icons/DownChevronIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme";
 import { Chapter, DraftChapter } from "@/types/chapter";
 import { formatRawDate } from "@/utils/formatRawDate";
-import { Pressable, Text, View, StyleSheet, Animated } from "react-native";
-import { useState, useRef, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Animated, Pressable, StyleSheet, Text, View } from "react-native";
 import { ChapterItemMoreOptions } from "./ChapterItemMoreOptions";
-import { DownChevronIcon } from "@/components/icons/DownChevronIcon";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 type PanelChapterItemProps = {
   chapter: Chapter | DraftChapter;
@@ -23,13 +23,12 @@ export const PanelChapterItem = ({
   const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
   const [showMoreOptions, setShowMoreOptions] = useState(false);
-
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.timing(rotateAnim, {
       toValue: showMoreOptions ? 1 : 0,
-      duration: 250,
+      duration: 220,
       useNativeDriver: true,
     }).start();
   }, [showMoreOptions, rotateAnim]);
@@ -44,45 +43,58 @@ export const PanelChapterItem = ({
       isChapterAvailable: true,
       chapterId: chapter.id,
       isDraft: !isPublished,
-      novelId: novelId,
+      novelId,
     });
   };
 
-  const renderVolumeHeader = () => {
-    if (isPublished && "volumeOrder" in chapter) {
-      const volChapter = chapter as Chapter;
-      const volumeLabel = `Cilt: ${volChapter.volumeOrder}${
-        volChapter.volumeName ? ` - ${volChapter.volumeName}` : ""
-      }`;
-
-      return (
-        <View style={styles.minimalVolumeContainer}>
-          <Text style={[styles.volumeText, { color: theme.textSecondary }]}>
-            {volumeLabel}
-          </Text>
-          <View
-            style={[
-              styles.line,
-              {
-                backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.05)"
-                  : "#E5E7EB",
-              },
-            ]}
-          />
-        </View>
-      );
-    }
-    return null;
-  };
-
-  const orderPrefix =
-    isPublished && "chapterOrder" in chapter
-      ? `${String((chapter as Chapter).chapterOrder).padStart(2, "0")} - `
-      : "";
-
   const isUnpublishedChapter =
     "isUnpublished" in chapter ? chapter.isUnpublished : false;
+
+  const chapterOrder =
+    isPublished && "chapterOrder" in chapter
+      ? String((chapter as Chapter).chapterOrder).padStart(2, "0")
+      : null;
+
+  const dateLabel =
+    isPublished && "publishedAt" in chapter
+      ? formatRawDate(chapter.publishedAt, true)
+      : "createdAt" in chapter
+        ? formatRawDate(chapter.createdAt, true)
+        : "";
+
+  const renderVolumeHeader = () => {
+    if (!isPublished || !("volumeOrder" in chapter)) {
+      return null;
+    }
+
+    const volChapter = chapter as Chapter;
+    const volumeLabel = `Cilt ${volChapter.volumeOrder}${
+      volChapter.volumeName ? ` · ${volChapter.volumeName}` : ""
+    }`;
+
+    return (
+      <View style={styles.volumeContainer}>
+        <Text
+          style={[
+            styles.volumeText,
+            { color: isDarkMode ? "rgba(255,255,255,0.58)" : "#64748B" },
+          ]}
+        >
+          {volumeLabel}
+        </Text>
+        <View
+          style={[
+            styles.volumeLine,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.035)"
+                : "rgba(15,23,42,0.045)",
+            },
+          ]}
+        />
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -92,27 +104,38 @@ export const PanelChapterItem = ({
         onPress={handlePress}
         style={({ pressed }) => [
           styles.chapterPressable,
-          isUnpublishedChapter && styles.unpublishedBackground,
           {
             backgroundColor: pressed
               ? isDarkMode
-                ? "rgba(255,255,255,0.05)"
-                : "#eeeef0"
+                ? "rgba(255,255,255,0.045)"
+                : "rgba(15,23,42,0.035)"
               : "transparent",
+            borderBottomColor: isDarkMode
+              ? "rgba(255,255,255,0.035)"
+              : "rgba(15,23,42,0.045)",
           },
+          isUnpublishedChapter && styles.archivedRow,
         ]}
       >
         <View style={styles.leftContent}>
-          {orderPrefix ? (
-            <Text
+          {chapterOrder ? (
+            <View
               style={[
-                styles.indexText,
-                { color: theme.textSecondary },
-                isUnpublishedChapter && styles.fadedText,
+                styles.orderBadge,
+                {
+                  backgroundColor: "transparent",
+                },
               ]}
             >
-              {orderPrefix}
-            </Text>
+              <Text
+                style={[
+                  styles.orderText,
+                  { color: theme.textPrimary },
+                ]}
+              >
+                {chapterOrder}
+              </Text>
+            </View>
           ) : null}
 
           <View style={styles.infoSection}>
@@ -127,71 +150,70 @@ export const PanelChapterItem = ({
               {chapter.title}
             </Text>
 
-            <View style={styles.dateAndBadgeRow}>
+            <View style={styles.metaRow}>
               <Text style={[styles.dateText, { color: theme.textSecondary }]}>
-                {isPublished && "publishedAt" in chapter
-                  ? formatRawDate(chapter.publishedAt, true)
-                  : "createdAt" in chapter
-                    ? formatRawDate(chapter.createdAt, true)
-                    : ""}
+                {dateLabel}
               </Text>
 
-              {isUnpublishedChapter && (
+              {isUnpublishedChapter ? (
                 <View
                   style={[
                     styles.unpublishedBadge,
                     {
                       backgroundColor: isDarkMode
-                        ? "rgba(239, 68, 68, 0.15)"
-                        : "#FEE2E2",
+                        ? "rgba(248,113,113,0.12)"
+                        : "rgba(239,68,68,0.09)",
                     },
                   ]}
                 >
                   <Text
-                    style={[styles.unpublishedBadgeText, { color: "#EF4444" }]}
+                    style={[
+                      styles.unpublishedBadgeText,
+                      { color: isDarkMode ? "#FCA5A5" : "#DC2626" },
+                    ]}
                   >
-                    Yayından Kaldırıldı
+                    Yayından kaldırıldı
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
         </View>
 
         <Pressable
-          style={{ paddingHorizontal: 16, paddingVertical: 8 }}
-          onPress={() => setShowMoreOptions((prev) => !prev)}
+          hitSlop={8}
+          style={styles.morePressable}
+          onPress={(event) => {
+            event.stopPropagation();
+            setShowMoreOptions((prev) => !prev);
+          }}
         >
           <View
             style={[
-              styles.morebutton,
+              styles.moreButton,
               {
                 backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.08)"
-                  : "#ededed",
+                  ? "rgba(255,255,255,0.045)"
+                  : "rgba(15,23,42,0.035)",
               },
               isUnpublishedChapter && styles.unpublishedMoreButton,
             ]}
           >
-            <Animated.View
-              style={{
-                transform: [{ rotate: spin }],
-              }}
-            >
-              <DownChevronIcon size={18} color={theme.textPrimary} />
+            <Animated.View style={{ transform: [{ rotate: spin }] }}>
+              <DownChevronIcon size={17} color={theme.textPrimary} />
             </Animated.View>
           </View>
         </Pressable>
       </Pressable>
 
-      {showMoreOptions && (
+      {showMoreOptions ? (
         <ChapterItemMoreOptions
           chapterId={chapter.id}
           isPublished={isPublished}
           novelId={novelId}
           isArchived={isUnpublishedChapter}
         />
-      )}
+      ) : null}
     </View>
   );
 };
@@ -200,81 +222,96 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "column",
   },
-  minimalVolumeContainer: {
+  volumeContainer: {
     flexDirection: "row",
     alignItems: "center",
-    paddingTop: 10,
-    gap: 12,
+    paddingTop: 8,
+    paddingBottom: 4,
+    paddingHorizontal: 4,
+    gap: 10,
   },
   volumeText: {
-    fontFamily: "Mont-700",
-    fontSize: 8,
+    fontFamily: "Mont-500",
+    fontSize: 8.5,
     textTransform: "uppercase",
-    letterSpacing: 1.2,
   },
-  line: {
+  volumeLine: {
     flex: 1,
     height: 1,
   },
   chapterPressable: {
-    paddingHorizontal: 12,
-    paddingVertical: 16,
+    minHeight: 58,
+    paddingHorizontal: 4,
+    paddingVertical: 9,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   leftContent: {
     flexDirection: "row",
     alignItems: "center",
     flex: 1,
-    gap: 8,
+    gap: 10,
+    minWidth: 0,
   },
-  indexText: {
-    fontFamily: "Mont-400",
-    fontSize: 12,
+  orderBadge: {
+    width: 26,
+    height: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  orderText: {
+    fontFamily: "Mont-500",
+    fontSize: 10.5,
   },
   infoSection: {
     flex: 1,
+    minWidth: 0,
   },
   chapterTitle: {
-    fontFamily: "Mont-600",
+    fontFamily: "Mont-500",
     fontSize: 13,
+    lineHeight: 17,
   },
-  dateAndBadgeRow: {
+  metaRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 2,
+    marginTop: 4,
     gap: 8,
   },
   dateText: {
     fontFamily: "Mont-400",
     fontSize: 10,
   },
-  morebutton: {
-    width: 30,
-    height: 30,
+  morePressable: {
+    paddingLeft: 10,
+    paddingVertical: 4,
+  },
+  moreButton: {
+    width: 28,
+    height: 28,
     borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
   },
-  unpublishedBackground: {
-    opacity: 0.6,
+  archivedRow: {
+    opacity: 0.72,
   },
   fadedText: {
     textDecorationLine: "line-through",
   },
   unpublishedBadge: {
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 7,
   },
   unpublishedBadgeText: {
-    fontFamily: "Mont-600",
+    fontFamily: "Mont-500",
     fontSize: 8,
-    textTransform: "uppercase",
   },
   unpublishedMoreButton: {
-    opacity: 0.5,
+    opacity: 0.65,
   },
 });

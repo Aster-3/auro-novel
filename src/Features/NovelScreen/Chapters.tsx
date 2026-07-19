@@ -8,7 +8,7 @@ interface NovelChaptersProps {
   id: string;
   openChapterSheet: () => void;
   chapterCount: number;
-  lastChapterDate: string;
+  lastChapterDate: string | null;
 }
 
 export const NovelChapters = ({

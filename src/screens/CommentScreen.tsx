@@ -4,31 +4,44 @@ import { RootStackParamList } from "@/constants/navigation";
 import { CommentSort } from "@/Features/CommentScreen/CommentSort";
 import { EmptyComments } from "@/Features/CommentScreen/EmptyComments";
 import { MyComment } from "@/Features/CommentScreen/MyComment";
-import { ReviewSheet } from "@/Features/CommentScreen/ReviewSheet";
 import { WriteCommentButton } from "@/Features/CommentScreen/WriteCommentButton";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useInfiniteComments } from "@/hooks/useInfiniteComments";
 import useMyCommentQuery from "@/hooks/useMyCommentQuery";
-import { useAppTheme } from "@/hooks/useTheme";
-import BottomSheet from "@gorhom/bottom-sheet";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
+import { useAuthStore } from "@/store/useAuthStore";
+import { CommentSortType } from "@/types/comment";
 import { RouteProp, useRoute } from "@react-navigation/native";
-import { useCallback, useRef } from "react";
-import { FlatList, Text, View } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { FlatList, Text } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 const CommentScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, "Comment">>();
   const { id, isCommentTextOpen } = route.params;
+  const navigation = useAppNavigation();
+  const { requireAuth } = useRequireAuthAction();
+  const [sort, setSort] = useState<CommentSortType>("newest");
 
   const { data, isLoading, hasNextPage, fetchNextPage, isFetchingNextPage } =
-    useInfiniteComments({ novelId: id, limit: 10 });
+    useInfiniteComments({ novelId: id, limit: 10, sort });
 
   const { data: myComment, isLoading: isMyCommentLoading } =
     useMyCommentQuery(id);
-  const bottomSheetRef = useRef<BottomSheet>(null);
+  const isAuthenticated = useAuthStore((state) => state.user) !== null;
 
-  const openChapterSheet = useCallback(() => {
-    bottomSheetRef.current?.expand();
-  }, []);
+  const openWriteReview = useCallback(() => {
+    requireAuth(
+      () => navigation.navigate("WriteReview", { novelId: id }),
+      "Yorum yazmak için giriş yapmalısın.",
+    );
+  }, [id, navigation, requireAuth]);
+
+  useEffect(() => {
+    if (isCommentTextOpen) {
+      openWriteReview();
+    }
+  }, [isCommentTextOpen, openWriteReview]);
 
   const renderItem = useCallback(
     ({ item }: { item: any }) => (
@@ -62,7 +75,7 @@ const CommentScreen = () => {
       }}
     >
       <Header title={`Yorumlar (${data?.total || 0})`} isAdjacent={false} />
-      <CommentSort />
+      <CommentSort selected={sort} onChange={setSort} />
       {myComment && <MyComment novelId={id} comment={myComment} />}
 
       <FlatList
@@ -79,15 +92,16 @@ const CommentScreen = () => {
         maxToRenderPerBatch={5}
         windowSize={5}
         removeClippedSubviews={false}
-        getItemLayout={(data, index) => ({
+        getItemLayout={(_data, index) => ({
           length: 150,
           offset: 150 * index,
           index,
         })}
       />
 
-      {!myComment && <WriteCommentButton onPress={openChapterSheet} />}
-      <ReviewSheet ref={bottomSheetRef} novelId={id} />
+      {isAuthenticated && !myComment && (
+        <WriteCommentButton onPress={openWriteReview} />
+      )}
       {data?.items.length === 0 && <EmptyComments hasMyComment={!!myComment} />}
     </SafeAreaView>
   );

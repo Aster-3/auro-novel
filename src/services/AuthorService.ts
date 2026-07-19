@@ -1,31 +1,33 @@
 import api from "@/api/axiosInstance";
-import {
-  AuthorTransaction,
-  AuthorTransactionType,
-  AuthorWalletInfo,
-} from "@/types/author";
+import { AuthorNovelListResponse } from "@/types/novel";
 
-export const getAuthorWalletInfo = async (): Promise<AuthorWalletInfo> => {
-  const { data } = await api.get("/authors/my-wallet");
+export interface AuthorMe {
+  isAuthor: boolean;
+  authorId: string | null;
+  nickname: string | null;
+  isVerified: boolean;
+}
+
+export const getAuthorMe = async (): Promise<AuthorMe> => {
+  const { data } = await api.get("/authors/me");
   return data;
 };
 
-export const getAuthorTransactions = async (query: {
+export const createAuthor = async (dto?: { nickname?: string }) => {
+  const body = dto?.nickname ? { nickname: dto.nickname } : {};
+  const { data } = await api.post("/authors", body);
+  return data;
+};
+
+export const getMyAuthorNovels = async ({
+  page = 1,
+  limit = 20,
+}: {
   page?: number;
   limit?: number;
-  filterBy?: AuthorTransactionType;
-  since?: Date;
-}): Promise<{
-  items: AuthorTransaction[];
-  total: number;
-  currentPage: number;
-  lastPage: number;
-  nextPage: number | null;
-}> => {
-  const url = `/authors/my-wallet/transactions?page=${query.page || 1}&limit=${query.limit || 20}${
-    query.filterBy ? `&filterBy=${query.filterBy}` : ""
-  }${query.since ? `&since=${new Date(query.since).toISOString()}` : ""}`;
-
-  const { data } = await api.get(url);
-  return data;
+}): Promise<AuthorNovelListResponse> => {
+  const { data } = await api.get("/authors/me/novels", {
+    params: { page, limit },
+  });
+  return data.data ?? data;
 };

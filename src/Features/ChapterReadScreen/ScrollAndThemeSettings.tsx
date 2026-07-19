@@ -11,6 +11,7 @@ const THEME_MODE_OPTIONS = ["day", "night"] as const;
 
 type ScrollMode = (typeof SCROLL_MODE_OPTIONS)[number];
 type ThemeMode = (typeof THEME_MODE_OPTIONS)[number];
+const IS_SCROLL_MODE_DISABLED = true;
 
 export const ScrollAndThemeSettings = () => {
   const { isDarkMode, scrollMode, setScrollMode, toggleDarkMode } =
@@ -18,7 +19,11 @@ export const ScrollAndThemeSettings = () => {
 
   const cardBg = isDarkMode ? "#000000" : "#FFFFFF";
   const primary = isDarkMode ? "#fcf3e6" : "#09244B";
+  const disabledColor = isDarkMode ? "rgba(252, 243, 230, 0.35)" : "#9AA4B2";
   const currentTheme: ThemeMode = isDarkMode ? "night" : "day";
+  const displayedScrollMode: ScrollMode = IS_SCROLL_MODE_DISABLED
+    ? "vertical"
+    : scrollMode;
 
   const handleScrollMode = useCallback(
     (option: ScrollMode) => setScrollMode(option),
@@ -35,23 +40,31 @@ export const ScrollAndThemeSettings = () => {
   return (
     <View style={styles.wrapper}>
       {/* Scroll modu */}
-      <View style={[styles.container, { backgroundColor: cardBg }]}>
+      <View
+        style={[
+          styles.container,
+          styles.disabledContainer,
+          { backgroundColor: cardBg },
+        ]}
+      >
         {SCROLL_MODE_OPTIONS.map((option) => (
           <TouchableOpacity
             key={option}
-            activeOpacity={0.7}
+            activeOpacity={1}
+            disabled={IS_SCROLL_MODE_DISABLED}
             onPress={() => handleScrollMode(option)}
             style={[
               styles.item,
-              scrollMode === option
-                ? { borderColor: primary }
+              displayedScrollMode === option
+                ? { borderColor: disabledColor }
                 : styles.itemInactive,
+              styles.disabledItem,
             ]}
           >
             {option === "vertical" ? (
-              <ScrollVerticalIcon size={16} color={primary} />
+              <ScrollVerticalIcon size={16} color={disabledColor} />
             ) : (
-              <ScrollHorizontalIcon size={16} color={primary} />
+              <ScrollHorizontalIcon size={16} color={disabledColor} />
             )}
           </TouchableOpacity>
         ))}
@@ -99,6 +112,9 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     paddingHorizontal: 12,
   },
+  disabledContainer: {
+    opacity: 0.55,
+  },
   item: {
     flex: 1,
     justifyContent: "center",
@@ -107,6 +123,9 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     // borderWidth her zaman sabit — sadece borderColor değişir
     borderWidth: 1,
+  },
+  disabledItem: {
+    backgroundColor: "rgba(148, 163, 184, 0.08)",
   },
   itemInactive: {
     borderColor: "transparent",

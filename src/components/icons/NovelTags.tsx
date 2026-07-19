@@ -2,35 +2,55 @@ import { memo } from "react";
 import { View, Text, StyleSheet, ScrollView, Pressable } from "react-native";
 import { Tag } from "@/types/tag";
 import { useAppTheme } from "@/hooks/useTheme";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
-export const NovelTags = memo(({ tags }: { tags: Tag[] }) => {
-  const { theme } = useAppTheme();
+export const NovelTags = memo(
+  ({
+    tags = [],
+    isAdultContent = false,
+  }: {
+    tags: Tag[];
+    isAdultContent?: boolean;
+  }) => {
+    const { theme } = useAppTheme();
+    const navigation = useAppNavigation();
 
-  if (!tags?.length) return null;
+    if (!isAdultContent && !tags.length) return null;
 
-  return (
-    <View style={s.container}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={s.scroll}
-        decelerationRate="fast"
-      >
-        {tags.map((tag) => (
-          <Pressable
-            key={tag.id}
-            style={({ pressed }) => [s.chip, pressed && s.chipPressed]}
-          >
-            <Text style={[s.hash, { color: theme.textSecondary }]}>#</Text>
-            <Text style={[s.text, { color: theme.textPrimary }]}>
-              {tag.name}
-            </Text>
-          </Pressable>
-        ))}
-      </ScrollView>
-    </View>
-  );
-});
+    return (
+      <View style={s.container}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.scroll}
+          decelerationRate="fast"
+        >
+          {isAdultContent && (
+            <View style={s.chip}>
+              <Text style={[s.text, { color: theme.textPrimary }]}># +18</Text>
+            </View>
+          )}
+          {tags.map((tag) => (
+            <Pressable
+              key={tag.id}
+              onPress={() =>
+                navigation.navigate("TagNovels", {
+                  id: String(tag.id),
+                  name: tag.name,
+                })
+              }
+              style={({ pressed }) => [s.chip, pressed && s.chipPressed]}
+            >
+              <Text style={[s.text, { color: theme.textPrimary }]}>
+                # {tag.name}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  },
+);
 
 const s = StyleSheet.create({
   container: {
@@ -50,10 +70,6 @@ const s = StyleSheet.create({
   },
   chipPressed: {
     opacity: 0.5,
-  },
-  hash: {
-    fontSize: 14,
-    fontFamily: "Mont-600",
   },
   text: {
     fontFamily: "Mont-500-Italic",

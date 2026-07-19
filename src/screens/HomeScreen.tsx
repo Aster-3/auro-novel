@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, ScrollView, StyleSheet, RefreshControl } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { Screen } from "../components/layout/Screen";
 import { FakeSearchBar } from "../components/fakeSearchBar";
 import { HomeCarousel } from "../Features/HomeScreen/Carousel";
@@ -8,15 +8,14 @@ import { UpdatedSeries } from "@/Features/HomeScreen/UpdatedSeries";
 import { Categories } from "@/Features/HomeScreen/Categories";
 import { BestofCategory } from "@/Features/HomeScreen/BestofCategory";
 import { RecenltyAdded } from "@/Features/HomeScreen/RecenltyAdded";
-import { useDynamicBottom } from "@/utils/useDynamicBottom";
+import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
 
 const HomeScreen = () => {
-  const dynamicBottom = useDynamicBottom();
+  const tabBarBottomPadding = useTabBarBottomPadding();
 
-  // Performans için padding değerini memoize ediyoruz
   const contentContainerStyle = useMemo(
-    () => [styles.scrollContent, { paddingBottom: dynamicBottom + 40 }],
-    [dynamicBottom],
+    () => [styles.scrollContent, { paddingBottom: tabBarBottomPadding }],
+    [tabBarBottomPadding],
   );
 
   return (
@@ -43,10 +42,6 @@ const HomeScreen = () => {
           <UpdatedSeries />
         </View>
 
-        <View style={styles.categoryWrapper}>
-          <Categories />
-        </View>
-
         <View style={styles.section}>
           <BestofCategory />
         </View>
@@ -66,21 +61,19 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   searchWrapper: {
-    paddingBottom: 12,
-    paddingTop: 8,
+    paddingBottom: 10,
+    paddingTop: 4,
     zIndex: 10, // Üstte kalmasını garantiye alalım
   },
   scrollContent: {
-    paddingTop: 4,
+    paddingTop: 6,
+    rowGap: 26,
   },
   section: {
-    marginBottom: 24,
+    width: "100%",
   },
   groupSection: {
-    marginBottom: 16,
-  },
-  categoryWrapper: {
-    marginBottom: 24,
-    paddingVertical: 4,
+    width: "100%",
+    rowGap: 26,
   },
 });

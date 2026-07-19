@@ -5,7 +5,7 @@ import { useAppTheme } from "@/hooks/useTheme";
 
 interface Props {
   id: string;
-  cover: string;
+  cover: string | null;
   name: string;
 }
 
@@ -22,12 +22,14 @@ export const SeriesCardVertical = ({ id, cover, name }: Props) => {
         }}
         style={[s.coverWrapper, { backgroundColor: theme.surface }]}
       >
-        <Image
-          source={{ uri: String(cover) }}
-          style={s.image}
-          contentFit="cover"
-          transition={200}
-        />
+        {cover ? (
+          <Image
+            source={{ uri: cover }}
+            style={s.image}
+            contentFit="cover"
+            transition={200}
+          />
+        ) : null}
       </TouchableOpacity>
 
       <Text

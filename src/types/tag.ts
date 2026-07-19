@@ -19,3 +19,23 @@ export interface GetTagsResponse {
   currentPage: number;
   lastPage: number;
 }
+
+export interface TaggedNovel {
+  id: string;
+  name: string;
+  coverImage: string | null;
+  chapterCount: number;
+  rankingScore: number;
+  lastChapterDate: string | null;
+  positiveReviewsCount: number;
+  totalReviewsCount: number;
+  createdAt: string;
+}
+
+export interface GetTaggedNovelsResponse {
+  items: TaggedNovel[];
+  total: number;
+  currentPage: number;
+  nextPage: number | null;
+  lastPage: number;
+}

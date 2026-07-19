@@ -1,5 +1,4 @@
 import { createReply } from "@/services/ReplyService";
-import { useToastStore } from "@/store/useToastStore";
 import { CreateReplyRequest } from "@/types/reply";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -7,7 +6,7 @@ export const useCreateReplyMutation = (commentId: number, novelId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationKey: ["createReply"],
+    mutationKey: ["createReply", commentId],
     mutationFn: (dto: CreateReplyRequest) => createReply(dto),
     onError: (error) => {
       console.error("Reply creation failed:", error);
@@ -24,10 +23,6 @@ export const useCreateReplyMutation = (commentId: number, novelId: string) => {
       });
       queryClient.invalidateQueries({
         queryKey: ["comment", commentId],
-      });
-      useToastStore.getState().showToast({
-        type: "Başarılı",
-        message: "Yanıtınız başarıyla gönderildi.",
       });
     },
   });

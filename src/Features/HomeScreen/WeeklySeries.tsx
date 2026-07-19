@@ -1,4 +1,4 @@
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { SectionHeader } from "@/components/SectionHeader";
 import { SeriesCardVertical } from "@/components/SeriesCardVertical";
 import { useWeeklyTrendNovels } from "@/hooks/useWeeklyTrendNovels";
@@ -8,13 +8,13 @@ export const WeeklyPopular = () => {
   if (isLoading) return <Text>Loading...</Text>;
   if (error) return <Text>{error.message}</Text>;
   return (
-    <View style={{ display: "flex", gap: 12, marginBottom: 24 }}>
+    <View style={styles.container}>
       <SectionHeader headerName="Haftalık Popüler Seriler" />
       <ScrollView
-        contentContainerStyle={{ gap: 12 }}
+        contentContainerStyle={styles.scrollContent}
         showsHorizontalScrollIndicator={false}
         horizontal
-        style={{ width: "100%" }}
+        style={styles.scroll}
       >
         {data?.map((novel) => (
           <SeriesCardVertical
@@ -28,3 +28,16 @@ export const WeeklyPopular = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    rowGap: 12,
+  },
+  scroll: {
+    width: "100%",
+  },
+  scrollContent: {
+    columnGap: 14,
+    paddingRight: 4,
+  },
+});

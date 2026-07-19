@@ -1,6 +1,6 @@
 import { CategoryCard } from "@/components/CategoryCard";
 import { SectionHeader } from "@/components/SectionHeader";
-import { ScrollView, Text, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 const data = [
   {
     id: 1,
@@ -26,12 +26,12 @@ const data = [
 
 export const Categories = () => {
   return (
-    <View style={{ display: "flex", gap: 12 }}>
+    <View style={styles.container}>
       <SectionHeader headerName="Kategoriler" />
       <ScrollView
         showsHorizontalScrollIndicator={false}
         horizontal
-        contentContainerStyle={{ gap: 12 }}
+        contentContainerStyle={styles.scrollContent}
       >
         {data.map((i) => (
           <CategoryCard cover={i.cover} name={i.name} key={i.id} />
@@ -40,3 +40,13 @@ export const Categories = () => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    rowGap: 12,
+  },
+  scrollContent: {
+    columnGap: 14,
+    paddingRight: 4,
+  },
+});

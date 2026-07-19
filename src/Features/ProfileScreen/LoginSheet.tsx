@@ -20,6 +20,7 @@ import { LoginBody } from "./LoginBody";
 import { globalNavigate } from "@/navigation/globalNavigate";
 import { useAuthStore } from "@/store/useAuthStore";
 import { TokenStorage } from "@/utils/tokenStorage";
+import { useAppTheme } from "@/hooks/useTheme";
 
 export interface LoginSheetRef {
   expand: () => void;
@@ -31,6 +32,7 @@ export interface LoginSheetProps {}
 export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
   (props, ref) => {
     const user = useAuthStore((state) => state.user);
+    const { theme, isDarkMode } = useAppTheme();
     const bottomSheetRef = useRef<BottomSheet>(null);
 
     const currentIndex = useRef<number>(-1);
@@ -100,12 +102,17 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
       setTimeout(() => globalNavigate("VerifyUser", { email }), 300);
     };
 
+    const navigateToForgotPassword = () => {
+      bottomSheetRef.current?.close();
+      setTimeout(() => globalNavigate("ForgotPassword"), 300);
+    };
+
     const onLoginSuccess = (
       data: any,
       accessToken: string,
       refreshToken: string,
     ) => {
-      useAuthStore.setState({ user: data.user });
+      useAuthStore.getState().setAuthSession({ user: data.user, accessToken });
       TokenStorage.saveTokens(accessToken, refreshToken);
       bottomSheetRef.current?.close();
     };
@@ -127,10 +134,6 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
     useImperativeHandle(ref, () => ({
       expand: () => {
         setIsVisible(true);
-        // requestAnimationFrame, Portal render edildikten sonraki karede animasyonu başlatır
-        requestAnimationFrame(() => {
-          bottomSheetRef.current?.snapToIndex(0);
-        });
       },
       close: () => {
         currentIndex.current = -1;
@@ -145,11 +148,21 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
       <Portal>
         <BottomSheet
           ref={bottomSheetRef}
-          index={-1} // Başlangıçta gizli (Altta bekler)
+          index={0}
           snapPoints={snapPoints}
           backdropComponent={renderBackdrop}
-          backgroundStyle={styles.sheetBackground}
-          handleIndicatorStyle={styles.indicator}
+          backgroundStyle={[
+            styles.sheetBackground,
+            { backgroundColor: isDarkMode ? "#08080a" : "#FFFFFF" },
+          ]}
+          handleIndicatorStyle={[
+            styles.indicator,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.24)"
+                : "#E0E0E0",
+            },
+          ]}
           enablePanDownToClose={canClose}
           enableDynamicSizing={false}
           animateOnMount={true} // Mount edildiğinde animasyon yapmasını sağlar
@@ -168,6 +181,7 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
             <LoginBody
               navigateToVerify={navigateToVerify}
               navigateToRegister={navigateToRegister}
+              navigateToForgotPassword={navigateToForgotPassword}
               onLoginSuccess={onLoginSuccess}
             />
           </BottomSheetView>
@@ -179,7 +193,6 @@ export const LoginSheet = forwardRef<LoginSheetRef, LoginSheetProps>(
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: "#FFFFFF",
     borderRadius: 30,
     ...Platform.select({
       ios: {

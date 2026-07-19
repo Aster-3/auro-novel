@@ -29,7 +29,7 @@ export const UTCSearch = ({
           style={[styles.textInput, { color: theme.textPrimary }]}
           value={searchValue}
           onChangeText={(text) => setSearchValue(text.trimStart())}
-          placeholder={mode === "tag" ? "Etiket Ara..." : "Kategori Ara..."}
+          placeholder={mode === "tag" ? "Etiket ara..." : "Kategori ara..."}
           placeholderTextColor={theme.textSecondary}
           selectionColor={theme.accent}
           cursorColor={theme.accent}
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48, // Bir tık daha dolgun ve premium
+    height: 48,
     paddingHorizontal: 16,
     borderWidth: 1,
     borderRadius: 14, // Daha yumuşak köşeler

@@ -1,12 +1,9 @@
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
 import { Text, View, StyleSheet, Image, Pressable } from "react-native";
-import logo from "@assets/lost-ghost.jpg";
 import { useAuthStore } from "@/store/useAuthStore";
-import { PlusIcon } from "@/components/icons/PlusIcon";
-import { NightShardIcon } from "@/components/icons/NightShardIcon";
-import { useWalletQuery } from "@/hooks/useWalletQuery";
 import { useAppTheme } from "@/hooks/useTheme";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 export const ProfileHeader = ({
   openLoginSheet,
@@ -14,7 +11,6 @@ export const ProfileHeader = ({
   openLoginSheet: () => void;
 }) => {
   const user = useAuthStore((state) => state.user);
-  const { data: wallet } = useWalletQuery();
   const { theme, isDarkMode } = useAppTheme();
   const navigation = useAppNavigation();
 
@@ -45,9 +41,7 @@ export const ProfileHeader = ({
         <Pressable onPress={navigateProfile} style={styles.userInfo}>
           <View style={styles.avatarContainer}>
             <Image
-              source={
-                user?.profileImageUrl ? { uri: user.profileImageUrl } : logo
-              }
+              source={getProfileImageSource(user?.profileImageUrl)}
               style={[
                 styles.avatar,
                 {
@@ -95,35 +89,7 @@ export const ProfileHeader = ({
               <Text style={[styles.loginText, { color: "#FFF" }]}>Giriş</Text>
               <RightChevronIcon size={14} color="#FFF" />
             </Pressable>
-          ) : (
-            <Pressable
-              style={({ pressed }) => [
-                styles.currencyChip,
-                {
-                  borderColor: isDarkMode
-                    ? "rgba(255,255,255,0.05)"
-                    : "rgba(0,0,0,0.05)",
-                  opacity: pressed ? 0.8 : 1,
-                  transform: [{ scale: pressed ? 0.96 : 1 }],
-                },
-              ]}
-            >
-              <View style={styles.shardWrapper}>
-                <NightShardIcon size={22} />
-              </View>
-              <Text style={[styles.currencyText, { color: theme.textPrimary }]}>
-                {wallet?.moonCoins || 0}
-              </Text>
-              <View
-                style={[
-                  styles.plusIconWrapper,
-                  { backgroundColor: theme.textPrimary },
-                ]}
-              >
-                <PlusIcon size={8} color={isDarkMode ? "#000" : "#FFF"} />
-              </View>
-            </Pressable>
-          )}
+          ) : null}
         </View>
       </View>
     </View>
@@ -189,33 +155,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     letterSpacing: 0.5,
     textTransform: "uppercase",
-  },
-  currencyChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 14,
-    borderWidth: 1,
-    gap: 6,
-  },
-  shardWrapper: {
-    width: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  currencyText: {
-    fontFamily: "Mont-800",
-    fontSize: 13,
-    letterSpacing: -0.5,
-  },
-  plusIconWrapper: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 2,
   },
 });

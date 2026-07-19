@@ -78,7 +78,7 @@ export const UTCSelectedItems = ({
               const isTag = mode === "tag";
               const displayName = isTag
                 ? (item as Tag).name
-                : (item as Category).trName;
+                : (item as Category).title;
 
               return (
                 <View key={item.id}>

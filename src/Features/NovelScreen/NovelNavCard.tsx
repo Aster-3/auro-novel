@@ -23,13 +23,36 @@ import { useDynamicBottom } from "@/utils/useDynamicBottom";
 import { useAppTheme } from "@/hooks/useTheme";
 import { useLibraryCheck } from "@/hooks/useLibraryCheck";
 import { useToggleLibrary } from "@/hooks/useToggleLibrary";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useToastStore } from "@/store/useToastStore";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 
-export const NovelNavCard = ({ novelId }: { novelId: string }) => {
+export const NovelNavCard = ({
+  novelId,
+  firstPublishedChapterId,
+}: {
+  novelId: string;
+  firstPublishedChapterId: string | null;
+}) => {
   const dynamicBottom = useDynamicBottom();
   const { theme, isDarkMode } = useAppTheme();
+  const navigation = useAppNavigation();
+  const { requireAuth } = useRequireAuthAction();
 
   const { data: isNovelInLibrary, isLoading } = useLibraryCheck(novelId);
   const { mutate: toggleLibrary } = useToggleLibrary(novelId);
+
+  const handleReadPress = () => {
+    if (firstPublishedChapterId) {
+      navigation.navigate("ChapterRead", { id: firstPublishedChapterId });
+      return;
+    }
+
+    useToastStore.getState().showToast({
+      type: "Bilgi",
+      message: "Yayınlanmış bir bölüm bulunmuyor.",
+    });
+  };
 
   const colors = useMemo(
     () => ({
@@ -58,9 +81,7 @@ export const NovelNavCard = ({ novelId }: { novelId: string }) => {
       <TouchableOpacity
         activeOpacity={0.8}
         style={[styles.readButton, { backgroundColor: colors.btnBg }]}
-        onPress={() => {
-          // Navigasyon buraya
-        }}
+        onPress={handleReadPress}
       >
         <BookReadIcon size={16} color={colors.btnText} />
         <Text style={[styles.readText, { color: colors.btnText }]}>
@@ -75,7 +96,12 @@ export const NovelNavCard = ({ novelId }: { novelId: string }) => {
         activeOpacity={0.6}
         disabled={isLoading}
         style={styles.saveButton}
-        onPress={() => toggleLibrary()}
+        onPress={() =>
+          requireAuth(
+            () => toggleLibrary(),
+            "Romanı kütüphanene eklemek için giriş yapmalısın.",
+          )
+        }
       >
         <Animated.View
           key={isNovelInLibrary ? "in" : "add"}
@@ -122,7 +148,7 @@ const styles = StyleSheet.create({
         shadowRadius: 15,
       },
       android: {
-        elevation: 6,
+        elevation: 2,
       },
     }),
   },

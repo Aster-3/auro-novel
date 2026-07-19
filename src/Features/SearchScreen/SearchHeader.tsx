@@ -1,4 +1,4 @@
-import { Keyboard, TouchableOpacity, View, StyleSheet } from "react-native";
+import { Keyboard, StyleSheet, TouchableOpacity, View } from "react-native";
 import { BackArrowIcon } from "../../components/icons/BackArrowIcon";
 import { SearchBar } from "../../components/searchBar";
 import { useAppNavigation } from "../../hooks/useAppNavigation";
@@ -23,18 +23,17 @@ export const SearchHeader = ({
     }
   };
 
-  // LibrarySearch stilindeki arka plan rengi
-  const buttonBg = isDarkMode ? theme.surface : "#F1F5F9";
+  const controlBg = isDarkMode ? theme.surface : "#F8FAFC";
+  const borderColor = isDarkMode ? "rgba(255,255,255,0.08)" : "#E5E7EB";
 
   return (
     <View style={styles.container}>
       <TouchableOpacity
         onPress={handleBack}
-        style={[styles.backButton]}
-        activeOpacity={0.7}
+        style={[styles.backButton, { backgroundColor: controlBg, borderColor }]}
+        activeOpacity={0.72}
       >
-        {/* İkon rengini temadan alması için color prop'u ekledik */}
-        <BackArrowIcon color={theme.textPrimary} />
+        <BackArrowIcon size={20} color={theme.textPrimary} />
       </TouchableOpacity>
 
       <View style={styles.searchWrapper}>
@@ -50,11 +49,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    paddingVertical: 8,
+    paddingVertical: 4,
   },
   backButton: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",

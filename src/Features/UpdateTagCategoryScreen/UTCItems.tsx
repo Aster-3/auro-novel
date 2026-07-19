@@ -11,7 +11,7 @@ import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 interface BaseItem {
   id: number;
   name?: string;
-  trName?: string;
+  title?: string;
 }
 
 interface UTCItemsProps {
@@ -40,7 +40,7 @@ export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
   );
 
   const renderItem = ({ item }: { item: BaseItem }) => {
-    const displayName = item.trName || item.name || "İsimsiz";
+    const displayName = item.title || item.name || "İsimsiz";
 
     return (
       <TouchableOpacity

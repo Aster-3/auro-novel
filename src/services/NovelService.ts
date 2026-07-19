@@ -1,17 +1,75 @@
 import api from "@/api/axiosInstance";
 import {
+  AuthorNovelListResponse,
   GetLastUpdatedNovel,
+  SearchNovelResult,
+  SimilarNovelsResponse,
   UpdateNovelFormData,
   WeeklyTrendNovel,
 } from "@/types/novel";
+import {
+  OfflineChaptersResponse,
+  OfflineNovelManifest,
+} from "@/types/offline";
 
 export const getNovels = async () => {
   const { data } = await api.get("/novels");
   return data;
 };
 
+export const searchNovels = async (
+  name: string,
+): Promise<SearchNovelResult> => {
+  const { data } = await api.get("/novels", {
+    params: { name },
+  });
+  return data;
+};
+
+export const getNovelsByAuthor = async ({
+  authorId,
+  page = 1,
+  limit = 20,
+}: {
+  authorId: string;
+  page?: number;
+  limit?: number;
+}): Promise<AuthorNovelListResponse> => {
+  const { data } = await api.get("/novels", {
+    params: { authorId, page, limit },
+  });
+  return data.data ?? data;
+};
+
 export const getNovelDetail = async (id: string) => {
   const { data } = await api.get(`/novels/${id}`);
+  return data;
+};
+
+export const getSimilarNovels = async (
+  id: string,
+  limit: number = 10,
+): Promise<SimilarNovelsResponse> => {
+  const { data } = await api.get(`/novels/${id}/similar`, {
+    params: { limit },
+  });
+  return data;
+};
+
+export const getOfflineManifest = async (
+  novelId: string,
+): Promise<OfflineNovelManifest> => {
+  const { data } = await api.get(`/novels/${novelId}/offline-manifest`);
+  return data;
+};
+
+export const getOfflineChapters = async (
+  novelId: string,
+  chapterIds: string[],
+): Promise<OfflineChaptersResponse> => {
+  const { data } = await api.post(`/novels/${novelId}/offline-chapters`, {
+    chapterIds,
+  });
   return data;
 };
 

@@ -13,6 +13,7 @@ import { SettingsIcon } from "@/components/icons/SettingsIcon";
 import { TableOfContentsIcon } from "@/components/icons/TableOfContentsIcon";
 import { SheetType } from "@/screens/ChapterReadScreen";
 import { useReaderStore } from "@/store/useReaderStore";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 const NavButton = ({
   children,
@@ -54,12 +55,15 @@ const NavButton = ({
 export const BottomMenu = ({
   isMenuVisible,
   handleOpenSheet,
+  chapterId,
 }: {
   isMenuVisible: boolean;
   handleOpenSheet: (type: SheetType) => void;
+  chapterId?: string;
 }) => {
   // 1. TEMA DEĞERLERİNİ ALALIM
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const navigation = useAppNavigation();
 
   // Renk Paleti (Apple Tarzı Sistem Renkleri)
   const theme = {
@@ -92,7 +96,11 @@ export const BottomMenu = ({
         <TableOfContentsIcon size={22} color={theme.icon} />
       </NavButton>
 
-      <NavButton onPress={() => {}}>
+      <NavButton
+        onPress={() => {
+          if (chapterId) navigation.navigate("ChapterComments", { chapterId });
+        }}
+      >
         <ChapterCommentIcon size={22} color={theme.icon} />
       </NavButton>
 

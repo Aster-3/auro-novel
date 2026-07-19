@@ -126,7 +126,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   tabText: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: "600",
     letterSpacing: 0.5,
     textTransform: "uppercase",

@@ -18,6 +18,7 @@ import { useModalStore } from "@/store/useModalStore";
 import { useReplyLikeMutation } from "@/hooks/useReplyLikeMutation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppTheme } from "@/hooks/useTheme";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 export const ReplyItem = ({
   reply,
@@ -87,10 +88,7 @@ export const ReplyItem = ({
       <View style={s.row}>
         <View style={s.leftCol}>
           <Image
-            source={{
-              uri:
-                reply.user.profileImageUrl ?? "https://via.placeholder.com/40",
-            }}
+            source={getProfileImageSource(reply.user.profileImageUrl)}
             style={s.avatar}
             contentFit="cover"
             transition={200}

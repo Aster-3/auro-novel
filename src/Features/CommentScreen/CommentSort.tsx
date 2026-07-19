@@ -1,13 +1,16 @@
 import React, { useState, useRef, useMemo } from "react";
 import { View, Text, Pressable, StyleSheet, Animated } from "react-native";
 import { useAppTheme } from "@/hooks/useTheme";
-
-type SortType = "newest" | "popular" | "oldest";
+import { CommentSortType } from "@/types/comment";
 
 const BUTTON_PADDING = 3;
 
-export const CommentSort = () => {
-  const [selected, setSelected] = useState<SortType>("newest");
+type Props = {
+  selected: CommentSortType;
+  onChange: (sort: CommentSortType) => void;
+};
+
+export const CommentSort = ({ selected, onChange }: Props) => {
   const { theme, isDarkMode } = useAppTheme();
 
   // Genişliği dinamik olarak takip edeceğiz
@@ -24,8 +27,8 @@ export const CommentSort = () => {
     [isDarkMode, theme],
   );
 
-  const handlePress = (type: SortType, index: number) => {
-    setSelected(type);
+  const handlePress = (type: CommentSortType, index: number) => {
+    onChange(type);
     Animated.spring(translateX, {
       toValue: index,
       useNativeDriver: true, // Artık piksellerle çalıştığımız için sorunsuz kayar

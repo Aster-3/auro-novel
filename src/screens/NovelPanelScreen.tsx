@@ -1,15 +1,14 @@
-import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { useRoute, RouteProp } from "@react-navigation/native";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { RootStackParamList } from "@/constants/navigation";
-import { Screen } from "@/components/layout/Screen";
-import { BackArrowIcon } from "@/components/icons/BackArrowIcon";
-import { OverviewTab } from "@/Features/NovelPanelScreen/OverviewTab";
 import { ChaptersTab } from "@/Features/NovelPanelScreen/ChaptersTab";
-import { PlusIcon } from "@/components/icons/PlusIcon";
-import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { OverviewTab } from "@/Features/NovelPanelScreen/OverviewTab";
 import { Header } from "@/components/Header";
+import { PlusIcon } from "@/components/icons/PlusIcon";
+import { Screen } from "@/components/layout/Screen";
+import { RootStackParamList } from "@/constants/navigation";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { useAppTheme } from "@/hooks/useTheme";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -36,13 +35,13 @@ const NovelPanelScreen = () => {
           style={[
             styles.saveButton,
             {
-              backgroundColor: theme.surface,
-              shadowColor: "#000",
-              shadowOpacity: isDarkMode ? 0.3 : 0.1,
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.045)"
+                : "rgba(15,23,42,0.035)",
             },
           ]}
         >
-          <PlusIcon size={16} color={theme.textPrimary} />
+          <PlusIcon size={14} color={theme.textPrimary} />
           <Text style={[styles.saveButtonText, { color: theme.textPrimary }]}>
             Yeni Bölüm
           </Text>
@@ -51,42 +50,48 @@ const NovelPanelScreen = () => {
 
       <Tab.Navigator
         screenOptions={{
-          tabBarScrollEnabled: true,
+          tabBarScrollEnabled: false,
+          tabBarPressColor: "transparent",
           tabBarLabelStyle: {
             paddingHorizontal: 0,
-            marginTop: 12,
             paddingVertical: 0,
-            borderRadius: 20,
-            fontSize: 12,
-            fontWeight: "600",
+            fontSize: 10.5,
+            fontFamily: "Mont-500",
             textTransform: "none",
           },
-          tabBarItemStyle: { width: "auto", paddingHorizontal: 20 },
-          sceneStyle: { backgroundColor: theme.background }, // Sahne rengi dinamik
-          tabBarIndicatorStyle: { backgroundColor: theme.accent, height: 2 }, // İndikatör rengi aksan rengin oldu
+          tabBarItemStyle: {
+            height: 42,
+            paddingHorizontal: 0,
+          },
+          sceneStyle: { backgroundColor: theme.background },
+          tabBarIndicatorStyle: {
+            backgroundColor: isDarkMode ? "#FFFFFF" : "#111827",
+            height: 1,
+          },
           tabBarStyle: {
             elevation: 0,
-            backgroundColor: theme.background, // Tab bar arka planı
+            backgroundColor: theme.background,
             shadowOpacity: 0,
-            borderBottomWidth: 1,
+            borderBottomWidth: StyleSheet.hairlineWidth,
             borderBottomColor: isDarkMode
-              ? "rgba(255,255,255,0.05)"
-              : "#efecec",
+              ? "rgba(255,255,255,0.035)"
+              : "rgba(15,23,42,0.045)",
+            height: 42,
           },
-          tabBarActiveTintColor: theme.textPrimary,
+          tabBarActiveTintColor: isDarkMode ? "#FFFFFF" : "#111827",
           tabBarInactiveTintColor: theme.textSecondary,
         }}
       >
         <Tab.Screen
           name="Drafts"
           component={ChaptersTab}
-          options={{ title: "Taslak Bölümler" }}
+          options={{ title: "Taslaklar" }}
           initialParams={{ novelId: id, isPublished: false }}
         />
         <Tab.Screen
           name="Published"
           component={ChaptersTab}
-          options={{ title: "Yayınlanmış Bölümler" }}
+          options={{ title: "Yayınlananlar" }}
           initialParams={{ novelId: id, isPublished: true }}
         />
         <Tab.Screen
@@ -108,24 +113,18 @@ const styles = StyleSheet.create({
     paddingBottom: 2,
     gap: 12,
   },
-  headerTitle: {
-    fontSize: 16,
-    fontFamily: "Mont-600",
-    letterSpacing: -0.3,
-    includeFontPadding: false,
-  },
   saveButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    elevation: 2,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    borderRadius: 12,
+    gap: 5,
+    borderRadius: 9,
   },
   saveButtonText: {
-    fontFamily: "Mont-600",
-    fontSize: 12,
+    fontFamily: "Mont-500",
+    fontSize: 11,
   },
 });
 

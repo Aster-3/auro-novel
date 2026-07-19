@@ -12,6 +12,8 @@ import * as Sharing from "expo-sharing";
 import { Image } from "expo-image";
 import { useAppTheme } from "@/hooks/useTheme";
 import { ShareIcon } from "@/components/icons/ShareIcon";
+import { Category } from "@/types/category";
+import { Novel, SeriesStatus } from "@/types/novel";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -23,23 +25,43 @@ const { width: SCREEN_WIDTH } = Dimensions.get("window");
 interface Props {
   isVisible: boolean;
   onClose: () => void;
-  novelData: {
-    title: string;
-    author: string;
-    cover: string;
-    categories?: any[];
-    synopsis?: string;
-    status?: string;
-  };
+  novel: Novel;
 }
+
+const statusLabels: Record<SeriesStatus, string> = {
+  [SeriesStatus.ONGOING]: "Devam Ediyor",
+  [SeriesStatus.COMPLETED]: "Tamamlandı",
+  [SeriesStatus.HIATUS]: "Ara Verildi",
+  [SeriesStatus.CANCELLED]: "Durduruldu",
+  [SeriesStatus.DRAFT]: "Hazırlıkta",
+};
+
+const statusColors: Record<SeriesStatus, string> = {
+  [SeriesStatus.ONGOING]: "#03e889",
+  [SeriesStatus.COMPLETED]: "#36e8ff",
+  [SeriesStatus.HIATUS]: "#c2f493",
+  [SeriesStatus.CANCELLED]: "#FF3D00",
+  [SeriesStatus.DRAFT]: "#FFD600",
+};
+
+const getCategoryTitle = (category: Category | string) =>
+  typeof category === "string" ? category : category.title;
 
 const NovelShareModal: React.FC<Props> = ({
   isVisible,
   onClose,
-  novelData,
+  novel,
 }) => {
   const viewShotRef = useRef<ViewShot>(null);
   const { theme, isDarkMode } = useAppTheme();
+  const title = novel.name;
+  const author = novel.author.authorName || "Bilinmeyen Yazar";
+  const cover = novel.coverImage;
+  const synopsis =
+    novel.synopsis || "Yazar tarafından henüz bir özet girilmedi...";
+  const categories = novel.categories ?? [];
+  const status = statusLabels[novel.status] ?? "Bilinmeyen Durum";
+  const statusColor = statusColors[novel.status] ?? "#10B981";
 
   // Animasyon Değerleri
   const shareScale = useSharedValue(1);
@@ -58,7 +80,7 @@ const NovelShareModal: React.FC<Props> = ({
       if (viewShotRef.current?.capture) {
         const uri = await viewShotRef.current.capture();
         await Sharing.shareAsync(uri, {
-          dialogTitle: novelData.title,
+          dialogTitle: title,
           mimeType: "image/png",
         });
       }
@@ -90,9 +112,9 @@ const NovelShareModal: React.FC<Props> = ({
             <View style={s.cardContent}>
               <View style={s.infoArea}>
                 <View style={s.statusRow}>
-                  <View style={[s.statusDot, { backgroundColor: "#10B981" }]} />
-                  <Text style={s.statusText}>
-                    {novelData.status || "Ongoing"}
+                  <View style={[s.statusDot, { backgroundColor: statusColor }]} />
+                  <Text style={[s.statusText, { color: statusColor }]}>
+                    {status}
                   </Text>
                 </View>
 
@@ -100,26 +122,26 @@ const NovelShareModal: React.FC<Props> = ({
                   style={[s.title, { color: theme.textPrimary }]}
                   numberOfLines={3}
                 >
-                  {novelData.title}
+                  {title}
                 </Text>
 
                 <Text style={[s.author, { color: theme.textSecondary }]}>
-                  {novelData.author}
+                  {author}
                 </Text>
 
-                {novelData.categories && (
+                {categories.length > 0 && (
                   <View style={s.categoryRow}>
-                    {novelData.categories.slice(0, 3).map((cat, i) => (
-                      <React.Fragment key={i}>
+                    {categories.slice(0, 3).map((cat, i) => (
+                      <React.Fragment key={cat.id}>
                         <Text
                           style={[
                             s.categoryText,
                             { color: theme.textSecondary },
                           ]}
                         >
-                          {typeof cat === "object" ? cat.trName : cat}
+                          {getCategoryTitle(cat)}
                         </Text>
-                        {i < novelData.categories!.slice(0, 3).length - 1 && (
+                        {i < categories.slice(0, 3).length - 1 && (
                           <View
                             style={[
                               s.dotSeparator,
@@ -140,7 +162,7 @@ const NovelShareModal: React.FC<Props> = ({
                   style={[s.synopsis, { color: theme.textSecondary }]}
                   numberOfLines={5}
                 >
-                  {novelData.synopsis}
+                  {synopsis}
                 </Text>
 
                 <Text style={[s.brandText, { color: theme.textSecondary }]}>
@@ -149,11 +171,15 @@ const NovelShareModal: React.FC<Props> = ({
               </View>
 
               <View style={s.coverWrapper}>
-                <Image
-                  source={{ uri: novelData.cover }}
-                  style={s.mainCover}
-                  contentFit="cover"
-                />
+                {cover ? (
+                  <Image
+                    source={{ uri: cover }}
+                    style={s.mainCover}
+                    contentFit="cover"
+                  />
+                ) : (
+                  <View style={[s.mainCover, s.coverPlaceholder]} />
+                )}
               </View>
             </View>
           </ViewShot>
@@ -304,6 +330,9 @@ const s = StyleSheet.create({
     width: "100%",
     height: "100%",
     borderRadius: 12,
+  },
+  coverPlaceholder: {
+    backgroundColor: "rgba(128,128,128,0.2)",
   },
   actionArea: {
     width: "100%",

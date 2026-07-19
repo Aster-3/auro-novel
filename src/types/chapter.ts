@@ -13,7 +13,6 @@ export interface Chapter {
   volumeOrder: number;
   volumeName: string;
   volumeId: number;
-  isLocked: boolean;
   publishedAt: string;
   isUnpublished?: boolean;
 }
@@ -23,18 +22,11 @@ export interface ChapterDetail {
   title: string;
   content: string;
   novelId: string;
-  isLocked: boolean;
   volumeOrder: number;
   volumeTitle: string | null;
   nextChapterId: string | null;
   previousChapterId: string | null;
   novelStatus: SeriesStatus;
-  premiumPrice: number;
-  freemiumPrice: number;
-  isDiscountActive: boolean;
-  discountRate: number;
-  discountedEndDate: string;
-  discountedPremiumPrice: number;
 }
 
 export interface GetChapters {

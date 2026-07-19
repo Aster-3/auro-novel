@@ -1,31 +1,84 @@
 export enum PersonalNotificationType {
   NEW_CHAPTER = "new_chapter",
-  REVIEW_REPLY = "review_reply",
-  REVIEW_LIKE = "review_like",
-  COMMENT_LIKE = "comment_like",
   COMMENT_REPLY = "comment_reply",
-  PAYMENT_REQUEST = "payment_request",
-  PAYMENT_SUCCESS = "payment_success",
-  PAYMENT_FAILURE = "payment_failure",
+  COMMENT_LIKE = "comment_like",
+  REPLY_REPLY = "reply_reply",
+  REPLY_LIKE = "reply_like",
+  FOLLOW = "follow",
+  MESSAGE = "message",
 }
+
+export interface NotificationActorUser {
+  id: string;
+  username: string;
+  nickname: string | null;
+  profileImageUrl: string | null;
+}
+
+export type PersonalNotificationData = {
+  isTest?: boolean;
+  novelId?: string | null;
+  chapterId?: string | null;
+  commentId?: number | string | null;
+  parentReplyId?: number | string | null;
+  replyId?: number | string | null;
+  userId?: string;
+  screen?: string;
+  id?: string;
+  createdBy?: string;
+};
+
+export type PersonalNotificationTargetType =
+  | "novel"
+  | "chapter"
+  | "comment"
+  | "reply"
+  | "user"
+  | "message";
 
 export interface PersonalNotification {
   id: string;
+  actorUserId?: string | null;
+  actorUser?: NotificationActorUser | null;
   type: PersonalNotificationType;
-  title: string;
-  body: string;
+  targetType?: PersonalNotificationTargetType | null;
+  targetId?: string | null;
+  targetUrl?: string | null;
+  title?: string;
+  body?: string;
+  titleSnapshot?: string;
+  bodySnapshot?: string;
   isRead: boolean;
+  readAt?: string | null;
   createdAt: string;
-  data?: any;
+  data?: PersonalNotificationData | null;
+  deletedAt?: string | null;
 }
 
 export interface GlobalNotification {
   id: string;
   title: string;
-  body: string;
+  summary: string;
+  content: string;
+  priority: number;
+  isPublished: boolean;
+  publishedAt: string;
+  expiresAt: string | null;
   createdAt: string;
+  updatedAt: string;
   isNew: boolean;
-  data?: any;
+}
+
+export interface GlobalNotificationListResponse {
+  items: GlobalNotification[];
+  total: number;
+  currentPage: number;
+  nextPage: number | null;
+  lastPage: number;
+}
+
+export interface GlobalNotificationDetailResponse {
+  item: GlobalNotification;
 }
 
 export const DUMMY_NOTIFICATIONS: PersonalNotification[] = [
@@ -39,14 +92,6 @@ export const DUMMY_NOTIFICATIONS: PersonalNotification[] = [
     data: { novelId: "ss-1", chapterId: "92" },
   },
   {
-    id: "2",
-    type: PersonalNotificationType.PAYMENT_SUCCESS,
-    title: "Ödeme Başarılı",
-    body: "500 Gece Parçası hesabınıza tanımlandı. Keyifli okumalar!",
-    isRead: false,
-    createdAt: "2026-04-22T13:45:00.000Z",
-  },
-  {
     id: "3",
     type: PersonalNotificationType.COMMENT_REPLY,
     title: "Yorumuna Yanıt Geldi",
@@ -57,19 +102,11 @@ export const DUMMY_NOTIFICATIONS: PersonalNotification[] = [
   },
   {
     id: "4",
-    type: PersonalNotificationType.REVIEW_LIKE,
+    type: PersonalNotificationType.COMMENT_LIKE,
     title: "İncelemen Beğenildi",
     body: "Lord_of_Shadow ve 12 kişi incelemeni beğendi.",
     isRead: true,
     createdAt: "2026-04-22T10:15:00.000Z",
-  },
-  {
-    id: "5",
-    type: PersonalNotificationType.PAYMENT_FAILURE,
-    title: "Ödeme Başarısız",
-    body: "Abonelik yenileme işleminiz banka reddi nedeniyle gerçekleşmedi.",
-    isRead: false,
-    createdAt: "2026-04-21T22:00:00.000Z",
   },
   {
     id: "6",
@@ -88,16 +125,8 @@ export const DUMMY_NOTIFICATIONS: PersonalNotification[] = [
     createdAt: "2026-04-21T15:20:00.000Z",
   },
   {
-    id: "8",
-    type: PersonalNotificationType.PAYMENT_REQUEST,
-    title: "Ödeme Talebi Alındı",
-    body: "Yazarlık kazancınız için para çekme talebi oluşturuldu.",
-    isRead: true,
-    createdAt: "2026-04-21T09:00:00.000Z",
-  },
-  {
     id: "9",
-    type: PersonalNotificationType.REVIEW_REPLY,
+    type: PersonalNotificationType.REPLY_REPLY,
     title: "İncelemene Yanıt",
     body: "Yazar: 'Desteğin için teşekkürler, 100. bölümde sürpriz var!'",
     isRead: false,
@@ -120,16 +149,8 @@ export const DUMMY_NOTIFICATIONS: PersonalNotification[] = [
     createdAt: "2026-04-19T11:45:00.000Z",
   },
   {
-    id: "12",
-    type: PersonalNotificationType.PAYMENT_SUCCESS,
-    title: "Abonelik Yenilendi",
-    body: "Premium üyeliğiniz 1 ay süreyle uzatıldı.",
-    isRead: true,
-    createdAt: "2026-04-18T00:01:00.000Z",
-  },
-  {
     id: "13",
-    type: PersonalNotificationType.REVIEW_LIKE,
+    type: PersonalNotificationType.COMMENT_LIKE,
     title: "Popüler İnceleme!",
     body: "İncelemen 50 beğeniye ulaştı ve trendlere girdi.",
     isRead: true,

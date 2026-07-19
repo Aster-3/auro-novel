@@ -13,12 +13,13 @@ import { ReplyIcon } from "./icons/ReplyIcon";
 import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import { useCommentLikeMutation } from "@/hooks/useCommentLikeMutation";
-import { useAuthStore } from "@/store/useAuthStore";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useReaderStore } from "@/store/useReaderStore";
 import { RecommendIcon } from "./icons/RecommendIcon";
 import { DoubleDateIcon } from "./icons/DoubleDateIcon";
 import { TotalReviewsIcon } from "./icons/TotalReviewsIcon";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 interface Props {
   comment: Comment;
@@ -31,9 +32,10 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
   const [measured, setMeasured] = useState(false);
 
   const { mutate } = useCommentLikeMutation(novelId);
-  const user = useAuthStore((state) => state.user);
+  const { requireAuth } = useRequireAuthAction();
   const navigation = useAppNavigation();
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const reviewCount = comment.user.reviewCount ?? 0;
 
   const toggleExpanded = useCallback(() => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -41,9 +43,8 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
   }, []);
 
   const toggleLike = useCallback(() => {
-    if (!user) return;
-    mutate(comment.id);
-  }, [user, mutate, comment.id]);
+    requireAuth(() => mutate(comment.id), "Beğenmek için giriş yapmalısın.");
+  }, [comment.id, mutate, requireAuth]);
 
   const theme = useMemo(
     () => ({
@@ -75,9 +76,14 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
   return (
     <View style={s.card}>
       {/* HEADER */}
-      <View style={s.header}>
+      <Pressable
+        style={s.header}
+        onPress={() =>
+          navigation.navigate("UserProfile", { userId: comment.user.id })
+        }
+      >
         <Image
-          source={{ uri: comment.user.profileImageUrl }}
+          source={getProfileImageSource(comment.user.profileImageUrl)}
           style={s.avatar}
           contentFit="cover"
         />
@@ -95,7 +101,7 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
             <View style={s.iconInfo}>
               <TotalReviewsIcon color={theme.subText} size={10} />
               <Text style={[s.microDate, { color: theme.subText }]}>
-                25 İnceleme
+                {reviewCount} İnceleme
               </Text>
             </View>
           </View>
@@ -122,7 +128,7 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
             size={14}
           />
         </View>
-      </View>
+      </Pressable>
 
       {/* BODY */}
       <Pressable onPress={() => isTruncated && toggleExpanded()} style={s.body}>
@@ -192,7 +198,10 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
             },
           ]}
           onPress={() =>
-            navigation.navigate("Reply", { commentId: comment.id, novelId })
+            navigation.navigate("Reply", {
+              commentId: comment.id,
+              novelId,
+            })
           }
           activeOpacity={0.7}
         >

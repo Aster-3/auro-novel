@@ -1,0 +1,39 @@
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/commonjs/hooks.js b/node_modules/react-native-collapsible-tab-view/lib/commonjs/hooks.js
+index ada937f..1ced18d 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/commonjs/hooks.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/commonjs/hooks.js
+@@ -349,7 +349,7 @@ const useScrollHandlerY = name => {
+ 
+     // if the index is decimal, then we're in between panes
+     const isChangingPane = !Number.isInteger(indexDecimal.value);
+-    return isChangingPane;
++    return false && isChangingPane;
+   }, (isSyncNeeded, wasSyncNeeded) => {
+     if (isSyncNeeded && isSyncNeeded !== wasSyncNeeded && focusedTab.value !== name) {
+       let nextPosition = null;
+diff --git a/node_modules/react-native-collapsible-tab-view/lib/module/hooks.js b/node_modules/react-native-collapsible-tab-view/lib/module/hooks.js
+index 997e8dd..65cad82 100644
+--- a/node_modules/react-native-collapsible-tab-view/lib/module/hooks.js
++++ b/node_modules/react-native-collapsible-tab-view/lib/module/hooks.js
+@@ -328,7 +328,7 @@ export const useScrollHandlerY = name => {
+ 
+     // if the index is decimal, then we're in between panes
+     const isChangingPane = !Number.isInteger(indexDecimal.value);
+-    return isChangingPane;
++    return false && isChangingPane;
+   }, (isSyncNeeded, wasSyncNeeded) => {
+     if (isSyncNeeded && isSyncNeeded !== wasSyncNeeded && focusedTab.value !== name) {
+       let nextPosition = null;
+diff --git a/node_modules/react-native-collapsible-tab-view/src/hooks.tsx b/node_modules/react-native-collapsible-tab-view/src/hooks.tsx
+index ba7dffa..1f440c9 100644
+--- a/node_modules/react-native-collapsible-tab-view/src/hooks.tsx
++++ b/node_modules/react-native-collapsible-tab-view/src/hooks.tsx
+@@ -462,7 +462,7 @@ export const useScrollHandlerY = (name: TabName) => {
+       // if the index is decimal, then we're in between panes
+       const isChangingPane = !Number.isInteger(indexDecimal.value)
+ 
+-      return isChangingPane
++      return false && isChangingPane
+     },
+     (isSyncNeeded, wasSyncNeeded) => {
+       if (

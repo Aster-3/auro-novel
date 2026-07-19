@@ -14,6 +14,7 @@ import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
 import { Reply } from "@/types/reply";
 import { useReaderStore } from "@/store/useReaderStore";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 interface ReplyParentProps {
   comment: Comment;
@@ -66,7 +67,7 @@ export const ReplyParent = React.memo(
             {/* Üst Kısım: Kullanıcı ve Rozet */}
             <View style={s.header}>
               <Image
-                source={{ uri: comment.user.profileImageUrl }}
+                source={getProfileImageSource(comment.user.profileImageUrl)}
                 style={s.avatar}
                 contentFit="cover"
               />

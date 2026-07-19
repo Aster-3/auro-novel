@@ -1,14 +1,16 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, Pressable } from "react-native";
 import { Image } from "expo-image";
 import { useReaderStore } from "@/store/useReaderStore";
 import { formatRelativeTime } from "@/utils/formatRelativeTime";
 import { PreviewComment } from "@/types/comment";
 import { RecommendIcon } from "./icons/RecommendIcon";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { getProfileImageSource } from "@/utils/profileImage";
 
 export const CommentCardShort = ({ comment }: { comment: PreviewComment }) => {
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
-
+  const navigation = useAppNavigation();
   const theme = useMemo(
     () => ({
       title: isDarkMode ? "#F0F5FF" : "#1B2838",
@@ -31,11 +33,15 @@ export const CommentCardShort = ({ comment }: { comment: PreviewComment }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <View style={styles.userInfo}>
+        <Pressable
+          onPress={() =>
+            navigation.push("UserProfile", { userId: comment.user.id })
+          }
+          style={styles.userInfo}
+        >
           <Image
-            source={{ uri: comment.user.profileImageUrl }}
+            source={getProfileImageSource(comment.user.profileImageUrl)}
             style={styles.avatar}
             contentFit="cover"
             transition={200}
@@ -51,9 +57,8 @@ export const CommentCardShort = ({ comment }: { comment: PreviewComment }) => {
               {formatRelativeTime(comment.createdAt).toUpperCase()}
             </Text>
           </View>
-        </View>
+        </Pressable>
 
-        {/* Mini Squircle Badge */}
         <View
           style={[
             styles.badge,
@@ -76,7 +81,6 @@ export const CommentCardShort = ({ comment }: { comment: PreviewComment }) => {
         </View>
       </View>
 
-      {/* Content: Avatar hizalı temiz yapı */}
       <Text numberOfLines={2} style={[styles.content, { color: theme.text }]}>
         {comment.content}
       </Text>

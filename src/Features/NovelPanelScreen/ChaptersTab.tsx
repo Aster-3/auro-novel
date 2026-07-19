@@ -11,12 +11,12 @@ import { PanelChapterItem } from "./PanelChapterItem";
 import { Chapter, DraftChapter } from "@/types/chapter";
 import { SortType } from "@/types/constants";
 import { useInfiniteDraftChapters } from "@/hooks/useInfiniteDraftChapters";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
 
 export const ChaptersTab = ({ route }: { route: any }) => {
-  const { theme, isDarkMode } = useAppTheme();
+  const { theme } = useAppTheme();
   const { novelId, isPublished } = route.params;
-  const [sortType, setSortType] = useState<SortType>(SortType.ASC);
+  const [sortType] = useState<SortType>(SortType.ASC);
 
   const publishedQuery = useInfiniteChapters(
     { id: novelId, sort: sortType },
@@ -37,6 +37,7 @@ export const ChaptersTab = ({ route }: { route: any }) => {
   const renderItem = useCallback(
     ({ item, index }: { item: Chapter | DraftChapter; index: number }) => {
       let showHeader = false;
+
       if (isPublished) {
         const currentChapter = item as Chapter;
         const prevChapter = chapters[index - 1] as Chapter | undefined;
@@ -69,14 +70,14 @@ export const ChaptersTab = ({ route }: { route: any }) => {
   ]);
 
   const ListFooter = useCallback(() => {
-    if (!activeQuery.isFetchingNextPage)
+    if (!activeQuery.isFetchingNextPage) {
       return <View style={styles.footerSpacer} />;
+    }
+
     return (
-      <ActivityIndicator
-        style={styles.loader}
-        color={theme.accent}
-        size="small"
-      />
+      <View style={styles.loader}>
+        <ActivityIndicator color={theme.accent} size="small" />
+      </View>
     );
   }, [activeQuery.isFetchingNextPage, theme.accent]);
 
@@ -107,16 +108,14 @@ export const ChaptersTab = ({ route }: { route: any }) => {
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={[
+          styles.listContent,
+          chapters.length === 0 && styles.emptyListContent,
+        ]}
         ListFooterComponent={ListFooter}
         ListEmptyComponent={
-          <View style={styles.centered}>
-            <Text
-              style={{
-                color: theme.textSecondary,
-                fontFamily: "Mont-500",
-                textAlign: "center",
-              }}
-            >
+          <View style={styles.emptyState}>
+            <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
               {isPublished
                 ? "Henüz yayınlanmış bölüm bulunmuyor."
                 : "Henüz taslak bölüm bulunmuyor."}
@@ -131,7 +130,15 @@ export const ChaptersTab = ({ route }: { route: any }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 8,
+  },
+  listContent: {
+    paddingTop: 12,
+    paddingBottom: 44,
+    gap: 2,
+  },
+  emptyListContent: {
+    flexGrow: 1,
+    justifyContent: "center",
   },
   centered: {
     flex: 1,
@@ -140,13 +147,27 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   loader: {
-    marginVertical: 20,
+    paddingVertical: 20,
+    alignItems: "center",
   },
   footerSpacer: {
-    height: 40,
+    height: 28,
   },
   errorText: {
     textAlign: "center",
     fontFamily: "Mont-600",
+  },
+  emptyState: {
+    marginHorizontal: 4,
+    paddingHorizontal: 18,
+    paddingVertical: 22,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+  emptyText: {
+    fontFamily: "Mont-500",
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: "center",
   },
 });

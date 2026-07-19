@@ -4,21 +4,34 @@ import { ProfileBodyTop } from "@/Features/ProfileScreen/ProfileBodyTop";
 import { ProfileBodyMiddle } from "@/Features/ProfileScreen/ProfileBodyMiddle";
 import { ScrollView } from "react-native-gesture-handler";
 import { ProfileBodyBottom } from "@/Features/ProfileScreen/ProfileBodyBottom";
-import { useRef } from "react";
-import BottomSheet from "@gorhom/bottom-sheet";
-import { LoginSheet } from "@/Features/ProfileScreen/LoginSheet";
-import { useDynamicBottom } from "@/utils/useDynamicBottom";
+import { useEffect, useRef } from "react";
+import { LoginSheet, LoginSheetRef } from "@/Features/ProfileScreen/LoginSheet";
+import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
 import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 import { StatusBar } from "react-native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 
 const ProfileScreen = () => {
-  const bottomSheetRef = useRef<BottomSheet>(null);
-  const dynamicBottom = useDynamicBottom();
+  const bottomSheetRef = useRef<LoginSheetRef>(null);
+  const tabBarBottomPadding = useTabBarBottomPadding();
   const { theme } = useAppTheme();
+  const route = useRoute<any>();
+  const navigation = useNavigation<any>();
 
   const openLoginSheet = () => {
     bottomSheetRef.current?.expand();
   };
+
+  useEffect(() => {
+    if (!route.params?.openLogin) return;
+
+    const timeoutId = setTimeout(() => {
+      bottomSheetRef.current?.expand();
+      navigation.setParams({ openLogin: undefined });
+    }, 250);
+
+    return () => clearTimeout(timeoutId);
+  }, [navigation, route.params?.openLogin]);
 
   return (
     <Screen
@@ -32,7 +45,7 @@ const ProfileScreen = () => {
       <ScrollView
         style={{ width: "100%" }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ gap: 16, paddingBottom: dynamicBottom + 80 }}
+        contentContainerStyle={{ gap: 16, paddingBottom: tabBarBottomPadding }}
       >
         <ProfileBodyTop />
         <ProfileBodyMiddle />

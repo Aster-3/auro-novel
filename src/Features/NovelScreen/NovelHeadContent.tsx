@@ -1,5 +1,5 @@
 import { AuthorIcon } from "@/components/icons/AuthorIcon";
-import { LikeIcon } from "@/components/icons/CommentLikeIcon";
+import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
 import { ViewIcon } from "@/components/icons/ViewIcon";
 import { Image, ImageSourcePropType, Text, View } from "react-native";
@@ -60,7 +60,7 @@ export const NovelHeadContent = ({
             <Text style={text}>15.7K</Text>
           </View>
           <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-            <LikeIcon color="white" />
+            <CommentLikeIcon color="white" />
             <Text style={text}>{recommendRate}% Öneriyor</Text>
           </View>
         </View>

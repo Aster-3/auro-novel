@@ -30,6 +30,7 @@ import { ToastContainer } from "./components/Toasts/ToastContainer";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { ActivityIndicator, StatusBar } from "react-native";
 import { useReaderStore } from "./store/useReaderStore";
+import { usePushNotifications } from "./hooks/usePushNotifications";
 
 enableFreeze(false);
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const queryClient = new QueryClient();
 export default function App() {
   const [isReady, setIsReady] = useState(false);
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const appBackgroundColor = isDarkMode ? "#090910" : "#ffffff";
   let [fontsLoaded] = useFonts({
     "Mont-400": Montserrat_400Regular,
@@ -65,12 +67,14 @@ export default function App() {
     const checkToken = async () => {
       const token = await TokenStorage.getAccessToken();
       if (token) {
-        useAuthStore.setState({ accessToken: token });
+        useAuthStore.getState().setAccessToken(token);
       }
       setIsReady(true);
     };
     checkToken();
   }, []);
+
+  usePushNotifications(accessToken, queryClient);
 
   if (!fontsLoaded) {
     return null;

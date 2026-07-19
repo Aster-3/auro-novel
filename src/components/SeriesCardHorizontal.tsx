@@ -45,7 +45,7 @@ export const SeriesCardHorizontal = ({
           style={{
             fontFamily: "Mont-600",
             color: theme.textPrimary,
-            fontSize: 14,
+            fontSize: 13,
             textAlign: "left",
           }}
         >

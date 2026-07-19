@@ -1,7 +1,7 @@
-import { AuthorIcon } from "@/components/icons/AuthorIcon";
 import { LittleRecommendIcon } from "@/components/icons/LittleRecommendIcon";
+import { SparkleIcon } from "@/components/icons/SparkleIcon";
 import { StatusIcon } from "@/components/icons/StatusIcon";
-import { ViewIcon } from "@/components/icons/ViewIcon";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { Author, SeriesStatus } from "@/types/novel";
 import { Category } from "@/types/category";
 import React, { useState } from "react";
@@ -25,7 +25,7 @@ export const NovelMetaData = ({
   status,
   viewCount,
 }: {
-  cover: string;
+  cover: string | null;
   author: Author;
   name: string;
   recommendRate: number | null;
@@ -33,8 +33,8 @@ export const NovelMetaData = ({
   status: SeriesStatus;
   viewCount: number;
 }) => {
-  const authorName =
-    author.nickname || author.user?.nickname || "Bilinmeyen Yazar";
+  const navigation = useAppNavigation();
+  const authorName = author.authorName || "Bilinmeyen Yazar";
 
   const imageSource = cover;
 
@@ -79,7 +79,7 @@ export const NovelMetaData = ({
         style={styles.posterContainer}
       >
         <Image
-          source={cover}
+          source={cover ?? undefined}
           style={styles.posterImage}
           contentFit="cover"
           transition={500}
@@ -101,7 +101,7 @@ export const NovelMetaData = ({
         >
           <View style={styles.fullImageContainer}>
             <Image
-              source={imageSource}
+              source={imageSource ?? undefined}
               style={styles.fullImage}
               contentFit="cover" //
               transition={300}
@@ -114,15 +114,30 @@ export const NovelMetaData = ({
         <Text style={styles.title}>{name}</Text>
 
         <View style={styles.row}>
-          <AuthorIcon color="white" />
-          <Text style={styles.text}>{authorName}</Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            disabled={!author.isRegisteredUser}
+            onPress={() => {
+              if (author.isRegisteredUser) {
+                navigation.navigate("UserProfile", { userId: author.id });
+              }
+            }}
+            style={styles.authorButton}
+          >
+            <Text style={styles.text}>
+              {authorName}
+            </Text>
+            {author.isVerified && (
+              <SparkleIcon color="white" size={12} />
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.row}>
           {genres && genres.length > 0 ? (
             genres.map((genre, index) => (
               <View key={genre.id} style={styles.genreWrapper}>
-                <Text style={styles.text}>{genre.trName}</Text>
+                <Text style={styles.text}>{genre.title}</Text>
                 {index !== genres.length - 1 && (
                   <View style={styles.genreDot} />
                 )}
@@ -215,6 +230,11 @@ const styles = StyleSheet.create({
   text: {
     color: "white",
     fontSize: 12,
+  },
+  authorButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
   },
   statusText: {
     color: "#00CE78",

@@ -5,6 +5,7 @@ export const useNovelReadingStats = (novelId: string) => {
   return useQuery({
     queryKey: ["novel-reading-stats", novelId],
     queryFn: async () => getUserNovelReadingStats(novelId),
+    enabled: !!novelId,
     refetchOnWindowFocus: false,
     staleTime: 1000 * 60 * 5,
   });

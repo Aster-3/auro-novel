@@ -1,5 +1,9 @@
 import api from "@/api/axiosInstance";
-import { GetTagsRequest, GetTagsResponse } from "@/types/tag";
+import {
+  GetTaggedNovelsResponse,
+  GetTagsRequest,
+  GetTagsResponse,
+} from "@/types/tag";
 
 export const getTags = async (
   dto: GetTagsRequest,
@@ -15,6 +19,20 @@ export const getRandomTags = async (
   const { data } = await api.get(`/tags/random`, {
     params: { count: limit || 20 },
   });
-  console.log("Fetched random tags:", data);
+  return data;
+};
+
+export const getNovelsByTag = async ({
+  id,
+  page = 1,
+  limit = 20,
+}: {
+  id: string;
+  page?: number;
+  limit?: number;
+}): Promise<GetTaggedNovelsResponse> => {
+  const { data } = await api.get(`/tags/${id}`, {
+    params: { page, limit },
+  });
   return data;
 };

@@ -30,7 +30,7 @@ const LibraryScreen = () => {
           },
         }}
       >
-        <Tab.Screen name="library">{() => <LibraryView />}</Tab.Screen>
+        <Tab.Screen name="library" component={LibraryView} />
         {/* <Tab.Screen name="readlist">
           {() => (
             <View style={{ flex: 1 }}>

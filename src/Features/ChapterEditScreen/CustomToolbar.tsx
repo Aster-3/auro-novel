@@ -1,17 +1,14 @@
-import { LoadingDots } from "@/components/LoadingDots";
-import { useVolumeQuery } from "@/hooks/useVolumeQuery";
-import React, { useState, useEffect } from "react";
+import { useAppTheme } from "@/hooks/useTheme";
+import React, { useEffect, useState } from "react";
 import {
-  TouchableOpacity,
-  View,
-  Text,
-  StyleSheet,
   Keyboard,
   LayoutAnimation,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
 
 export const CustomToolbar = React.memo(
   ({ editor, contentWordCount }: { editor: any; contentWordCount: number }) => {
@@ -22,9 +19,15 @@ export const CustomToolbar = React.memo(
       isUnderlineActive: false,
       isStrikeActive: false,
     });
+    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
+    const insets = useSafeAreaInsets();
+    const bottomPadding = isKeyboardVisible ? 0 : insets.bottom;
 
     useEffect(() => {
-      if (!editor) return;
+      if (!editor) {
+        return;
+      }
+
       const interval = setInterval(() => {
         const newState = editor.getEditorState();
         setEditorState((prevState) => {
@@ -39,16 +42,15 @@ export const CustomToolbar = React.memo(
           return prevState;
         });
       }, 150);
+
       return () => clearInterval(interval);
     }, [editor]);
 
-    const configureAnimation = () => {
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    };
-
-    const [isKeyboardVisible, setKeyboardVisible] = useState(false);
-
     useEffect(() => {
+      const configureAnimation = () => {
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      };
+
       const showSubscription = Keyboard.addListener("keyboardDidShow", () => {
         configureAnimation();
         setKeyboardVisible(true);
@@ -66,63 +68,65 @@ export const CustomToolbar = React.memo(
       };
     }, []);
 
-    const insets = useSafeAreaInsets();
-    const bottomPadding = isKeyboardVisible ? 0 : insets.bottom;
+    const toolbarButtons = [
+      {
+        id: "bold",
+        label: "B",
+        action: () => editor.toggleBold(),
+        active: editorState.isBoldActive,
+        style: { fontFamily: "Mont-700" },
+      },
+      {
+        id: "italic",
+        label: "I",
+        action: () => editor.toggleItalic(),
+        active: editorState.isItalicActive,
+        style: { fontStyle: "italic" as const, fontFamily: "serif" },
+      },
+      {
+        id: "underline",
+        label: "U",
+        action: () => editor.toggleUnderline(),
+        active: editorState.isUnderlineActive,
+        style: { textDecorationLine: "underline" as const },
+      },
+      {
+        id: "strike",
+        label: "S",
+        action: () => editor.toggleStrike(),
+        active: editorState.isStrikeActive,
+        style: { textDecorationLine: "line-through" as const },
+      },
+    ];
 
     return (
       <View
-        style={{ paddingBottom: bottomPadding, backgroundColor: theme.surface }}
+        style={{ paddingBottom: bottomPadding, backgroundColor: theme.background }}
       >
         <View
           style={[
             styles.wrapper,
             {
-              backgroundColor: theme.surface,
-              borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#eff2f6",
+              backgroundColor: theme.background,
+              borderTopColor: isDarkMode
+                ? "rgba(255,255,255,0.035)"
+                : "rgba(15,23,42,0.045)",
             },
           ]}
         >
           <View style={styles.toolbarWrapper}>
-            {[
-              {
-                id: "bold",
-                label: "B",
-                action: () => editor.toggleBold(),
-                active: editorState.isBoldActive,
-                style: { fontWeight: "bold" as const },
-              },
-              {
-                id: "italic",
-                label: "I",
-                action: () => editor.toggleItalic(),
-                active: editorState.isItalicActive,
-                style: { fontStyle: "italic" as const, fontFamily: "serif" },
-              },
-              {
-                id: "underline",
-                label: "U",
-                action: () => editor.toggleUnderline(),
-                active: editorState.isUnderlineActive,
-                style: { textDecorationLine: "underline" as const },
-              },
-              {
-                id: "strike",
-                label: "S",
-                action: () => editor.toggleStrike(),
-                active: editorState.isStrikeActive,
-                style: { textDecorationLine: "line-through" as const },
-              },
-            ].map((btn) => (
+            {toolbarButtons.map((btn) => (
               <TouchableOpacity
                 key={btn.id}
                 style={[
                   styles.toolbarButton,
                   btn.active && {
                     backgroundColor: isDarkMode
-                      ? "rgba(255,255,255,0.1)"
-                      : "#f1f5f9",
+                      ? "rgba(255,255,255,0.06)"
+                      : "rgba(15,23,42,0.045)",
                   },
                 ]}
+                activeOpacity={0.72}
                 onPress={btn.action}
               >
                 <Text
@@ -138,43 +142,31 @@ export const CustomToolbar = React.memo(
             ))}
           </View>
 
-          <View
-            style={[
-              styles.wordCountBadge,
-              {
-                backgroundColor: isDarkMode
-                  ? "rgba(255,255,255,0.05)"
-                  : "#F8FAFC",
-              },
-            ]}
-          >
-            <Text style={[styles.volumeText, { color: theme.textSecondary }]}>
-              {contentWordCount} Kelime
-            </Text>
-          </View>
+          <Text style={[styles.wordCountText, { color: theme.textSecondary }]}>
+            {contentWordCount} kelime
+          </Text>
         </View>
       </View>
     );
   },
 );
 
-// EDITÖRÜN İÇİNDEKİ CSS (Dinamik Renkler)
 export const getCustomCSS = (isDarkMode: boolean, theme: any) => `
   .ProseMirror {
-    background-color: ${isDarkMode ? theme.surface : "#ffffff"} !important;
+    background-color: ${theme.background} !important;
     outline: none !important;
     padding-bottom: 150px;
   }
   .ProseMirror p {
     font-family: 'Montserrat', sans-serif !important;
     font-size: 16px !important;
-    line-height: 1.7 !important; 
-    margin-bottom: 16px !important; 
+    line-height: 1.72 !important;
+    margin-bottom: 16px !important;
     color: ${isDarkMode ? theme.textPrimary : "#1e293b"} !important;
   }
   .ProseMirror p.is-editor-empty:first-child::before {
     content: "Hikayeni anlatmaya başla..." !important;
-    color: ${isDarkMode ? "rgba(255,255,255,0.2)" : "#94a3b8"} !important;
+    color: ${isDarkMode ? "rgba(255,255,255,0.24)" : "#94a3b8"} !important;
     font-style: italic;
     float: left;
     height: 0;
@@ -184,38 +176,31 @@ export const getCustomCSS = (isDarkMode: boolean, theme: any) => `
 
 const styles = StyleSheet.create({
   wrapper: {
+    height: 50,
+    paddingHorizontal: 16,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 20,
     justifyContent: "space-between",
-    height: 56,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   toolbarWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   toolbarButton: {
-    width: 32,
-    height: 32,
+    width: 30,
+    height: 30,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 10,
+    borderRadius: 8,
   },
   toolbarIcon: {
-    fontSize: 15,
-    fontFamily: "Mont-600",
+    fontSize: 14,
+    fontFamily: "Mont-500",
   },
-  wordCountBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  volumeText: {
-    fontSize: 10, // Mikro-tipografi
-    fontFamily: "Mont-700",
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+  wordCountText: {
+    fontSize: 10,
+    fontFamily: "Mont-500",
   },
 });

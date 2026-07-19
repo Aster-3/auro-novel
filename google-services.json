@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "898497000347",
+    "project_id": "auro-novel",
+    "storage_bucket": "auro-novel.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:898497000347:android:8633b860c92759bf8ee73e",
+        "android_client_info": {
+          "package_name": "com.auroinitiative.novel"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYYKwHng4RqwGIpaDiYnWGOx0w3CwYp9E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
