@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -59,6 +59,8 @@ const SupportFeedbackScreen = () => {
   const user = useAuthStore((state) => state.user);
   const isLoggedIn = !!user;
   const { mutate, isPending } = useFeedbackMutation();
+  const isSubjectDisabled = prefill?.isSubjectDisable === true;
+  const isTypeDisabled = prefill?.isTypeDisable === true;
   const [type, setType] = useState<FeedbackType>(
     prefill?.initialType ?? "support",
   );
@@ -67,10 +69,14 @@ const SupportFeedbackScreen = () => {
   const [message, setMessage] = useState(prefill?.initialMessage ?? "");
   const [email, setEmail] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubjectFocused, setSubjectFocused] = useState(false);
+  const subjectInputRef = useRef<TextInput>(null);
 
   const borderColor = isDarkMode ? "rgba(255,255,255,0.08)" : "#E2E8F0";
   const mutedBorder = isDarkMode ? "rgba(255,255,255,0.06)" : "#F1F5F9";
   const selectedType = feedbackTypes.find((item) => item.value === type);
+  const lockedSubjectSelection =
+    isSubjectDisabled && !isSubjectFocused ? { start: 0, end: 0 } : undefined;
 
   const isFormReady = useMemo(() => {
     return (
@@ -126,8 +132,10 @@ const SupportFeedbackScreen = () => {
       },
       {
         onSuccess: () => {
-          setType("support");
-          setSubject("");
+          setType(
+            isTypeDisabled ? (prefill?.initialType ?? "support") : "support",
+          );
+          setSubject(isSubjectDisabled ? (prefill?.initialSubject ?? "") : "");
           setMessage("");
           setEmail("");
           setErrors({});
@@ -199,13 +207,14 @@ const SupportFeedbackScreen = () => {
             </Text>
             <View style={styles.dropdownWrap}>
               <Pressable
+                disabled={isTypeDisabled}
                 onPress={() => setIsDropdownOpen((current) => !current)}
                 style={({ pressed }) => [
                   styles.dropdownButton,
                   {
                     backgroundColor: theme.surface,
                     borderColor: mutedBorder,
-                    opacity: pressed ? 0.78 : 1,
+                    opacity: isTypeDisabled ? 0.55 : pressed ? 0.78 : 1,
                   },
                 ]}
               >
@@ -218,13 +227,14 @@ const SupportFeedbackScreen = () => {
                   style={[
                     styles.chevron,
                     isDropdownOpen && styles.chevronOpen,
+                    isTypeDisabled && styles.disabledControl,
                   ]}
                 >
                   <DownChevronIcon color={theme.textSecondary} size={18} />
                 </View>
               </Pressable>
 
-              {isDropdownOpen && (
+              {isDropdownOpen && !isTypeDisabled && (
                 <View
                   style={[
                     styles.dropdownMenu,
@@ -285,20 +295,46 @@ const SupportFeedbackScreen = () => {
               style={[
                 styles.inputWrapper,
                 {
-                  backgroundColor: theme.surface,
+                  backgroundColor: isSubjectDisabled
+                    ? isDarkMode
+                      ? "rgba(255,255,255,0.04)"
+                      : "#F8FAFC"
+                    : theme.surface,
                   borderColor: errors.subject ? "#EF4444" : mutedBorder,
                 },
               ]}
             >
               <TextInput
+                ref={subjectInputRef}
                 value={subject}
+                caretHidden={isSubjectDisabled}
+                contextMenuHidden={isSubjectDisabled}
+                scrollEnabled
+                selection={lockedSubjectSelection}
+                showSoftInputOnFocus={!isSubjectDisabled}
+                onFocus={() => setSubjectFocused(true)}
+                onBlur={() => {
+                  setSubjectFocused(false);
+                  subjectInputRef.current?.setNativeProps({
+                    selection: { start: 0, end: 0 },
+                  });
+                }}
                 onChangeText={(value) => {
+                  if (isSubjectDisabled) {
+                    setSubject(prefill?.initialSubject ?? subject);
+                    return;
+                  }
+
                   setSubject(value);
                   clearError("subject");
                 }}
                 placeholder="Kısa başlık"
                 placeholderTextColor={theme.textSecondary + "80"}
-                style={[styles.input, { color: theme.textPrimary }]}
+                style={[
+                  styles.input,
+                  isSubjectDisabled && styles.readOnlyInput,
+                  { color: theme.textPrimary },
+                ]}
                 maxLength={90}
               />
             </View>
@@ -489,6 +525,9 @@ const styles = StyleSheet.create({
   chevronOpen: {
     transform: [{ rotate: "180deg" }],
   },
+  disabledControl: {
+    opacity: 0.45,
+  },
   dropdownMenu: {
     marginTop: 8,
     borderRadius: 16,
@@ -521,6 +560,9 @@ const styles = StyleSheet.create({
     height: "100%",
     fontSize: 12,
     fontFamily: "Mont-500",
+  },
+  readOnlyInput: {
+    opacity: 0.78,
   },
   messageWrapper: {
     height: 164,

@@ -1,8 +1,8 @@
 import { BackArrowIcon } from "@/components/icons/BackArrowIcon";
 import { CircleEditIcon } from "@/components/icons/CircleEditIcon";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
-import { Text, TouchableOpacity, View, StyleSheet } from "react-native";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 export const UTCHeader = ({
   onSave,
@@ -16,12 +16,13 @@ export const UTCHeader = ({
 
   return (
     <View style={[styles.header, { backgroundColor: theme.background }]}>
-      <View style={styles.container}>
+      <View style={styles.leftContent}>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => navigation.goBack()}
+          style={styles.backButton}
         >
-          <BackArrowIcon size={24} color={theme.textPrimary} />
+          <BackArrowIcon size={22} color={theme.textPrimary} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: theme.textPrimary }]}>
           {mode === "category" ? "Kategoriler" : "Etiketler"}
@@ -32,17 +33,17 @@ export const UTCHeader = ({
         style={[
           styles.saveButton,
           {
-            backgroundColor: theme.surface,
-            shadowColor: "#000",
-            shadowOpacity: isDarkMode ? 0.4 : 0.1,
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.045)"
+              : "rgba(15,23,42,0.035)",
           },
         ]}
-        activeOpacity={0.8}
+        activeOpacity={0.75}
         onPress={onSave}
       >
         <CircleEditIcon size={14} color={theme.textPrimary} />
         <Text style={[styles.saveButtonText, { color: theme.textPrimary }]}>
-          KAYDET
+          Kaydet
         </Text>
       </TouchableOpacity>
     </View>
@@ -50,37 +51,42 @@ export const UTCHeader = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flexDirection: "row",
-    gap: 12,
-    alignItems: "center",
-  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingTop: 12,
-    paddingBottom: 8,
+    paddingTop: 10,
+    paddingBottom: 4,
     gap: 12,
+  },
+  leftContent: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  backButton: {
+    width: 30,
+    height: 30,
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerTitle: {
     fontSize: 16,
-    fontFamily: "Mont-700",
+    fontFamily: "Mont-600",
   },
   saveButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    elevation: 4,
+    minHeight: 34,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    borderRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 8,
+    gap: 5,
+    borderRadius: 9,
   },
   saveButtonText: {
-    fontFamily: "Mont-700",
-    fontSize: 10,
-    letterSpacing: 0.5,
+    fontFamily: "Mont-500",
+    fontSize: 11,
   },
 });

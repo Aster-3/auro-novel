@@ -10,6 +10,7 @@ import {
 import { Image } from "expo-image";
 import { Reply } from "@/types/reply";
 import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
+import { FlagIcon } from "@/components/icons/FlagIcon";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { TrashIcon } from "@/components/icons/TrashIcon";
 import { formatSmartDate } from "@/utils/formatSmartDate";
@@ -19,6 +20,7 @@ import { useReplyLikeMutation } from "@/hooks/useReplyLikeMutation";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAppTheme } from "@/hooks/useTheme";
 import { getProfileImageSource } from "@/utils/profileImage";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 export const ReplyItem = ({
   reply,
@@ -33,7 +35,9 @@ export const ReplyItem = ({
 }) => {
   const { theme, isDarkMode } = useAppTheme();
   const user = useAuthStore((state) => state.user);
+  const navigation = useAppNavigation();
   const { mutate } = useReplyLikeMutation(rootCommentId);
+  const isMine = reply.user.id === user?.id;
 
   const [expanded, setExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -70,6 +74,15 @@ export const ReplyItem = ({
   };
 
   // CommentCardFull ile senkronize tema değerleri
+  const handleReportPress = useCallback(() => {
+    navigation.push("SupportFeedback", {
+      initialType: "report",
+      initialSubject: `Yanıt Şikayeti | ${reply.user.nickname}: (Reply ID: ${reply.id}, Comment ID: ${rootCommentId})`,
+      isSubjectDisable: true,
+      isTypeDisable: true,
+    });
+  }, [navigation, reply.id, reply.user.nickname, rootCommentId]);
+
   const cardTheme = useMemo(
     () => ({
       actions: isDarkMode ? "#94A3B8" : "#64748B",
@@ -86,23 +99,36 @@ export const ReplyItem = ({
   return (
     <View style={s.card}>
       <View style={s.row}>
-        <View style={s.leftCol}>
+        <Pressable
+          style={s.leftCol}
+          onPress={() =>
+            navigation.push("UserProfile", { userId: reply.user.id })
+          }
+          hitSlop={8}
+        >
           <Image
             source={getProfileImageSource(reply.user.profileImageUrl)}
             style={s.avatar}
             contentFit="cover"
             transition={200}
           />
-        </View>
+        </Pressable>
 
         <View style={s.content}>
           <View style={s.header}>
-            <Text
-              style={[s.nickname, { color: theme.textPrimary }]}
-              numberOfLines={1}
+            <Pressable
+              onPress={() =>
+                navigation.push("UserProfile", { userId: reply.user.id })
+              }
+              hitSlop={6}
             >
-              {reply.user.nickname}
-            </Text>
+              <Text
+                style={[s.nickname, { color: theme.textPrimary }]}
+                numberOfLines={1}
+              >
+                {reply.user.nickname}
+              </Text>
+            </Pressable>
             <View style={[s.dot, { backgroundColor: theme.textSecondary }]} />
             <Text style={[s.date, { color: theme.textSecondary }]}>
               {formatSmartDate(reply.createdAt).toUpperCase()}
@@ -204,6 +230,16 @@ export const ReplyItem = ({
             </TouchableOpacity>
 
             {/* SİL BUTONU */}
+            {!isMine && (
+              <TouchableOpacity
+                style={[s.iconAction, { backgroundColor: cardTheme.buttonBg }]}
+                activeOpacity={0.7}
+                onPress={handleReportPress}
+              >
+                <FlagIcon color={cardTheme.actions} size={15} />
+              </TouchableOpacity>
+            )}
+
             {onDelete && (
               <TouchableOpacity
                 style={[s.action, { backgroundColor: cardTheme.deleteBg }]}
@@ -285,6 +321,13 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 12,
+  },
+  iconAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 34,
+    height: 32,
     borderRadius: 12,
   },
   actionText: {

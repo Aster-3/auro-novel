@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { CommentLikeIcon } from "./icons/CommentLikeIcon";
+import { FlagIcon } from "./icons/FlagIcon";
 import { ReplyIcon } from "./icons/ReplyIcon";
 import { Comment } from "@/types/comment";
 import { formatSmartDate } from "@/utils/formatSmartDate";
@@ -45,6 +46,15 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
   const toggleLike = useCallback(() => {
     requireAuth(() => mutate(comment.id), "Beğenmek için giriş yapmalısın.");
   }, [comment.id, mutate, requireAuth]);
+
+  const handleReportPress = useCallback(() => {
+    navigation.push("SupportFeedback", {
+      initialType: "report",
+      initialSubject: `Yorum Şikayeti | ${comment.user.nickname}: (Comment ID: ${comment.id}, Novel ID: ${novelId})`,
+      isSubjectDisable: true,
+      isTypeDisable: true,
+    });
+  }, [comment.id, comment.user.nickname, navigation, novelId]);
 
   const theme = useMemo(
     () => ({
@@ -210,6 +220,21 @@ export const CommentCardFull = memo(({ comment, novelId }: Props) => {
             {comment.replyCount > 0 ? comment.replyCount : "YANITLA"}
           </Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            s.iconAction,
+            {
+              backgroundColor: isDarkMode
+                ? "rgba(255,255,255,0.03)"
+                : "#F8FAFC",
+            },
+          ]}
+          onPress={handleReportPress}
+          activeOpacity={0.7}
+        >
+          <FlagIcon color={theme.actions} size={15} />
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -289,6 +314,13 @@ const s = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    borderRadius: 12,
+  },
+  iconAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 34,
+    height: 32,
     borderRadius: 12,
   },
   actionText: {

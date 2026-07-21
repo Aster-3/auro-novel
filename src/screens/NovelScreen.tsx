@@ -1,18 +1,7 @@
 import React, { useRef, useCallback } from "react";
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  StatusBar,
-  InteractionManager,
-} from "react-native";
+import { View, FlatList, StyleSheet, InteractionManager } from "react-native";
 import { Image } from "expo-image";
-import {
-  RouteProp,
-  useNavigation,
-  useNavigationState,
-  useRoute,
-} from "@react-navigation/native";
+import { RouteProp, useRoute } from "@react-navigation/native";
 import { RootStackParamList } from "@/constants/navigation";
 import { SafeAreaView } from "react-native-safe-area-context";
 import BottomSheet from "@gorhom/bottom-sheet";
@@ -35,6 +24,7 @@ import { useIncrementNovelView } from "@/hooks/useIncrementNovelView";
 import { useAppTheme } from "@/hooks/useTheme";
 import { useOfflineChapterDownloads } from "@/hooks/useOfflineChapterDownloads";
 import { categories } from "@/constants/seed";
+import { NativeAdCard } from "@/components/ads/NativeAdBanner";
 
 const SECTIONS = [
   { key: "summary" },
@@ -166,7 +156,11 @@ const NovelScreen = () => {
       />
 
       {/* Bölüm Listesi Sheet */}
-      <ChapterSheet id={id} ref={bottomSheetRef} offlineDownloads={offlineDownloads} />
+      <ChapterSheet
+        id={id}
+        ref={bottomSheetRef}
+        offlineDownloads={offlineDownloads}
+      />
     </View>
   );
 };

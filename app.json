@@ -1,30 +1,39 @@
 {
   "expo": {
-    "name": "auro-novel",
+    "name": "Auro Novel",
     "slug": "auro-novel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash-icon2.png",
       "resizeMode": "contain",
-      "backgroundColor": "#000000"
+      "backgroundColor": "#FFFFFF"
     },
     "ios": {
       "supportsTablet": false
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false,
       "usesCleartextTraffic": false,
       "googleServicesFile": "./google-services.json",
-      "package": "com.auroinitiative.novel",
-      "permissions": ["com.android.vending.BILLING"]
+      "package": "com.auroinitiative.novel"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#00000000",
+      "translucent": true
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/a4f1b318-0c91-4303-ae43-e1c160e5b711"
     },
     "web": {
       "favicon": "./assets/favicon.png",
@@ -34,7 +43,14 @@
       "expo-font",
       "expo-secure-store",
       "expo-notifications",
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "react-native-google-mobile-ads",
+        {
+          "androidAppId": "ca-app-pub-3940256099942544~3347511713",
+          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
+        }
+      ]
     ],
     "extra": {
       "eas": {

@@ -41,6 +41,16 @@ export const updateMe = (data: UpdateProfileSchemaType | FormData) => {
     .then((res) => res.data);
 };
 
+export interface DeleteMyAccountPayload {
+  password: string;
+  confirmation: "ONAYLIYORUM";
+}
+
+export const deleteMyAccount = async (payload: DeleteMyAccountPayload) => {
+  const { data } = await api.delete("/users/me", { data: payload });
+  return data;
+};
+
 export const getMyLibrary = (query: {
   page?: number;
   limit?: number;

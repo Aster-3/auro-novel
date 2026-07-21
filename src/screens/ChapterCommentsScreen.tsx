@@ -17,6 +17,7 @@ import { RouteProp, useRoute } from "@react-navigation/native";
 
 import { Header } from "@/components/Header";
 import { CommentLikeIcon } from "@/components/icons/CommentLikeIcon";
+import { FlagIcon } from "@/components/icons/FlagIcon";
 import { ReplyIcon } from "@/components/icons/ReplyIcon";
 import { SendIcon } from "@/components/icons/SendIcon";
 import { TrashIcon } from "@/components/icons/TrashIcon";
@@ -189,6 +190,7 @@ const ReplyList = memo(
                       })
                     }
                     onDelete={isMine ? () => onDelete(reply) : undefined}
+                    canReport={!isMine}
                     actionsColor={actionsColor}
                     buttonBg={buttonBg}
                     likeColor={likeColor}
@@ -223,6 +225,7 @@ const ActionRow = memo(
     onLike,
     onReply,
     onDelete,
+    canReport,
     actionsColor,
     buttonBg,
     likeColor,
@@ -233,13 +236,26 @@ const ActionRow = memo(
     onLike: (commentId: number) => void;
     onReply: () => void;
     onDelete?: () => void;
+    canReport: boolean;
     actionsColor: string;
     buttonBg: string;
     likeColor: string;
     deleteBg: string;
     deleteColor: string;
-  }) => (
-    <View style={styles.actions}>
+  }) => {
+    const navigation = useAppNavigation();
+
+    const handleReportPress = () => {
+      navigation.push("SupportFeedback", {
+        initialType: "report",
+        initialSubject: `Bölüm Yorumu Şikayeti | ${comment.user.nickname}: (Chapter Comment ID: ${comment.id}, Chapter ID: ${comment.chapterId})`,
+        isSubjectDisable: true,
+        isTypeDisable: true,
+      });
+    };
+
+    return (
+      <View style={styles.actions}>
       <TouchableOpacity
         style={[styles.action, { backgroundColor: buttonBg }]}
         activeOpacity={0.7}
@@ -271,6 +287,16 @@ const ActionRow = memo(
         </Text>
       </TouchableOpacity>
 
+      {canReport && (
+        <TouchableOpacity
+          style={[styles.iconAction, { backgroundColor: buttonBg }]}
+          activeOpacity={0.7}
+          onPress={handleReportPress}
+        >
+          <FlagIcon color={actionsColor} size={15} />
+        </TouchableOpacity>
+      )}
+
       {onDelete && (
         <TouchableOpacity
           style={[styles.action, { backgroundColor: deleteBg }]}
@@ -282,7 +308,8 @@ const ActionRow = memo(
         </TouchableOpacity>
       )}
     </View>
-  ),
+    );
+  },
 );
 
 const CommentItem = memo(
@@ -309,7 +336,7 @@ const CommentItem = memo(
       () => ({
         border: isDarkMode ? "rgba(255,255,255,0.07)" : "#EDF2F7",
         actions: isDarkMode ? "#94A3B8" : "#64748B",
-        buttonBg: isDarkMode ? "rgba(255,255,255,0.04)" : "#F8FAFC",
+        buttonBg: isDarkMode ? "rgba(255,255,255,0.03)" : "#F8FAFC",
         like: isDarkMode ? "#7AA7FF" : "#0f3f92",
         deleteBg: isDarkMode
           ? "rgba(225, 29, 72, 0.08)"
@@ -362,6 +389,7 @@ const CommentItem = memo(
               })
             }
             onDelete={isMine ? () => onDelete(comment) : undefined}
+            canReport={!isMine}
             actionsColor={cardColors.actions}
             buttonBg={cardColors.buttonBg}
             likeColor={cardColors.like}
@@ -712,12 +740,13 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingHorizontal: HORIZONTAL_PADDING,
-    paddingBottom: 18,
+    paddingTop: 2,
+    paddingBottom: 14,
   },
   card: {
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-    gap: 10,
+    paddingVertical: 13,
+    borderBottomWidth: 0.6,
+    gap: 8,
   },
   commentHeader: {
     flexDirection: "row",
@@ -725,9 +754,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 14,
+    width: 31,
+    height: 31,
+    borderRadius: 13,
   },
   headerText: {
     flex: 1,
@@ -735,36 +764,45 @@ const styles = StyleSheet.create({
   },
   nickname: {
     fontFamily: "Mont-700",
-    fontSize: 13,
+    fontSize: 12.5,
   },
   date: {
     fontFamily: "Mont-800",
     fontSize: 8,
     letterSpacing: 0.5,
+    opacity: 0.55,
   },
   commentText: {
     fontFamily: "Mont-500",
-    fontSize: 13,
-    lineHeight: 20,
+    fontSize: 12,
+    lineHeight: 18.5,
   },
   deletedText: {
-    opacity: 0.45,
+    opacity: 0.5,
     fontStyle: "italic",
   },
   actions: {
     flexDirection: "row",
     alignItems: "center",
     flexWrap: "wrap",
-    gap: 8,
-    marginTop: 2,
+    gap: 7,
+    marginTop: 0,
   },
   action: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
+    gap: 5,
+    minHeight: 28,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  iconAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 30,
+    height: 28,
+    borderRadius: 10,
   },
   actionText: {
     fontFamily: "Mont-800",
@@ -773,15 +811,15 @@ const styles = StyleSheet.create({
   },
   showRepliesButton: {
     alignSelf: "flex-start",
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   showRepliesText: {
     fontFamily: "Mont-700",
-    fontSize: 11,
+    fontSize: 10,
   },
   replies: {
-    gap: 12,
-    paddingTop: 4,
+    gap: 8,
+    paddingTop: 1,
   },
   repliesLoading: {
     paddingVertical: 14,
@@ -792,23 +830,25 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   replyLine: {
-    width: 2,
+    width: 1.5,
     borderRadius: 2,
-    marginLeft: 16,
+    marginLeft: 14,
+    marginVertical: 3,
   },
   replyBody: {
     flex: 1,
-    gap: 8,
-    paddingBottom: 4,
+    gap: 6,
+    paddingBottom: 2,
   },
   replyingTo: {
     fontFamily: "Mont-600",
     fontSize: 10,
+    opacity: 0.72,
   },
   moreRepliesButton: {
     alignSelf: "flex-start",
-    paddingVertical: 4,
-    marginLeft: 28,
+    paddingVertical: 2,
+    marginLeft: 26,
   },
   moreRepliesText: {
     fontFamily: "Mont-800",

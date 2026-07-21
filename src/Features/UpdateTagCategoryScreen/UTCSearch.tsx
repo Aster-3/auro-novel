@@ -1,6 +1,6 @@
 import { SearchIcon2 } from "@/components/icons/SearchIcon2";
-import { TextInput, StyleSheet, View } from "react-native";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
+import { StyleSheet, TextInput, View } from "react-native";
 
 export const UTCSearch = ({
   searchValue,
@@ -19,8 +19,9 @@ export const UTCSearch = ({
         style={[
           styles.searchWrapper,
           {
-            backgroundColor: theme.surface,
-            borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.035)"
+              : "rgba(15,23,42,0.025)",
           },
         ]}
       >
@@ -43,23 +44,20 @@ export const UTCSearch = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginBottom: 12,
   },
   searchWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    height: 48,
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderRadius: 14, // Daha yumuşak köşeler
+    height: 44,
+    paddingHorizontal: 14,
+    borderRadius: 12,
   },
   textInput: {
     flex: 1,
     height: "100%",
     marginLeft: 8,
-    fontSize: 13, // 14'ten 13'e çekerek daha minimal yaptık
+    fontSize: 12.5,
     fontFamily: "Mont-500",
-    letterSpacing: -0.2, // Yazıyı daha sıkı ve şık gösterir
     paddingVertical: 0,
   },
 });

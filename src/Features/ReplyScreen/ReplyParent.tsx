@@ -15,6 +15,7 @@ import { formatSmartDate } from "@/utils/formatSmartDate";
 import { Reply } from "@/types/reply";
 import { useReaderStore } from "@/store/useReaderStore";
 import { getProfileImageSource } from "@/utils/profileImage";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 interface ReplyParentProps {
   comment: Comment;
@@ -28,6 +29,7 @@ export const ReplyParent = React.memo(
     const [isTruncated, setIsTruncated] = useState(false);
     const [measured, setMeasured] = useState(false);
     const isDarkMode = useReaderStore((state) => state.isDarkMode);
+    const navigation = useAppNavigation();
 
     const theme = useMemo(
       () => ({
@@ -66,19 +68,32 @@ export const ReplyParent = React.memo(
           <View style={s.main}>
             {/* Üst Kısım: Kullanıcı ve Rozet */}
             <View style={s.header}>
-              <Image
-                source={getProfileImageSource(comment.user.profileImageUrl)}
-                style={s.avatar}
-                contentFit="cover"
-              />
-              <View style={s.meta}>
+              <Pressable
+                onPress={() =>
+                  navigation.push("UserProfile", { userId: comment.user.id })
+                }
+                hitSlop={8}
+              >
+                <Image
+                  source={getProfileImageSource(comment.user.profileImageUrl)}
+                  style={s.avatar}
+                  contentFit="cover"
+                />
+              </Pressable>
+              <Pressable
+                style={s.meta}
+                onPress={() =>
+                  navigation.push("UserProfile", { userId: comment.user.id })
+                }
+                hitSlop={6}
+              >
                 <Text style={[s.userName, { color: theme.textPrimary }]}>
                   {comment.user.nickname}
                 </Text>
                 <Text style={[s.date, { color: theme.textSecondary }]}>
                   {formatSmartDate(comment.createdAt).toUpperCase()}
                 </Text>
-              </View>
+              </Pressable>
 
               {/* CommentCardFull Stili Rozet */}
               <View

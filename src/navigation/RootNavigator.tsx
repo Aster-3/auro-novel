@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { TabNavigator } from "./TabNavigator";
 import NovelScreen from "../screens/NovelScreen";
@@ -12,6 +12,7 @@ import ForgotPasswordScreen from "@/screens/ForgotPasswordScreen";
 import ResetPasswordScreen from "@/screens/ResetPasswordScreen";
 import ReplyScreen from "@/screens/ReplyScreen";
 import PersonalInfoScreen from "../screens/PersonalInfoScreen";
+import DeleteAccountScreen from "@/screens/DeleteAccountScreen";
 import PrivacySecurityScreen from "../screens/PrivacySecurityScreen";
 import DownloadedChaptersScreen from "../screens/DownloadedChaptersScreen";
 import DownloadedNovelDetailScreen from "@/screens/DownloadedNovelDetailScreen";
@@ -66,18 +67,7 @@ export const RootNavigator = () => {
   );
 
   if (isLoading) {
-    return (
-      <View
-        style={{
-          flex: 1,
-          justifyContent: "center",
-          alignItems: "center",
-          backgroundColor: theme.background,
-        }}
-      >
-        <ActivityIndicator size="large" color={theme.textPrimary || "#000"} />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: theme.background }} />;
   }
 
   return (
@@ -150,6 +140,7 @@ export const RootNavigator = () => {
         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         <Stack.Screen name="ResetPassword" component={ResetPasswordScreen} />
         <Stack.Screen name="Reply" component={ReplyScreen} />
+        <Stack.Screen name="DeleteAccount" component={DeleteAccountScreen} />
       </Stack.Group>
     </Stack.Navigator>
   );

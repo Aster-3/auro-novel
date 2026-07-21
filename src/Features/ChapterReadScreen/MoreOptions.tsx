@@ -9,7 +9,10 @@ import { ShareIcon } from "@/components/icons/ShareIcon";
 import { useLibraryCheck } from "@/hooks/useLibraryCheck";
 import { useNovelDetail } from "@/hooks/useNovelDetail";
 import { useToggleLibrary } from "@/hooks/useToggleLibrary";
-import { globalNavigate, navigateToNovelSafe } from "@/navigation/globalNavigate";
+import {
+  globalNavigate,
+  navigateToNovelSafe,
+} from "@/navigation/globalNavigate";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useReaderStore } from "@/store/useReaderStore";
 import { useToastStore } from "@/store/useToastStore";
@@ -72,7 +75,9 @@ export const MoreOptions = ({
         "SupportFeedback",
         {
           initialType: "report",
-          initialSubject: `${novelName}: ${chapterId}`,
+          initialSubject: `Bölüm Şikayeti | ${novelName}: (Bölüm ID: ${chapterId})`,
+          isSubjectDisable: true,
+          isTypeDisable: true,
         },
         "push",
       );

@@ -1,18 +1,18 @@
-import React, { useState } from "react";
 import { ChevronBottomIcon } from "@/components/icons/ChevronBottomIcon";
-import {
-  TouchableOpacity,
-  View,
-  StyleSheet,
-  Text,
-  LayoutAnimation,
-  Platform,
-  UIManager,
-} from "react-native";
 import { XIcon } from "@/components/icons/XIcon";
+import { useAppTheme } from "@/hooks/useTheme";
 import { Category } from "@/types/category";
 import { Tag } from "@/types/tag";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import React, { useState } from "react";
+import {
+  LayoutAnimation,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
+} from "react-native";
 
 if (
   Platform.OS === "android" &&
@@ -32,30 +32,43 @@ export const UTCSelectedItems = ({
 }) => {
   const { theme, isDarkMode } = useAppTheme();
   const [isOpen, setIsOpen] = useState(false);
+  const label = mode === "tag" ? "Seçilen etiketler" : "Seçilen kategoriler";
 
   const toggleDropdown = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setIsOpen(!isOpen);
+    setIsOpen((current) => !current);
   };
 
   return (
     <View
       style={[
         styles.container,
-        {
-          backgroundColor: theme.surface,
-          borderColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
-        },
+        isOpen && [
+          styles.openContainer,
+          {
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.025)"
+              : "rgba(15,23,42,0.022)",
+          },
+        ],
       ]}
     >
       <TouchableOpacity
-        style={styles.header}
+        style={[
+          styles.header,
+          {
+            borderBottomColor: isDarkMode
+              ? "rgba(255,255,255,0.035)"
+              : "rgba(15,23,42,0.045)",
+          },
+        ]}
         onPress={toggleDropdown}
-        activeOpacity={0.6}
+        activeOpacity={0.65}
       >
         <Text style={[styles.label, { color: theme.textSecondary }]}>
-          SEÇİLEN {mode === "tag" ? "ETİKETLER" : "KATEGORİLER"}{" "}
-          <Text style={{ color: theme.textPrimary, fontFamily: "Mont-700" }}>
+          {label}
+          <Text style={[styles.count, { color: theme.textPrimary }]}>
+            {" "}
             ({selectedItems.length})
           </Text>
         </Text>
@@ -64,26 +77,18 @@ export const UTCSelectedItems = ({
         </View>
       </TouchableOpacity>
 
-      {isOpen && (
-        <View
-          style={[
-            styles.content,
-            {
-              borderTopColor: isDarkMode ? "rgba(255,255,255,0.05)" : "#F1F5F9",
-            },
-          ]}
-        >
+      {isOpen ? (
+        <View style={styles.content}>
           {selectedItems.length > 0 ? (
             selectedItems.map((item, index) => {
-              const isTag = mode === "tag";
-              const displayName = isTag
-                ? (item as Tag).name
-                : (item as Category).title;
+              const displayName =
+                mode === "tag" ? (item as Tag).name : (item as Category).title;
 
               return (
                 <View key={item.id}>
                   <View style={styles.itemRow}>
                     <Text
+                      numberOfLines={1}
                       style={[styles.itemText, { color: theme.textPrimary }]}
                     >
                       {displayName}
@@ -91,25 +96,26 @@ export const UTCSelectedItems = ({
                     <TouchableOpacity
                       onPress={() => onRemove(item.id)}
                       hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                      style={styles.removeButton}
                     >
                       <XIcon
                         size={10}
-                        color={isDarkMode ? "#fb7185" : "#f47069"}
+                        color={isDarkMode ? "#FCA5A5" : "#DC2626"}
                       />
                     </TouchableOpacity>
                   </View>
-                  {index !== selectedItems.length - 1 && (
+                  {index !== selectedItems.length - 1 ? (
                     <View
                       style={[
                         styles.itemSeparator,
                         {
                           backgroundColor: isDarkMode
                             ? "rgba(255,255,255,0.03)"
-                            : "#F1F5F9",
+                            : "rgba(15,23,42,0.04)",
                         },
                       ]}
                     />
-                  )}
+                  ) : null}
                 </View>
               );
             })
@@ -119,7 +125,7 @@ export const UTCSelectedItems = ({
             </Text>
           )}
         </View>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -127,47 +133,60 @@ export const UTCSelectedItems = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    borderWidth: 1,
-    borderRadius: 14,
-    overflow: "hidden",
-    marginBottom: 8,
+  },
+  openContainer: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    marginBottom: 4,
   },
   header: {
+    minHeight: 42,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    height: 48,
-    paddingHorizontal: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 4,
   },
   label: {
-    fontSize: 9, // Mikro-tipografi
-    fontFamily: "Mont-700",
-    letterSpacing: 1,
+    fontSize: 10,
+    fontFamily: "Mont-500",
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  count: {
+    fontFamily: "Mont-500",
   },
   content: {
-    borderTopWidth: 1,
+    paddingTop: 4,
     paddingBottom: 8,
   },
   itemRow: {
+    minHeight: 38,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 4,
+    gap: 12,
   },
   itemText: {
+    flex: 1,
     fontSize: 12,
     fontFamily: "Mont-500",
-    letterSpacing: -0.2,
+  },
+  removeButton: {
+    width: 26,
+    height: 26,
+    alignItems: "center",
+    justifyContent: "center",
   },
   itemSeparator: {
-    height: 1,
-    marginLeft: 16,
+    height: StyleSheet.hairlineWidth,
+    marginLeft: 4,
   },
   emptyText: {
     fontSize: 11,
     fontFamily: "Mont-500",
-    padding: 16,
+    paddingVertical: 14,
     textAlign: "center",
   },
 });

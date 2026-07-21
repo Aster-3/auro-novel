@@ -3,7 +3,16 @@ import {
   GetTaggedNovelsResponse,
   GetTagsRequest,
   GetTagsResponse,
+  Tag,
 } from "@/types/tag";
+
+export interface CreateTagPayload {
+  name: string;
+}
+
+export interface CreateTagResponse {
+  message: string;
+}
 
 export const getTags = async (
   dto: GetTagsRequest,
@@ -20,6 +29,28 @@ export const getRandomTags = async (
     params: { count: limit || 20 },
   });
   return data;
+};
+
+export const createTag = async (
+  payload: CreateTagPayload,
+): Promise<CreateTagResponse> => {
+  const { data } = await api.post("/tags", payload);
+  return data;
+};
+
+export const createTagAndFind = async (name: string): Promise<Tag> => {
+  await createTag({ name });
+  const tags = await getTags({ name, limit: 10 });
+  const normalizedName = name.trim().toLocaleLowerCase("tr-TR");
+  const createdTag = tags.items.find(
+    (tag) => tag.name.trim().toLocaleLowerCase("tr-TR") === normalizedName,
+  );
+
+  if (!createdTag) {
+    throw new Error("Oluşturulan etiket listede bulunamadı.");
+  }
+
+  return createdTag;
 };
 
 export const getNovelsByTag = async ({

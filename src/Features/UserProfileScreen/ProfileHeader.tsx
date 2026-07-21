@@ -1,4 +1,6 @@
 import { BackButton } from "@/components/BackButton";
+import { FlagIcon2 } from "@/components/icons/FlagIcon2";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { useAppTheme } from "@/hooks/useTheme";
 import { getProfileImageSource } from "@/utils/profileImage";
 import React, { useMemo, useState } from "react";
@@ -17,23 +19,58 @@ export const ProfileHeader = React.memo(
   ({
     coverImage,
     profileImage,
+    userId,
+    nickname,
+    canReport = true,
   }: {
     coverImage?: string | null;
     profileImage?: string | null;
+    userId: string;
+    nickname: string;
+    canReport?: boolean;
   }) => {
-    const { theme } = useAppTheme();
+    const { theme, isDarkMode } = useAppTheme();
+    const navigation = useAppNavigation();
+    const coverBackgroundColor = isDarkMode
+      ? "rgba(255,255,255,0.06)"
+      : "#E5E7EB";
+    const avatarBackgroundColor = isDarkMode ? "#1f2334" : "#F1F5F9";
     const [isProfileImageOpen, setIsProfileImageOpen] = useState(false);
     const profileImageSource = useMemo(
       () => getProfileImageSource(profileImage),
       [profileImage],
     );
+    const handleReportPress = () => {
+      navigation.push("SupportFeedback", {
+        initialType: "report",
+        initialSubject: `Kullanıcı Şikayeti | ${nickname}: (User ID: ${userId})`,
+        isSubjectDisable: true,
+        isTypeDisable: true,
+      });
+    };
 
     return (
       <View style={styles.container} pointerEvents="box-none">
         <View style={styles.coverContainer} pointerEvents="box-none">
+          <View
+            style={[
+              styles.coverBackground,
+              { backgroundColor: coverBackgroundColor },
+            ]}
+            pointerEvents="none"
+          />
           <View style={styles.backButton}>
             <BackButton />
           </View>
+          {canReport && (
+            <Pressable
+              style={styles.reportButton}
+              onPress={handleReportPress}
+              hitSlop={8}
+            >
+              <FlagIcon2 color="#FFFFFF" size={22} />
+            </Pressable>
+          )}
           {coverImage ? (
             <Image
               source={{ uri: coverImage }}
@@ -51,12 +88,21 @@ export const ProfileHeader = React.memo(
         </View>
 
         <Pressable
-          style={styles.profileImageWrapper}
+          style={[
+            styles.profileImageWrapper,
+            { backgroundColor: avatarBackgroundColor },
+          ]}
           onPress={() => setIsProfileImageOpen(true)}
         >
           <Image
             source={profileImageSource}
-            style={[styles.profileImage, { borderColor: theme.background }]}
+            style={[
+              styles.profileImage,
+              {
+                backgroundColor: avatarBackgroundColor,
+                borderColor: theme.background,
+              },
+            ]}
           />
         </Pressable>
 
@@ -70,7 +116,7 @@ export const ProfileHeader = React.memo(
         >
           <StatusBar
             translucent
-            backgroundColor="rgba(0,0,0,0.9)"
+            backgroundColor="transparent"
             barStyle="light-content"
           />
           <Pressable
@@ -106,11 +152,24 @@ const styles = StyleSheet.create({
     borderRadius: PROFILE_HEADER.coverRadius,
     overflow: "hidden",
   },
+  coverBackground: {
+    ...StyleSheet.absoluteFillObject,
+  },
   backButton: {
     position: "absolute",
     top: 10,
     left: 10,
     zIndex: 10,
+  },
+  reportButton: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    zIndex: 10,
+    width: 34,
+    height: 34,
+    alignItems: "center",
+    justifyContent: "center",
   },
   coverImage: {
     width: "100%",
@@ -123,6 +182,10 @@ const styles = StyleSheet.create({
   profileImageWrapper: {
     position: "absolute",
     bottom: -PROFILE_HEADER.avatarOverlap,
+    width: PROFILE_HEADER.avatarSize,
+    height: PROFILE_HEADER.avatarSize,
+    borderRadius: PROFILE_HEADER.avatarRadius,
+    overflow: "hidden",
   },
   profileImage: {
     width: PROFILE_HEADER.avatarSize,

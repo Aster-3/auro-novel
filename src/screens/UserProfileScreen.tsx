@@ -125,6 +125,9 @@ const UserProfileScreen = ({ route }: { route: any }) => {
         <ProfileHeader
           coverImage={userProfile.profileBackgroundImageUrl}
           profileImage={userProfile.profileImageUrl}
+          userId={userId}
+          nickname={userProfile.nickname}
+          canReport={!isOwnProfile}
         />
         <UserProfileBio
           username={userProfile.username}
@@ -151,6 +154,7 @@ const UserProfileScreen = ({ route }: { route: any }) => {
     hasFollowStatus,
     isFollowPending,
     isFollowing,
+    isOwnProfile,
     followingCount,
     theme.background,
     userProfile,

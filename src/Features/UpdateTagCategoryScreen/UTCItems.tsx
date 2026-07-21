@@ -1,12 +1,6 @@
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-} from "react-native";
 import { RightChevronIcon } from "@/components/icons/RightChevronIcon";
-import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
+import { useAppTheme } from "@/hooks/useTheme";
+import { FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
 interface BaseItem {
   id: number;
@@ -21,6 +15,9 @@ interface UTCItemsProps {
 
 export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
   const { theme, isDarkMode } = useAppTheme();
+  const separatorColor = isDarkMode
+    ? "rgba(255,255,255,0.035)"
+    : "rgba(15,23,42,0.045)";
 
   const renderEmptyList = () => (
     <View style={styles.emptyContainer}>
@@ -31,28 +28,32 @@ export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
   );
 
   const renderSeparator = () => (
-    <View
-      style={[
-        styles.separator,
-        { backgroundColor: isDarkMode ? "rgba(255,255,255,0.03)" : "#F1F5F9" },
-      ]}
-    />
+    <View style={[styles.separator, { backgroundColor: separatorColor }]} />
   );
 
   const renderItem = ({ item }: { item: BaseItem }) => {
     const displayName = item.title || item.name || "İsimsiz";
 
     return (
-      <TouchableOpacity
-        style={styles.item}
+      <Pressable
+        style={({ pressed }) => [
+          styles.item,
+          pressed && {
+            backgroundColor: isDarkMode
+              ? "rgba(255,255,255,0.045)"
+              : "rgba(15,23,42,0.035)",
+          },
+        ]}
         onPress={() => onSelect(item)}
-        activeOpacity={0.5}
       >
-        <Text style={[styles.itemText, { color: theme.textPrimary }]}>
+        <Text
+          numberOfLines={1}
+          style={[styles.itemText, { color: theme.textPrimary }]}
+        >
           {displayName}
         </Text>
         <RightChevronIcon size={12} color={theme.textSecondary} />
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 
@@ -65,8 +66,8 @@ export const UTCItems = ({ items, onSelect }: UTCItemsProps) => {
         ItemSeparatorComponent={renderSeparator}
         ListEmptyComponent={renderEmptyList}
         contentContainerStyle={[
-          items.length === 0 ? styles.emptyListContent : styles.listWrapper,
-          { backgroundColor: theme.surface },
+          styles.listContent,
+          items.length === 0 && styles.emptyListContent,
         ]}
         showsVerticalScrollIndicator={false}
         nestedScrollEnabled={true}
@@ -81,34 +82,32 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingBottom: 20,
   },
-  listWrapper: {
-    borderRadius: 16,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    // Kenarlığı tamamen kaldırdık veya çok silik yaptık
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.02)",
+  listContent: {
+    paddingTop: 6,
+    paddingBottom: 32,
   },
   emptyListContent: {
     flexGrow: 1,
     justifyContent: "center",
-    borderRadius: 16,
   },
   item: {
+    minHeight: 46,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    gap: 12,
   },
   itemText: {
-    fontSize: 13, // 15'ten 13'e çekerek minimalizmi sağladık
+    flex: 1,
+    fontSize: 12.5,
     fontFamily: "Mont-500",
-    letterSpacing: -0.2,
   },
   separator: {
-    height: 1,
-    marginHorizontal: 16, // Ayraçlar Apple stilindeki gibi içeriden başlar
+    height: StyleSheet.hairlineWidth,
+    marginHorizontal: 4,
   },
   emptyContainer: {
     alignItems: "center",

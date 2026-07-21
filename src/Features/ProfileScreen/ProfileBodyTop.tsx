@@ -1,24 +1,26 @@
-import { Text, View, StyleSheet, Pressable } from "react-native";
-import { ProfileHeaderText } from "./ProfileHeaderText";
-import { UserIcon } from "@/components/icons/UserIcon";
-import { ShieldIcon } from "@/components/icons/ShieldIcon";
 import { DownloadedsIcon } from "@/components/icons/DownloadedsIcon";
 import { LogoutIcon } from "@/components/icons/LogoutIcon";
-import { useModalStore } from "@/store/useModalStore";
+import { ShieldIcon } from "@/components/icons/ShieldIcon";
+import { TrashIcon } from "@/components/icons/TrashIcon";
+import { UserIcon } from "@/components/icons/UserIcon";
+import { deleteDownloadedDataForUser } from "@/db/offlineChaptersDb";
+import { unregisterStoredPushToken } from "@/hooks/usePushNotifications";
+import { useAppTheme } from "@/hooks/useTheme";
 import { useAuthStore } from "@/store/useAuthStore";
+import { useModalStore } from "@/store/useModalStore";
+import { useToastStore } from "@/store/useToastStore";
 import { TokenStorage } from "@/utils/tokenStorage";
 import { useNavigation } from "@react-navigation/native";
-import { useAppTheme } from "@/hooks/useTheme";
 import { useQueryClient } from "@tanstack/react-query";
-import { useToastStore } from "@/store/useToastStore";
-import { unregisterStoredPushToken } from "@/hooks/usePushNotifications";
-import { deleteDownloadedDataForUser } from "@/db/offlineChaptersDb";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { ProfileHeaderText } from "./ProfileHeaderText";
 
 const iconMap = {
   personal_info: UserIcon,
   privacy_security: ShieldIcon,
   downloaded_chapters: DownloadedsIcon,
   logout: LogoutIcon,
+  delete_account: TrashIcon,
 };
 
 export const ProfileBodyTop = () => {
@@ -35,9 +37,10 @@ export const ProfileBodyTop = () => {
     }
 
     if (!isLoggedIn) {
-      useToastStore
-        .getState()
-        .showToast({ message: "Lütfen önce giriş yapın.", type: "Bilgi" });
+      useToastStore.getState().showToast({
+        message: "Lütfen önce giriş yapın.",
+        type: "Bilgi",
+      });
       return;
     }
 
@@ -48,12 +51,6 @@ export const ProfileBodyTop = () => {
 
   const options = [
     { id: "personal_info", label: "Kişisel Bilgiler", screen: "PersonalInfo" },
-    // {
-    //   id: "privacy_security",
-    //   label: "Gizlilik ve Güvenlik",
-    //   screen: "PrivacySecurity",
-    // },
-
     {
       id: "logout",
       label: "Çıkış Yap",
@@ -72,6 +69,11 @@ export const ProfileBodyTop = () => {
           },
         }),
     },
+    {
+      id: "delete_account",
+      label: "Hesabı Sil",
+      screen: "DeleteAccount",
+    },
   ];
 
   return (
@@ -87,7 +89,13 @@ export const ProfileBodyTop = () => {
       >
         {options.map((option) => {
           const IconComponent = iconMap[option.id as keyof typeof iconMap];
-          if (option.id === "logout" && !isLoggedIn) return null;
+          const isDestructive =
+            option.id === "logout" || option.id === "delete_account";
+
+          if (isDestructive && !isLoggedIn) {
+            return null;
+          }
+
           return (
             <Pressable
               key={option.id}
@@ -104,13 +112,18 @@ export const ProfileBodyTop = () => {
               ]}
               onPress={() => handlePress(option)}
             >
-              {IconComponent && (
+              {IconComponent ? (
                 <IconComponent
-                  color={option.id !== "logout" ? theme.textPrimary : "#da0303"}
+                  color={isDestructive ? "#da0303" : theme.textPrimary}
                   size={18}
                 />
-              )}
-              <Text style={[styles.text, { color: theme.textPrimary }]}>
+              ) : null}
+              <Text
+                style={[
+                  styles.text,
+                  { color: isDestructive ? "#da0303" : theme.textPrimary },
+                ]}
+              >
                 {option.label}
               </Text>
             </Pressable>

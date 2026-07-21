@@ -47,6 +47,7 @@ export type RootStackParamList = {
     replyPreview?: string | null;
   };
   PersonalInfo: undefined;
+  DeleteAccount: undefined;
   PrivacySecurity: undefined;
   DownloadedChapters: undefined;
   DownloadedNovelDetail: {
@@ -65,6 +66,8 @@ export type RootStackParamList = {
         initialType?: "support" | "feedback" | "suggestion" | "report" | "other";
         initialSubject?: string;
         initialMessage?: string;
+        isSubjectDisable?: boolean;
+        isTypeDisable?: boolean;
       }
     | undefined;
   CreateNovel: undefined;

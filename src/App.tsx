@@ -23,14 +23,19 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { Portal, PortalProvider } from "@gorhom/portal";
 import { navigationRef } from "./navigation/globalNavigate";
 import { GlobalConfirmModal } from "./components/GlobalConfirmModal";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { AppState } from "react-native";
 import { TokenStorage } from "./utils/tokenStorage";
 import { useAuthStore } from "./store/useAuthStore";
 import { ToastContainer } from "./components/Toasts/ToastContainer";
 import { KeyboardProvider } from "react-native-keyboard-controller";
-import { ActivityIndicator, StatusBar } from "react-native";
+import { StatusBar } from "react-native";
 import { useReaderStore } from "./store/useReaderStore";
 import { usePushNotifications } from "./hooks/usePushNotifications";
+import {
+  applyAppStatusBar,
+  getAppSystemBarColors,
+} from "./utils/systemBars";
 
 enableFreeze(false);
 const queryClient = new QueryClient();
@@ -39,7 +44,8 @@ export default function App() {
   const [isReady, setIsReady] = useState(false);
   const isDarkMode = useReaderStore((state) => state.isDarkMode);
   const accessToken = useAuthStore((state) => state.accessToken);
-  const appBackgroundColor = isDarkMode ? "#090910" : "#ffffff";
+  const { backgroundColor: appBackgroundColor, barStyle } =
+    getAppSystemBarColors(isDarkMode);
   let [fontsLoaded] = useFonts({
     "Mont-400": Montserrat_400Regular,
     Montserrat: Montserrat_400Regular,
@@ -65,29 +71,47 @@ export default function App() {
 
   useEffect(() => {
     const checkToken = async () => {
-      const token = await TokenStorage.getAccessToken();
-      if (token) {
-        useAuthStore.getState().setAccessToken(token);
+      try {
+        const token = await TokenStorage.getAccessToken();
+        if (token) {
+          useAuthStore.getState().setAccessToken(token);
+        }
+      } finally {
+        setIsReady(true);
       }
-      setIsReady(true);
     };
     checkToken();
   }, []);
 
   usePushNotifications(accessToken, queryClient);
 
-  if (!fontsLoaded) {
-    return null;
-  }
+  const applyDefaultStatusBar = useCallback(() => {
+    if (!navigationRef.isReady()) {
+      applyAppStatusBar(isDarkMode);
+      return;
+    }
 
-  if (!isReady) {
-    return (
-      <ActivityIndicator
-        size="large"
-        color="#0000ff"
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      />
-    );
+    const routeName = navigationRef.getCurrentRoute()?.name;
+
+    if (routeName === "ChapterRead") return;
+
+    applyAppStatusBar(isDarkMode);
+  }, [isDarkMode]);
+
+  useEffect(() => {
+    applyDefaultStatusBar();
+
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        applyDefaultStatusBar();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [applyDefaultStatusBar]);
+
+  if (!fontsLoaded || !isReady) {
+    return null;
   }
 
   const myTheme = {
@@ -125,15 +149,20 @@ export default function App() {
       style={{ flex: 1, backgroundColor: appBackgroundColor }}
     >
       <StatusBar
-        barStyle={isDarkMode ? "light-content" : "dark-content"}
-        backgroundColor={appBackgroundColor}
+        barStyle={barStyle}
+        translucent
+        backgroundColor="transparent"
       />
       <KeyboardProvider>
         <QueryClientProvider client={queryClient}>
           <BottomSheetModalProvider>
             <PortalProvider>
               <SafeAreaProvider>
-                <NavigationContainer ref={navigationRef}>
+                <NavigationContainer
+                  ref={navigationRef}
+                  onReady={applyDefaultStatusBar}
+                  onStateChange={applyDefaultStatusBar}
+                >
                   <RootNavigator />
                   <GlobalConfirmModal />
                   <ToastContainer />

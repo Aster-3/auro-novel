@@ -9,6 +9,7 @@ import { Categories } from "@/Features/HomeScreen/Categories";
 import { BestofCategory } from "@/Features/HomeScreen/BestofCategory";
 import { RecenltyAdded } from "@/Features/HomeScreen/RecenltyAdded";
 import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
+import { NativeAdCard } from "@/components/ads/NativeAdBanner";
 
 const HomeScreen = () => {
   const tabBarBottomPadding = useTabBarBottomPadding();
@@ -41,6 +42,7 @@ const HomeScreen = () => {
           <WeeklyPopular />
           <UpdatedSeries />
         </View>
+        <NativeAdCard />
 
         <View style={styles.section}>
           <BestofCategory />

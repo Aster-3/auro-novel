@@ -8,8 +8,8 @@ import { useEffect, useRef } from "react";
 import { LoginSheet, LoginSheetRef } from "@/Features/ProfileScreen/LoginSheet";
 import { useTabBarBottomPadding } from "@/utils/useTabBarBottomPadding";
 import { useAppTheme } from "@/hooks/useTheme"; // Temayı ekledik
-import { StatusBar } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
+import { NativeAdCard } from "@/components/ads/NativeAdBanner";
 
 const ProfileScreen = () => {
   const bottomSheetRef = useRef<LoginSheetRef>(null);
@@ -48,6 +48,8 @@ const ProfileScreen = () => {
         contentContainerStyle={{ gap: 16, paddingBottom: tabBarBottomPadding }}
       >
         <ProfileBodyTop />
+        <NativeAdCard />
+
         <ProfileBodyMiddle />
         <ProfileBodyBottom />
         <LoginSheet ref={bottomSheetRef} />

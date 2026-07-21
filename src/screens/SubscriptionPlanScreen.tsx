@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Circle, Line, Path, Rect } from "react-native-svg";
@@ -220,11 +220,32 @@ const SubscriptionPlanScreen = () => {
   const user = useAuthStore((state) => state.user);
   const isPremium = useAuthStore((state) => state.isPremium);
   const premiumUntil = useAuthStore((state) => state.premiumUntil);
+  const subscriptionTier = useAuthStore((state) => state.subscriptionTier);
   const subscriptionPeriod = useAuthStore((state) => state.subscriptionPeriod);
   const isLoggedIn = !!user;
   const hasActivePremium = isPremiumActive(isPremium, premiumUntil);
   const [selectedPlanId, setSelectedPlanId] =
     useState<(typeof plans)[number]["id"]>("yearly");
+
+  useEffect(() => {
+    if (!__DEV__) return;
+
+    console.log("Auro Pass Premium Status:", {
+      userId: user?.id ?? null,
+      isPremium,
+      premiumUntil,
+      subscriptionTier,
+      subscriptionPeriod,
+      hasActivePremium,
+    });
+  }, [
+    hasActivePremium,
+    isPremium,
+    premiumUntil,
+    subscriptionPeriod,
+    subscriptionTier,
+    user?.id,
+  ]);
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? plans[0],

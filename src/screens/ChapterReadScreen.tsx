@@ -26,7 +26,6 @@ import { ChapterBottomSheet } from "@/Features/ChapterReadScreen/ChapterBottomSh
 import RenderHtml, { MixedStyleDeclaration } from "react-native-render-html";
 import { useReaderStore } from "@/store/useReaderStore";
 import { SlideForNextChapter } from "@/Features/ChapterReadScreen/SlideForNextChapter";
-import { useAppNavigation } from "@/hooks/useAppNavigation";
 
 // --- REANIMATED IMPORTLARI ---
 import Animated, {
@@ -45,6 +44,11 @@ import {
   getAdjacentDownloadedChapterIds,
   getDownloadedChapterById,
 } from "@/db/offlineChaptersDb";
+import {
+  ChapterInterstitialAd,
+  ChapterInterstitialAdRef,
+} from "@/components/ads/ChapterInterstitialAd";
+import { NativeAdCard } from "@/components/ads/NativeAdBanner";
 
 interface RouteParams {
   params: {
@@ -95,8 +99,8 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
   const isLoading = isOffline ? isOfflineLoading : isOnlineLoading;
 
   const { width } = useWindowDimensions();
-  const navigation = useAppNavigation();
   const scrollViewRef = useRef<ScrollView>(null);
+  const chapterInterstitialRef = useRef<ChapterInterstitialAdRef>(null);
 
   const translateX = useSharedValue(0);
   const contentOpacity = useSharedValue(0);
@@ -132,15 +136,41 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     setIsMenuVisible((prev) => !prev);
   }, []);
 
-  const selectChapter = useCallback((chapterId: string) => {
-    setId(chapterId);
-    bottomSheetRef.current?.close();
-  }, []);
-
   const handleOpenSheet = useCallback((type: SheetType) => {
     setActiveSheet(type);
     bottomSheetRef.current?.expand();
   }, []);
+
+  const changeChapter = useCallback(
+    (chapterId: string) => {
+      if (chapterId === selectedId) return;
+
+      const commitChapterChange = () => {
+        setId(chapterId);
+      };
+
+      if (isOffline) {
+        commitChapterChange();
+        return;
+      }
+
+      if (!chapterInterstitialRef.current) {
+        commitChapterChange();
+        return;
+      }
+
+      chapterInterstitialRef.current.showBeforeContinue(commitChapterChange);
+    },
+    [isOffline, selectedId],
+  );
+
+  const selectChapter = useCallback(
+    (chapterId: string) => {
+      bottomSheetRef.current?.close();
+      changeChapter(chapterId);
+    },
+    [changeChapter],
+  );
 
   useEffect(() => {
     contentOpacity.value = 0;
@@ -150,7 +180,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     setIsMenuVisible(false);
     bottomSheetRef.current?.close();
     hasScrolledToInitialProgress.current = false;
-  }, [id, contentOpacity, translateX]);
+  }, [selectedId, contentOpacity, translateX]);
 
   useEffect(() => {
     if (!isLoading && chapterData?.content) {
@@ -210,17 +240,11 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
 
         if (event.translationX > threshold && prevId) {
           translateX.value = withTiming(width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", {
-              id: prevId,
-              isOffline,
-            });
+            runOnJS(changeChapter)(prevId);
           });
         } else if (event.translationX < -threshold && nextId) {
           translateX.value = withTiming(-width, { duration: 250 }, () => {
-            runOnJS(navigation.replace)("ChapterRead", {
-              id: nextId,
-              isOffline,
-            });
+            runOnJS(changeChapter)(nextId);
           });
         } else {
           translateX.value = withTiming(0, { duration: 200 });
@@ -239,7 +263,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     chapterData?.previousChapterId,
     chapterData?.nextChapterId,
     width,
-    navigation,
+    changeChapter,
     translateX,
     toggleMenu,
   ]);
@@ -350,6 +374,7 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
     <Screen
       style={[styles.container, { backgroundColor: colors.background }] as any}
     >
+      {!isOffline && <ChapterInterstitialAd ref={chapterInterstitialRef} />}
       <StatusBar hidden={true} animated />
 
       <Animated.View
@@ -430,6 +455,11 @@ const ChapterReadScreen = ({ route }: { route: RouteParams }) => {
                   systemFonts={systemFonts}
                 />
                 {!isOffline && (
+                  <View style={styles.nativeAdWrapper}>
+                    <NativeAdCard placement="chapter-end" />
+                  </View>
+                )}
+                {!isOffline && (
                   <SlideForNextChapter
                     novelStatus={chapterData?.novelStatus}
                     lastChapterAvailable={!!chapterData?.nextChapterId}
@@ -498,5 +528,9 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 20,
     textAlign: "center",
+  },
+  nativeAdWrapper: {
+    marginTop: 4,
+    marginBottom: 18,
   },
 });
